@@ -13,13 +13,18 @@
 
 package org.curtinfrc;
 
+import static org.curtinfrc.subsystems.vision.VisionConstants.*;
+
+import choreo.auto.AutoFactory;
+import choreo.auto.AutoFactory.AutoBindings;
+import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.generated.TunerConstants;
 import org.curtinfrc.subsystems.drive.Drive;
@@ -28,10 +33,15 @@ import org.curtinfrc.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.subsystems.drive.ModuleIO;
 import org.curtinfrc.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.subsystems.vision.Vision;
+import org.curtinfrc.subsystems.vision.VisionIO;
+import org.curtinfrc.subsystems.vision.VisionIOLimelight;
+import org.curtinfrc.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.subsystems.vision.VisionIOPhotonVisionSim;
+import org.curtinfrc.util.AutoChooser;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -46,12 +56,15 @@ import org.littletonrobotics.urcl.URCL;
 public class Robot extends LoggedRobot {
   // Subsystems
   private final Drive drive;
+  private final Vision vision;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
-  // Dashboard inputs
-  private final LoggedDashboardChooser<Command> autoChooser;
+  // Auto stuff
+  private final AutoChooser autoChooser;
+  private final AutoFactory autoFactory;
+  private final Autos autos;
 
   public Robot() {
     // Record metadata
@@ -95,13 +108,14 @@ public class Robot extends LoggedRobot {
         break;
     }
 
+    SignalLogger.start();
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
 
     switch (Constants.currentMode) {
       case REAL:
-        // Real robot, instantiate hardware IO implementations
+        // Real robot, instantiate hardware IO implementationsRobot
         drive =
             new Drive(
                 new GyroIOPigeon2(),
@@ -109,6 +123,11 @@ public class Robot extends LoggedRobot {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOLimelightGamepiece(camera0Name),
+                new VisionIOLimelight(camera1Name, drive::getRotation));
         break;
 
       case SIM:
@@ -120,6 +139,11 @@ public class Robot extends LoggedRobot {
                 new ModuleIOSim(TunerConstants.FrontRight),
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
+                new VisionIOPhotonVisionSim(camera1Name, robotToCamera0, drive::getPose));
         break;
 
       default:
@@ -131,27 +155,42 @@ public class Robot extends LoggedRobot {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         break;
     }
 
-    // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+    autoFactory =
+        new AutoFactory(
+            drive::getPose,
+            drive::setPose,
+            drive::followTrajectory,
+            true,
+            drive,
+            new AutoBindings(),
+            drive::logTrajectory);
+
+    autoChooser = new AutoChooser("Auto Chooser");
+
+    autos = new Autos(autoFactory);
+
+    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("New Path"));
 
     // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", drive.wheelRadiusCharacterization());
-    autoChooser.addOption("Drive Simple FF Characterization", drive.feedforwardCharacterization());
-    autoChooser.addOption(
+    autoChooser.addCmd(
+        "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
+    autoChooser.addCmd(
+        "Drive Simple FF Characterization", () -> drive.feedforwardCharacterization());
+    autoChooser.addCmd(
         "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
+        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
         "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    // TODO schedule and auto commands
+        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addCmd(
+        "Drive SysId (Dynamic Forward)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
+        "Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(

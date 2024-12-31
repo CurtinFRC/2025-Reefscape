@@ -1,10 +1,10 @@
 {
   "hubs": [
     {
-      "x": 139,
-      "y": 95,
-      "width": 1100,
-      "height": 650,
+      "x": 66,
+      "y": 69,
+      "width": 2334,
+      "height": 1531,
       "state": {
         "sidebar": {
           "width": 300,
@@ -17,7 +17,7 @@
           ]
         },
         "tabs": {
-          "selected": 1,
+          "selected": 2,
           "tabs": [
             {
               "type": 0,
@@ -102,16 +102,6 @@
                     }
                   },
                   {
-                    "type": "trajectory",
-                    "logKey": "/RealOutputs/Odometry/Trajectory",
-                    "logType": "Pose2d[]",
-                    "visible": true,
-                    "options": {
-                      "color": "#ff8c00",
-                      "size": "normal"
-                    }
-                  },
-                  {
                     "type": "ghost",
                     "logKey": "/RealOutputs/Odometry/TrajectorySetpoint",
                     "logType": "Pose2d",
@@ -119,6 +109,16 @@
                     "options": {
                       "model": "Crab Bot",
                       "color": "#ff8c00"
+                    }
+                  },
+                  {
+                    "type": "trajectory",
+                    "logKey": "/RealOutputs/Odometry/Trajectory",
+                    "logType": "SwerveSample[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff8c00",
+                      "size": "normal"
                     }
                   }
                 ],
@@ -130,14 +130,14 @@
                 "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  1.4695761589768238e-15,
-                  5.999999999999999,
-                  -12
+                  1.6341614186543365e-15,
+                  6.000000000000003,
+                  -11.999999999999998
                 ],
                 "cameraTarget": [
-                  0,
-                  0.5,
-                  0
+                  3.23659241848801e-16,
+                  -1.728988571788344,
+                  -1.2989376388526193
                 ]
               },
               "controlsHeight": 200
@@ -459,5 +459,5 @@
     }
   ],
   "satellites": [],
-  "version": "4.0.0-beta-3"
+  "version": "4.1.0"
 }

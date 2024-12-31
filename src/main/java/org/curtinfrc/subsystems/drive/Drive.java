@@ -16,11 +16,14 @@ package org.curtinfrc.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.subsystems.drive.DriveConstants.*;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -81,6 +84,10 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
+  private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
+  private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
+  private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -109,6 +116,8 @@ public class Drive extends SubsystemBase {
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   @Override
@@ -319,6 +328,32 @@ public class Drive extends SubsystemBase {
         })
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(getRotation().getRadians()));
+  }
+
+  /** Follows the provided swerve sample. */
+  public void followTrajectory(SwerveSample sample) {
+    // Get the current pose of the robot
+    Pose2d pose = getPose();
+    Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            sample.vx + xController.calculate(pose.getX(), sample.x),
+            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.omega
+                + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+            getRotation());
+
+    // Apply the generated speeds
+    runVelocity(speeds);
+  }
+
+  public void logTrajectory(Trajectory<SwerveSample> traj, boolean flipped) {
+    SwerveSample[] trajarray = new SwerveSample[0];
+    Logger.recordOutput(
+        "Odometry/Trajectory",
+        flipped ? traj.flipped().samples().toArray(trajarray) : traj.samples().toArray(trajarray));
   }
 
   /**
