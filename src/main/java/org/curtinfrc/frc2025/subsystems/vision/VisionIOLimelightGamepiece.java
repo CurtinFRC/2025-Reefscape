@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.vision;
+package org.curtinfrc.frc2025.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.DoubleSubscriber;

@@ -11,7 +11,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.util;
+package org.curtinfrc.frc2025.util;
 
 import com.ctre.phoenix6.StatusCode;
 import java.util.function.Supplier;

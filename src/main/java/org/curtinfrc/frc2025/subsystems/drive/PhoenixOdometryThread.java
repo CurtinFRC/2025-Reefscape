@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.drive;
+package org.curtinfrc.frc2025.subsystems.drive;
 
-import static org.curtinfrc.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
@@ -27,7 +27,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
-import org.curtinfrc.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.TunerConstants;
 
 /**
  * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.

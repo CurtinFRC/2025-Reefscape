@@ -11,10 +11,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.drive;
+package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
-import static org.curtinfrc.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
@@ -57,9 +57,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.curtinfrc.Constants;
-import org.curtinfrc.Constants.Mode;
-import org.curtinfrc.generated.TunerConstants;
+import org.curtinfrc.frc2025.Constants;
+import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 

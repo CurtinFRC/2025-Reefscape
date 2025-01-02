@@ -11,10 +11,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.drive;
+package org.curtinfrc.frc2025.subsystems.drive;
 
-import static org.curtinfrc.subsystems.drive.DriveConstants.*;
-import static org.curtinfrc.util.PhoenixUtil.*;
+import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.util.PhoenixUtil.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -42,7 +42,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import java.util.Queue;
-import org.curtinfrc.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.TunerConstants;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
