@@ -1,7 +1,7 @@
-package org.curtinfrc.subsystems.drive;
+package org.curtinfrc.frc2025.subsystems.drive;
 
 import com.ctre.phoenix6.CANBus;
-import org.curtinfrc.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.TunerConstants;
 
 public final class DriveConstants {
   public static final double DEADBAND = 0;

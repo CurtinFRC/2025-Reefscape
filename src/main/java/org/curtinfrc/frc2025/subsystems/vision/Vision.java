@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.vision;
+package org.curtinfrc.frc2025.subsystems.vision;
 
-import static org.curtinfrc.subsystems.vision.VisionConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -27,7 +27,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
 import java.util.List;
-import org.curtinfrc.subsystems.vision.VisionIO.PoseObservationType;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {

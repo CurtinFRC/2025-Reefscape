@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.drive;
+package org.curtinfrc.frc2025.subsystems.drive;
 
-import static org.curtinfrc.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -25,7 +25,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import java.util.Queue;
-import org.curtinfrc.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.TunerConstants;
 
 /** IO implementation for Pigeon 2. */
 public class GyroIOPigeon2 implements GyroIO {

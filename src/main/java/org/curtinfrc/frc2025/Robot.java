@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc;
+package org.curtinfrc.frc2025;
 
-import static org.curtinfrc.subsystems.vision.VisionConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoFactory.AutoBindings;
@@ -26,19 +26,19 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import org.curtinfrc.generated.TunerConstants;
-import org.curtinfrc.subsystems.drive.Drive;
-import org.curtinfrc.subsystems.drive.GyroIO;
-import org.curtinfrc.subsystems.drive.GyroIOPigeon2;
-import org.curtinfrc.subsystems.drive.ModuleIO;
-import org.curtinfrc.subsystems.drive.ModuleIOSim;
-import org.curtinfrc.subsystems.drive.ModuleIOTalonFX;
-import org.curtinfrc.subsystems.vision.Vision;
-import org.curtinfrc.subsystems.vision.VisionIO;
-import org.curtinfrc.subsystems.vision.VisionIOLimelight;
-import org.curtinfrc.subsystems.vision.VisionIOLimelightGamepiece;
-import org.curtinfrc.subsystems.vision.VisionIOPhotonVisionSim;
-import org.curtinfrc.util.AutoChooser;
+import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.subsystems.drive.Drive;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
+import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
+import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.frc2025.subsystems.vision.Vision;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
+import org.curtinfrc.frc2025.util.AutoChooser;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;

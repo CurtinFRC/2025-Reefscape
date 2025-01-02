@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package org.curtinfrc.subsystems.vision;
+package org.curtinfrc.frc2025.subsystems.vision;
 
-import static org.curtinfrc.subsystems.vision.VisionConstants.aprilTagLayout;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;

@@ -1,4 +1,4 @@
-package org.curtinfrc.util;
+package org.curtinfrc.frc2025.util;
 
 import static edu.wpi.first.wpilibj.Alert.AlertType.kError;
 

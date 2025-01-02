@@ -1,4 +1,4 @@
-package org.curtinfrc.generated;
+package org.curtinfrc.frc2025.generated;
 
 import static edu.wpi.first.units.Units.*;
 
