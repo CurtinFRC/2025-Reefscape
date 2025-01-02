@@ -39,6 +39,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -130,7 +131,8 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOLimelight(camera1Name, drive::getRotation));
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOQuestNav());
         }
 
         case DEVBOT -> {
@@ -146,7 +148,8 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOLimelight(camera1Name, drive::getRotation));
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOQuestNav());
         }
 
         case SIMBOT -> {
@@ -162,7 +165,8 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
+                  new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
+                  new VisionIO() {});
         }
       }
     } else {
@@ -174,7 +178,9 @@ public class Robot extends LoggedRobot {
               new ModuleIO() {},
               new ModuleIO() {});
 
-      vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+      vision =
+          new Vision(
+              drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
     }
 
     autoFactory =
