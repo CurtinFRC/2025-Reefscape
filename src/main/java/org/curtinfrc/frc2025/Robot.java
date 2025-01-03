@@ -208,9 +208,6 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
-    // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
     // Reset gyro to 0° when B button is pressed
     controller
         .b()
