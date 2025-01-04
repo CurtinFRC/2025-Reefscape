@@ -184,7 +184,7 @@ public class Drive extends SubsystemBase {
    *
    * @param speeds Speeds in meters/sec
    */
-  public void runVelocity(ChassisSpeeds speeds) {
+  private void runVelocity(ChassisSpeeds speeds) {
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
@@ -203,28 +203,10 @@ public class Drive extends SubsystemBase {
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
-  public void runCharacterization(double output) {
+  private void runCharacterization(double output) {
     for (int i = 0; i < 4; i++) {
       modules[i].runCharacterization(output);
     }
-  }
-
-  /** Stops the drive. */
-  public void stop() {
-    runVelocity(new ChassisSpeeds());
-  }
-
-  /**
-   * Stops the drive and turns the modules to an X arrangement to resist movement. The modules will
-   * return to their normal orientations the next time a nonzero velocity is requested.
-   */
-  public void stopWithX() {
-    Rotation2d[] headings = new Rotation2d[4];
-    for (int i = 0; i < 4; i++) {
-      headings[i] = getModuleTranslations()[i].getAngle();
-    }
-    kinematics.resetHeadings(headings);
-    stop();
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
