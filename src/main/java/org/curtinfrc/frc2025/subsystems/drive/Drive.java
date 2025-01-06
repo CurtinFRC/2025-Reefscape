@@ -15,9 +15,11 @@ package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -28,6 +30,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -556,5 +559,53 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
+  }
+
+  public Command autoAlign(Pose3d pose) {
+    Logger.recordOutput("Odometry/DesiredPose", pose);
+    PIDController xController = new PIDController(10, 0, 0);
+    xController.setSetpoint(pose.getX());
+    PIDController yController = new PIDController(10, 0, 0);
+    yController.setSetpoint(pose.getY());
+    PIDController rotController = new PIDController(7.5, 0, 0);
+    rotController.setSetpoint(pose.getRotation().getAngle());
+    rotController.enableContinuousInput(-Math.PI, Math.PI);
+
+    return run(() -> {
+          var robotPose = getPose();
+          runVelocity(
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  xController.calculate(robotPose.getX()),
+                  yController.calculate(robotPose.getY()),
+                  rotController.calculate(robotPose.getRotation().getRadians()),
+                  robotPose.getRotation()));
+        })
+        .until(
+            () ->
+                xController.atSetpoint() && yController.atSetpoint() && rotController.atSetpoint())
+        .finallyDo(
+            () -> {
+              xController.close();
+              yController.close();
+              rotController.close();
+            });
+  }
+
+  public Pose3d findClosestTag(List<AprilTag> tags) {
+    Transform2d lowestTransform = null;
+    int closestTagId = 99;
+    for (var tag : tags) {
+      var transform = getPose().minus(tag.pose.toPose2d());
+      if (lowestTransform == null) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+        break;
+      }
+      if (lowestTransform.getTranslation().getNorm() > transform.getTranslation().getNorm()) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+      }
+    }
+    return aprilTagLayout.getTagPose(closestTagId).get();
   }
 }
