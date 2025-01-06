@@ -247,6 +247,8 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
+    controller.x().whileTrue(drive.autoAlign(drive.findClosestTag(aprilTagLayout.getTags())));
+
     // Reset gyro to 0° when B button is pressed
     controller
         .b()
