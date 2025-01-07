@@ -13,6 +13,8 @@
 
 package org.curtinfrc.frc2025;
 
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -21,8 +23,34 @@ import edu.wpi.first.wpilibj.RobotBase;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final Mode simMode = Mode.SIM;
-  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+  private static final RobotType robotType = RobotType.SIMBOT;
+
+  public static final Mode getMode() {
+    return switch (robotType) {
+      case DEVBOT, COMPBOT -> RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
+      case SIMBOT -> Mode.SIM;
+    };
+  }
+
+  @SuppressWarnings("resource")
+  public static RobotType getRobot() {
+    if (RobotBase.isReal() && RobotType.SIMBOT == robotType) {
+      new Alert("Robot type is invalid, defaulting to competition robot.", AlertType.kWarning);
+      return RobotType.COMPBOT;
+    }
+    return robotType;
+  }
+
+  public static enum RobotType {
+    /** Running in simulation */
+    SIMBOT,
+
+    /** Running competition robot. */
+    COMPBOT,
+
+    /** Running developer robot. */
+    DEVBOT,
+  }
 
   public static enum Mode {
     /** Running on a real robot. */
