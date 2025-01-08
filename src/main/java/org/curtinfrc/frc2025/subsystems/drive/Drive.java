@@ -50,6 +50,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -78,6 +79,8 @@ public class Drive extends SubsystemBase {
   private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
+
+  RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
       GyroIO gyroIO,
@@ -588,32 +591,34 @@ public class Drive extends SubsystemBase {
 
   public Command autoAlign(Pose3d pose) {
     Logger.recordOutput("Odometry/DesiredPose", pose);
-    PIDController xController = new PIDController(10, 0, 0);
-    xController.setSetpoint(pose.getX());
-    PIDController yController = new PIDController(10, 0, 0);
-    yController.setSetpoint(pose.getY());
-    PIDController rotController = new PIDController(7.5, 0, 0);
-    rotController.setSetpoint(pose.getRotation().getAngle());
-    rotController.enableContinuousInput(-Math.PI, Math.PI);
+    // PIDController xController = new PIDController(10, 0, 0);
+    // xController.setSetpoint(pose.getX());
+    // PIDController yController = new PIDController(10, 0, 0);
+    // yController.setSetpoint(pose.getY());
+    // PIDController rotController = new PIDController(7.5, 0, 0);
+    // rotController.setSetpoint(pose.getRotation().getAngle());
+    // rotController.enableContinuousInput(-Math.PI, Math.PI);
+    repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
 
-    return run(() -> {
+    return run(
+        () -> {
           var robotPose = getPose();
-          runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  xController.calculate(robotPose.getX()),
-                  yController.calculate(robotPose.getY()),
-                  rotController.calculate(robotPose.getRotation().getRadians()),
-                  robotPose.getRotation()));
-        })
-        .until(
-            () ->
-                xController.atSetpoint() && yController.atSetpoint() && rotController.atSetpoint())
-        .finallyDo(
-            () -> {
-              xController.close();
-              yController.close();
-              rotController.close();
-            });
+          followTrajectory(
+              repulsorFieldPlanner.getCmd(
+                  robotPose,
+                  getChassisSpeeds(),
+                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  true));
+        });
+    // .until(
+    //     () ->
+    //         xController.atSetpoint() && yController.atSetpoint() && rotController.atSetpoint())
+    // .finallyDo(
+    // () -> {
+    //   xController.close();
+    //   yController.close();
+    //   rotController.close();
+    // });
   }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {
