@@ -1,6 +1,7 @@
 package org.curtinfrc.frc2025.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotController;
@@ -15,6 +16,12 @@ public class VisionIOLimelightGamepiece implements VisionIO {
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
+
+    int portOffset = 10 * VisionIOLimelight.numberLimelights;
+    for (int port = 5800; port <= 5809; port++) {
+      PortForwarder.add(port + portOffset, name + ".local", port);
+    }
+    VisionIOLimelight.numberLimelights += 1;
   }
 
   @Override
