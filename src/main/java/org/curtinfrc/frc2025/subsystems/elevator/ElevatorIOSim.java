@@ -27,4 +27,9 @@ public class ElevatorIOSim implements ElevatorIO {
 
     elevatorSim.setAngle(ElevatorIONeoMaxMotion.convertSetpoint(point.setpoint));
   }
+
+  @Override
+  public boolean isStable() {
+    return true;
+  }
 }

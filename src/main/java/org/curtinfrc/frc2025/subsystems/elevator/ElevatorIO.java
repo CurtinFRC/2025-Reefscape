@@ -8,7 +8,6 @@ public interface ElevatorIO {
   public static class ElevatorIOInputs {
     public double distanceSensorReading;
     public double encoderReading;
-    public double position;
     public ElevatorConstants.Setpoints point;
   }
 
@@ -17,4 +16,8 @@ public interface ElevatorIO {
   public default void applyVoltage(double volts) {}
 
   public default void updateInputs(ElevatorIOInputs inputs) {}
+
+  public default boolean isStable() {
+    return false;
+  }
 }
