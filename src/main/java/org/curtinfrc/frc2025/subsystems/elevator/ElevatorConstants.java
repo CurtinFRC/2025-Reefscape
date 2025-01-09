@@ -21,11 +21,11 @@ public class ElevatorConstants {
   public enum Setpoints {
     /* in mm */
     NONE(-1),
-    L1(1),
-    L2(2),
-    L3(3),
-    COLLECT(4),
-    STOW(5);
+    L1(460),
+    L2(810),
+    L3(1210),
+    COLLECT(950),
+    STOW(0);
 
     public int setpoint;
 

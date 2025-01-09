@@ -35,6 +35,7 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotion;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
@@ -256,6 +257,11 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+
+    controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
+    controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));
+    controller.pov(180).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L3));
+    controller.pov(270).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
