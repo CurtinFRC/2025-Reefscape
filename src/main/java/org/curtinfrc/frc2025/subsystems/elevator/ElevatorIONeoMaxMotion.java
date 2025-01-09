@@ -9,10 +9,9 @@ import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   private SparkClosedLoopController controller = elevatorMotor.getClosedLoopController();
-  private ElevatorConstants.Setpoints setpoint = ElevatorConstants.Setpoints.NONE;
 
   public static double convertSetpoint(double set /* in mm */) {
-    return set * 2 /* to counts */ / 42 /* to revolutions */;
+    return set * 2 /* to counts */ / 42 /* to revolutions */ /* or divide by 21 */;
   }
 
   public ElevatorIONeoMaxMotion() {
@@ -44,15 +43,14 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   }
 
   @Override
-  public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.point = this.setpoint;
-    inputs.distanceSensorReading = 0;
-    inputs.encoderReading = elevatorEncoder.getPosition();
-  }
-
-  @Override
   public void goToSetpoint(ElevatorConstants.Setpoints point) {
     setpoint = point;
     controller.setReference(convertSetpoint(point.setpoint), ControlType.kPosition);
+  }
+
+  @Override
+  public boolean isStable() {
+    double pos = elevatorEncoder.getPosition();
+    return setpoint.setpoint - 0.01 < pos && pos < setpoint.setpoint + 0.01;
   }
 }
