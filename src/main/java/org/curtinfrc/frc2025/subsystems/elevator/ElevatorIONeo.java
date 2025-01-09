@@ -5,7 +5,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 public class ElevatorIONeo implements ElevatorIO {
-  protected final SparkMax elevatorMotor = new SparkMax(10, MotorType.kBrushless);
+  protected final SparkMax elevatorMotor = new SparkMax(ElevatorConstants.motorPort, MotorType.kBrushless);
   protected final RelativeEncoder elevatorEncoder = elevatorMotor.getEncoder();
   protected ElevatorConstants.Setpoints setpoint = ElevatorConstants.Setpoints.NONE;
 

@@ -3,7 +3,9 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 public class ElevatorConstants {
   public static int motorCount = 2;
   public static int distanceSensorPort = 99;
-  public static int encoderPort = 99;
+  public static int motorPort = 99;
+  
+  public static double tolerance = 0.01;
 
   public static double maxVel = 5676;
   public static double maxAccel = 0;
