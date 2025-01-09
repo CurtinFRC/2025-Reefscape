@@ -1,0 +1,36 @@
+package org.curtinfrc.frc2025.subsystems.elevator;
+
+public class ElevatorConstants {
+  public static int motorCount = 2;
+  public static int distanceSensorPort = 99;
+  public static int encoderPort = 99;
+
+  public static double maxVel = 5676;
+  public static double maxAccel = 0;
+  public static double allowedErr = 0;
+
+  // TODO: TUNE PID
+  public static double kP = 1;
+  public static double kI = 0;
+  public static double kD = 0;
+  public static double kMinOutput = 0;
+  public static double kMaxOutput = 0;
+  public static double kV = 473;
+
+  // TODO: MAKE SETPOINTS
+  public enum Setpoints {
+    /* in mm */
+    NONE(-1),
+    L1(1),
+    L2(2),
+    L3(3),
+    COLLECT(4),
+    STOW(5);
+
+    public int setpoint;
+
+    private Setpoints(int val) {
+      this.setpoint = val;
+    }
+  };
+}

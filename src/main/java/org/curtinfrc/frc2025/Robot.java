@@ -34,6 +34,10 @@ import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotion;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -60,6 +64,7 @@ public class Robot extends LoggedRobot {
   // Subsystems
   private Drive drive;
   private Vision vision;
+  private Elevator elevator;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -133,6 +138,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
+          elevator = new Elevator(new ElevatorIONeoMaxMotion());
         }
 
         case DEVBOT -> {
@@ -150,6 +156,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
+          elevator = new Elevator(new ElevatorIONeoMaxMotion());
         }
 
         case SIMBOT -> {
@@ -167,6 +174,8 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
+
+          elevator = new Elevator(new ElevatorIOSim());
         }
       }
     } else {
@@ -181,6 +190,8 @@ public class Robot extends LoggedRobot {
       vision =
           new Vision(
               drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
+
+      elevator = new Elevator(new ElevatorIO() {});
     }
 
     autoFactory =
