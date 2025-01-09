@@ -11,7 +11,7 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   private SparkClosedLoopController controller = elevatorMotor.getClosedLoopController();
 
   public static double convertSetpoint(double set /* in mm */) {
-    return set * 2 /* to counts */ / 42 /* to revolutions */ /* or divide by 21 */;
+    return set / 21; /* mm to revolutions */
   }
 
   public ElevatorIONeoMaxMotion() {
@@ -51,6 +51,6 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   @Override
   public boolean isStable() {
     double pos = elevatorEncoder.getPosition();
-    return setpoint.setpoint - 0.01 < pos && pos < setpoint.setpoint + 0.01;
+    return setpoint.setpoint - ElevatorConstants.tolerance < pos && pos < setpoint.setpoint + ElevatorConstants.tolerance;
   }
 }
