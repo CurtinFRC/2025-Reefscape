@@ -14,7 +14,6 @@ public class ElevatorIONeo implements ElevatorIO {
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     inputs.point = this.setpoint;
-    inputs.distanceSensorReading = 0;
     inputs.encoderReading = elevatorEncoder.getPosition();
   }
 }
