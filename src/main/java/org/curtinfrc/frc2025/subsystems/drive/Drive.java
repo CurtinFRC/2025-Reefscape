@@ -49,7 +49,6 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -590,35 +589,15 @@ public class Drive extends SubsystemBase {
     };
   }
 
-  public Command autoAlign(Setpoints setpoint) {
-    repulsorFieldPlanner.setGoal(setpoint.toPose().toPose2d().getTranslation());
-    
-    return run(
-        () -> {
-          var robotPose = getPose();
-          followTrajectory(
-              repulsorFieldPlanner.getCmd(
-                  robotPose,
-                  getChassisSpeeds(),
-                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-                  true));
-        });
-
-  }
-
-  public Command autoAlign(Pose3d pose) {
-    Logger.recordOutput("Odometry/DesiredPose", pose);
-    // PIDController xController = new PIDController(10, 0, 0);
-    // xController.setSetpoint(pose.getX());
-    // PIDController yController = new PIDController(10, 0, 0);
-    // yController.setSetpoint(pose.getY());
-    // PIDController rotController = new PIDController(7.5, 0, 0);
-    // rotController.setSetpoint(pose.getRotation().getAngle());
-    // rotController.enableContinuousInput(-Math.PI, Math.PI);
-    repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
+  public Command autoAlign(Pose3d _setpoint) {
+    // this.setpoint = _setpoint;
 
     return run(
         () -> {
+          Logger.recordOutput("Drive/Setpoint", _setpoint);
+
+          repulsorFieldPlanner.setGoal(_setpoint.toPose2d().getTranslation());
+
           var robotPose = getPose();
           followTrajectory(
               repulsorFieldPlanner.getCmd(
@@ -628,6 +607,29 @@ public class Drive extends SubsystemBase {
                   true));
         });
   }
+
+  // public Command autoAlign(Pose3d pose) {
+  //   Logger.recordOutput("Odometry/DesiredPose", pose);
+  //   // PIDController xController = new PIDController(10, 0, 0);
+  //   // xController.setSetpoint(pose.getX());
+  //   // PIDController yController = new PIDController(10, 0, 0);
+  //   // yController.setSetpoint(pose.getY());
+  //   // PIDController rotController = new PIDController(7.5, 0, 0);
+  //   // rotController.setSetpoint(pose.getRotation().getAngle());
+  //   // rotController.enableContinuousInput(-Math.PI, Math.PI);
+  //   repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
+
+  //   return run(
+  //       () -> {
+  //         var robotPose = getPose();
+  //         followTrajectory(
+  //             repulsorFieldPlanner.getCmd(
+  //                 robotPose,
+  //                 getChassisSpeeds(),
+  //                 TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+  //                 true));
+  //       });
+  // }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {
     Transform2d lowestTransform = null;

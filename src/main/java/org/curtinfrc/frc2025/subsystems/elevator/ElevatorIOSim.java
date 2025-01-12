@@ -1,10 +1,9 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import org.curtinfrc.frc2025.Constants.Setpoints;
-
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 
 public class ElevatorIOSim implements ElevatorIO {
   private DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
