@@ -1,10 +1,20 @@
 {
-    "name": "plex",
-    "rotations": [
-        {"axis": "x", "degrees": 90},
-        {"axis": "z", "degrees": 90}
-    ],
-    "positions": [0, 0, 0],
-    "cameras": [],
-    "components": []
+  "name": "plex",
+  "rotations": [
+    {
+      "axis": "x",
+      "degrees": 90
+    },
+    {
+      "axis": "z",
+      "degrees": 90
+    }
+  ],
+  "positions": [
+    0,
+    0,
+    0
+  ],
+  "cameras": [],
+  "components": []
 }
