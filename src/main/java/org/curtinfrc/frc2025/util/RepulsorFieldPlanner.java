@@ -146,9 +146,10 @@ public class RepulsorFieldPlanner {
           new HorizontalObstacle(0.0, 0.5, true),
           new HorizontalObstacle(FIELD_WIDTH, 0.5, false),
           new VerticalObstacle(0.0, 0.5, true),
-          new VerticalObstacle(FIELD_LENGTH, 0.5, false),
-          new VerticalObstacle(7.55, 0.5, false),
-          new VerticalObstacle(10, 0.5, true));
+          new VerticalObstacle(FIELD_LENGTH, 0.5, false)
+          // new VerticalObstacle(7.55, 0.5, false),
+          // new VerticalObstacle(10, 0.5, true)
+          );
 
   private List<Obstacle> fixedObstacles = new ArrayList<>();
   private Optional<Translation2d> goalOpt = Optional.empty();

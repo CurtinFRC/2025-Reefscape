@@ -15,16 +15,14 @@ package org.curtinfrc.frc2025;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import java.util.List;
 import java.util.Optional;
-
-import org.curtinfrc.frc2025.subsystems.drive.Drive;
-
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.RobotBase;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -50,6 +48,12 @@ public final class Constants {
     return robotType;
   }
 
+  // public static Alliance getAlliance() {
+  //   return getMode() == Mode.SIM ? (List.of(AllianceStationID.Blue1, AllianceStationID.Blue2,
+  // AllianceStationID.Blue3).contains(DriverStationSim.getAllianceStationId()) ? Alliance.Blue :
+  // Alliance.Red) : DriverStation.getAlliance().get();
+  // }
+
   public static enum RobotType {
     /** Running in simulation */
     SIMBOT,
@@ -72,44 +76,49 @@ public final class Constants {
     REPLAY
   }
 
-  // TODO: MAKE SETPOINTS  
   public enum Setpoints {
-      /* in mm */
-      NONE(-1, List.of(), List.of()),
-      L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
-      L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
-      L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
-      COLLECT(950, List.of(13, 12), List.of(1, 2));
-  
-      private int elevator;
-      private Pose3d pose;
-  
-      Setpoints(int elevator, List<Integer> tagIdsBlue, List<Integer> tagIdsRed) {
-          this.elevator = elevator;
-          this.pose = resolvePose(DriverStation.getAlliance().get() == DriverStation.Alliance.Blue ? tagIdsBlue : tagIdsRed);
+    /* in mm */
+    NONE(-1, List.of(), List.of()),
+    COLLECT(950, List.of(13, 12), List.of(1, 2)),
+    L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
+    L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
+    L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6));
+
+    private final int _elevator;
+    private final List<Integer> _tagIdsBlue;
+    private final List<Integer> _tagIdsRed;
+    private Pose3d _pose = null;
+
+    Setpoints(int elevator, List<Integer> tagIdsBlue, List<Integer> tagIdsRed) {
+      this._elevator = elevator;
+      this._tagIdsBlue = tagIdsBlue;
+      this._tagIdsRed = tagIdsRed;
+    }
+
+    public int elevatorSetpoint() {
+      return this._elevator;
+    }
+
+    public Pose3d toPose() {
+      return resolvePose(
+          DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+              ? _tagIdsRed
+              : _tagIdsBlue);
+    }
+
+    private Pose3d resolvePose(List<Integer> tagIds) {
+      if (tagIds.isEmpty()) {
+        return new Pose3d(); // No valid pose
       }
-  
-      public int elevatorSetpoint() {
-          return this.elevator;
+
+      for (int tagId : tagIds) {
+        Optional<Pose3d> pose = aprilTagLayout.getTagPose(tagId);
+        if (pose.isPresent()) {
+          return pose.get(); // Return the first valid pose found
+        }
       }
-  
-      public Pose3d toPose() {
-          return this.pose;
-      }
-  
-      private Pose3d resolvePose(List<Integer> tagIds) {
-          if (tagIds.isEmpty()) {
-              return null; // No valid pose
-          }
-  
-          for (int tagId : tagIds) {
-              Optional<Pose3d> pose = aprilTagLayout.getTagPose(tagId);
-              if (pose.isPresent()) {
-                  return pose.get(); // Return the first valid pose found
-              }
-          }
-  
-          return null; // No valid pose found
-      }
+
+      return new Pose3d(-1, -1, 1, new Rotation3d()); // No valid pose found
+    }
   }
 }

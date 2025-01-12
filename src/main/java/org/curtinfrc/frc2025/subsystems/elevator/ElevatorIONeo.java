@@ -1,10 +1,9 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import org.curtinfrc.frc2025.Constants.Setpoints;
-
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 
 public class ElevatorIONeo implements ElevatorIO {
   protected final SparkMax elevatorMotor =
