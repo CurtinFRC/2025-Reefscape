@@ -13,7 +13,16 @@
 
 package org.curtinfrc.frc2025;
 
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.curtinfrc.frc2025.subsystems.drive.Drive;
+
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
 
@@ -61,5 +70,46 @@ public final class Constants {
 
     /** Replaying from a log file. */
     REPLAY
+  }
+
+  // TODO: MAKE SETPOINTS  
+  public enum Setpoints {
+      /* in mm */
+      NONE(-1, List.of(), List.of()),
+      L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
+      L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
+      L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(7, 8, 9, 10, 11, 12)),
+      COLLECT(950, List.of(13, 12), List.of(1, 2));
+  
+      private int elevator;
+      private Pose3d pose;
+  
+      Setpoints(int elevator, List<Integer> tagIdsBlue, List<Integer> tagIdsRed) {
+          this.elevator = elevator;
+          this.pose = resolvePose(DriverStation.getAlliance().get() == DriverStation.Alliance.Blue ? tagIdsBlue : tagIdsRed);
+      }
+  
+      public int elevatorSetpoint() {
+          return this.elevator;
+      }
+  
+      public Pose3d toPose() {
+          return this.pose;
+      }
+  
+      private Pose3d resolvePose(List<Integer> tagIds) {
+          if (tagIds.isEmpty()) {
+              return null; // No valid pose
+          }
+  
+          for (int tagId : tagIds) {
+              Optional<Pose3d> pose = aprilTagLayout.getTagPose(tagId);
+              if (pose.isPresent()) {
+                  return pose.get(); // Return the first valid pose found
+              }
+          }
+  
+          return null; // No valid pose found
+      }
   }
 }
