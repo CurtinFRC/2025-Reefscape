@@ -51,6 +51,7 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   @Override
   public boolean isStable() {
     double pos = elevatorEncoder.getPosition();
-    return setpoint.setpoint - ElevatorConstants.tolerance < pos && pos < setpoint.setpoint + ElevatorConstants.tolerance;
+    return setpoint.setpoint - ElevatorConstants.tolerance < pos
+        && pos < setpoint.setpoint + ElevatorConstants.tolerance;
   }
 }
