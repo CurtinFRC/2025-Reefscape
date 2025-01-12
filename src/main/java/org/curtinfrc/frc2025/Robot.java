@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
@@ -64,6 +65,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Elevator elevator;
+  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -194,6 +196,8 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
     }
 
+    superstructure = new Superstructure(drive, elevator);
+
     autoFactory =
         new AutoFactory(
             drive::getPose,
@@ -274,18 +278,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller
-        .x()
-        .whileTrue(
-            drive.joystickDrive(
-                () -> controller.getLeftY() * 0.5,
-                () -> controller.getLeftX() * 0.5,
-                () -> -controller.getRightX() * 0.5));
-
-    controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
-    controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));
-    controller.pov(180).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L3));
-    controller.pov(270).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.COLLECT));
+    controller.pov(0).onTrue(superstructure.align(Setpoints.L1));
+    controller.pov(90).onTrue(superstructure.align(Setpoints.L2));
+    controller.pov(180).onTrue(superstructure.align(Setpoints.L3));
+    controller.pov(270).onTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
