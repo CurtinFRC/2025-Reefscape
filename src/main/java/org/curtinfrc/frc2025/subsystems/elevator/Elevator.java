@@ -2,7 +2,6 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.littletonrobotics.junction.Logger;
 
