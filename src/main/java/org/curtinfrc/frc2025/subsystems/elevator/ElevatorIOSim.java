@@ -1,5 +1,7 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
+import org.curtinfrc.frc2025.Constants.Setpoints;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -7,7 +9,7 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 public class ElevatorIOSim implements ElevatorIO {
   private DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
   private DCMotorSim elevatorSim;
-  private ElevatorConstants.Setpoints set = ElevatorConstants.Setpoints.NONE;
+  private Setpoints set = Setpoints.NONE;
 
   public ElevatorIOSim() {
     elevatorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, 0.025, 4.0), motor);
@@ -22,10 +24,10 @@ public class ElevatorIOSim implements ElevatorIO {
     inputs.encoderReading = elevatorSim.getAngularPositionRotations();
   }
 
-  public void goToSetpoint(ElevatorConstants.Setpoints point) {
+  public void goToSetpoint(Setpoints point) {
     set = point;
 
-    elevatorSim.setAngle(ElevatorIONeoMaxMotion.convertSetpoint(point.setpoint));
+    elevatorSim.setAngle(ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint()));
   }
 
   @Override
