@@ -20,6 +20,7 @@ import choreo.auto.AutoFactory.AutoBindings;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -36,7 +37,6 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
@@ -123,6 +123,8 @@ public class Robot extends LoggedRobot {
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
+
+    DriverStation.waitForDsConnection(60);
 
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.getRobot()) {
@@ -251,7 +253,7 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
-    controller.x().whileTrue(drive.autoAlign(drive.findClosestTag(aprilTagLayout.getTags())));
+    // controller.x().whileTrue(drive.autoAlign(drive.findClosestTag(aprilTagLayout.getTags())));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -264,10 +266,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.pov(0).onTrue(superstructure.align(Setpoints.L1));
-    controller.pov(90).onTrue(superstructure.align(Setpoints.L2));
-    controller.pov(180).onTrue(superstructure.align(Setpoints.L3));
-    controller.pov(270).onTrue(superstructure.align(Setpoints.COLLECT));
+    controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
+    controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
+    controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
+    controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */

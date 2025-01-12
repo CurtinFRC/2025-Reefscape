@@ -5,7 +5,6 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkMaxConfig;
-
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
