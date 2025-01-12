@@ -1,6 +1,8 @@
 package org.curtinfrc.frc2025.util;
 
 import choreo.trajectory.SwerveSample;
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -15,7 +17,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-// TODO should be IO layer cause if it changes we cant replay? idk
+@Logged
 public class RepulsorFieldPlanner {
 
   abstract static class Obstacle {
@@ -135,12 +137,8 @@ public class RepulsorFieldPlanner {
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
-          new SnowmanObstacle(new Translation2d(5.56, 2.74), 0.4, true),
-          new SnowmanObstacle(new Translation2d(3.45, 4.07), 0.4, true),
-          new SnowmanObstacle(new Translation2d(5.56, 5.35), 0.4, true),
-          new SnowmanObstacle(new Translation2d(11.0, 2.74), 0.4, true),
-          new SnowmanObstacle(new Translation2d(13.27, 4.07), 0.4, true),
-          new SnowmanObstacle(new Translation2d(11.0, 5.35), 0.4, true));
+          new SnowmanObstacle(new Translation2d(4.49, 4), 1, true),
+          new SnowmanObstacle(new Translation2d(13.08, 4), 1, true));
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
   public static final List<Obstacle> WALLS =
@@ -148,7 +146,9 @@ public class RepulsorFieldPlanner {
           new HorizontalObstacle(0.0, 0.5, true),
           new HorizontalObstacle(FIELD_WIDTH, 0.5, false),
           new VerticalObstacle(0.0, 0.5, true),
-          new VerticalObstacle(FIELD_LENGTH, 0.5, false));
+          new VerticalObstacle(FIELD_LENGTH, 0.5, false),
+          new VerticalObstacle(7.55, 0.5, false),
+          new VerticalObstacle(10, 0.5, true));
 
   private List<Obstacle> fixedObstacles = new ArrayList<>();
   private Optional<Translation2d> goalOpt = Optional.empty();
@@ -168,22 +168,50 @@ public class RepulsorFieldPlanner {
     for (int i = 0; i < ARROWS_SIZE; i++) {
       arrows.add(new Pose2d());
     }
-    var topic = NetworkTableInstance.getDefault().getBooleanTopic("useGoalInArrows");
-    topic.publish().set(useGoalInArrows);
-    NetworkTableListener.createListener(
-        topic,
-        EnumSet.of(Kind.kValueAll),
-        (event) -> {
-          useGoalInArrows = event.valueData.value.getBoolean();
-          updateArrows();
-        });
-    topic.subscribe(useGoalInArrows);
+    {
+      var topic = NetworkTableInstance.getDefault().getBooleanTopic("useGoalInArrows");
+      topic.publish().set(useGoalInArrows);
+      NetworkTableListener.createListener(
+          topic,
+          EnumSet.of(Kind.kValueAll),
+          (event) -> {
+            useGoalInArrows = event.valueData.value.getBoolean();
+            updateArrows();
+          });
+      topic.subscribe(useGoalInArrows);
+    }
+    {
+      var topic = NetworkTableInstance.getDefault().getBooleanTopic("useObstaclesInArrows");
+      topic.publish().set(useObstaclesInArrows);
+      NetworkTableListener.createListener(
+          topic,
+          EnumSet.of(Kind.kValueAll),
+          (event) -> {
+            useObstaclesInArrows = event.valueData.value.getBoolean();
+            updateArrows();
+          });
+      topic.subscribe(useObstaclesInArrows);
+    }
+    {
+      var topic = NetworkTableInstance.getDefault().getBooleanTopic("useWallsInArrows");
+      topic.publish().set(useWallsInArrows);
+      NetworkTableListener.createListener(
+          topic,
+          EnumSet.of(Kind.kValueAll),
+          (event) -> {
+            useWallsInArrows = event.valueData.value.getBoolean();
+            updateArrows();
+          });
+      topic.subscribe(useWallsInArrows);
+    }
     NetworkTableInstance.getDefault()
         .startEntryDataLog(
             DataLogManager.getLog(), "SmartDashboard/Alerts", "SmartDashboard/Alerts");
   }
 
-  private boolean useGoalInArrows = false;
+  @NotLogged private boolean useGoalInArrows = false;
+  @NotLogged private boolean useObstaclesInArrows = true;
+  @NotLogged private boolean useWallsInArrows = true;
   private Pose2d arrowBackstage = new Pose2d(-10, -10, Rotation2d.kZero);
   // A grid of arrows drawn in AScope
   void updateArrows() {
@@ -191,7 +219,11 @@ public class RepulsorFieldPlanner {
       for (int y = 0; y <= ARROWS_Y; y++) {
         var translation =
             new Translation2d(x * FIELD_LENGTH / ARROWS_X, y * FIELD_WIDTH / ARROWS_Y);
-        var force = getObstacleForce(translation, goal().getTranslation());
+        var force = Force.kZero;
+        if (useObstaclesInArrows)
+          force = force.plus(getObstacleForce(translation, goal().getTranslation()));
+        if (useWallsInArrows)
+          force = force.plus(getWallForce(translation, goal().getTranslation()));
         if (useGoalInArrows) {
           force = force.plus(getGoalForce(translation, goal().getTranslation()));
         }
@@ -217,16 +249,27 @@ public class RepulsorFieldPlanner {
     return new Force(mag, direction);
   }
 
+  Force getWallForce(Translation2d curLocation, Translation2d target) {
+    var force = Force.kZero;
+    for (Obstacle obs : WALLS) {
+      force = force.plus(obs.getForceAtPosition(curLocation, target));
+    }
+    return force;
+  }
+
   Force getObstacleForce(Translation2d curLocation, Translation2d target) {
     var force = Force.kZero;
-    for (Obstacle obs : fixedObstacles) {
+    for (Obstacle obs : FIELD_OBSTACLES) {
       force = force.plus(obs.getForceAtPosition(curLocation, target));
     }
     return force;
   }
 
   Force getForce(Translation2d curLocation, Translation2d target) {
-    var goalForce = getGoalForce(curLocation, target).plus(getObstacleForce(curLocation, target));
+    var goalForce =
+        getGoalForce(curLocation, target)
+            .plus(getObstacleForce(curLocation, target))
+            .plus(getWallForce(curLocation, target));
     return goalForce;
   }
 
@@ -254,6 +297,15 @@ public class RepulsorFieldPlanner {
 
   public SwerveSample getCmd(
       Pose2d pose, ChassisSpeeds currentSpeeds, double maxSpeed, boolean useGoal) {
+    return getCmd(pose, currentSpeeds, maxSpeed, useGoal, pose.getRotation());
+  }
+
+  public SwerveSample getCmd(
+      Pose2d pose,
+      ChassisSpeeds currentSpeeds,
+      double maxSpeed,
+      boolean useGoal,
+      Rotation2d goalRotation) {
     Translation2d speedPerSec =
         new Translation2d(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
     double currentSpeed =
@@ -267,9 +319,9 @@ public class RepulsorFieldPlanner {
       var curTrans = pose.getTranslation();
       var err = curTrans.minus(goal);
       if (useGoal && err.getNorm() < stepSize_m * 1.5) {
-        return sample(goal, pose.getRotation(), 0, 0, 0);
+        return sample(goal, goalRotation, 0, 0, 0);
       } else {
-        var obstacleForce = getObstacleForce(curTrans, goal);
+        var obstacleForce = getObstacleForce(curTrans, goal).plus(getWallForce(curTrans, goal));
         var netForce = obstacleForce;
         if (useGoal) {
           netForce = getGoalForce(curTrans, goal).plus(netForce);
@@ -283,8 +335,7 @@ public class RepulsorFieldPlanner {
         var intermediateGoal = curTrans.plus(step);
         var endTime = System.nanoTime();
         SmartDashboard.putNumber("repulsorTimeS", (endTime - startTime) / 1e9);
-        return sample(
-            intermediateGoal, pose.getRotation(), step.getX() / 0.02, step.getY() / 0.02, 0);
+        return sample(intermediateGoal, goalRotation, step.getX() / 0.02, step.getY() / 0.02, 0);
       }
     }
   }
@@ -294,7 +345,7 @@ public class RepulsorFieldPlanner {
   public ArrayList<Translation2d> getTrajectory(
       Translation2d current, Translation2d goalTranslation, double stepSize_m) {
     pathLength = 0;
-    goalTranslation = goalOpt.orElse(goalTranslation);
+    // goalTranslation = goalOpt.orElse(goalTranslation);
     ArrayList<Translation2d> traj = new ArrayList<>();
     Translation2d robot = current;
     for (int i = 0; i < 400; i++) {
