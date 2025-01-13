@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.subsystems.climber.*;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
@@ -60,6 +61,7 @@ public class Robot extends LoggedRobot {
   // Subsystems
   private Drive drive;
   private Vision vision;
+  private Climber climber;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -133,6 +135,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
+          climber = new Climber(new ClimberIOSim() {});
         }
 
         case DEVBOT -> {
@@ -150,6 +153,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
+          climber = new Climber(new ClimberIOSim() {});
         }
 
         case SIMBOT -> {
@@ -167,6 +171,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
+          climber = new Climber(new ClimberIOSim() {});
         }
       }
     } else {
@@ -181,6 +186,8 @@ public class Robot extends LoggedRobot {
       vision =
           new Vision(
               drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
+
+      climber = new Climber(new ClimberIOSim() {});
     }
 
     autoFactory =
@@ -245,6 +252,8 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+
+    controller.y().whileTrue(climber.ClimberCommand());
   }
 
   /** This function is called periodically during all modes. */
