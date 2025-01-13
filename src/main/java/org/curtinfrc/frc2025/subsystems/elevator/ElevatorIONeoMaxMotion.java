@@ -55,4 +55,9 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
     return setpoint.elevatorSetpoint() - ElevatorConstants.tolerance < pos
         && pos < setpoint.elevatorSetpoint() + ElevatorConstants.tolerance;
   }
+
+  @Override
+  public void updateInputs(ElevatorIOInputs inputs) {
+    super.updateInputs(inputs);
+  }
 }

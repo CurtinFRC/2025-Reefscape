@@ -31,8 +31,7 @@ public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotionDistan
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.point = this.setpoint;
+    super.updateInputs(inputs);
     inputs.distanceSensorReading = distance;
-    inputs.encoderReading = elevatorEncoder.getPosition();
   }
 }

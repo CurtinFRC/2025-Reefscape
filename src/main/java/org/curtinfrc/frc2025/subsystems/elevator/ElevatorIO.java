@@ -10,6 +10,10 @@ public interface ElevatorIO {
     public double distanceSensorReading;
     public double encoderReading;
     public Setpoints point;
+    public double motorVoltage;
+    public double motorVelocity;
+    public double motorCurrent;
+    public double motorTemp;
   }
 
   public default void goToSetpoint(Setpoints point) {}
