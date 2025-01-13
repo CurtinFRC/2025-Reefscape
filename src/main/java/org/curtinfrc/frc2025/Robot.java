@@ -153,11 +153,11 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIO() {},
-                  new VisionIO() {},
-                  new VisionIO() {});
-          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
-          elevator = new Elevator(new ElevatorIO() {});
+                  new VisionIOLimelightGamepiece(camera0Name),
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOQuestNav());
+          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          
         }
 
         case SIMBOT -> {
