@@ -8,7 +8,7 @@ public class ElevatorIONeo implements ElevatorIO {
   protected final SparkMax elevatorMotor =
       new SparkMax(ElevatorConstants.motorPort, MotorType.kBrushless);
   protected final RelativeEncoder elevatorEncoder = elevatorMotor.getEncoder();
-  protected ElevatorConstants.Setpoints setpoint = ElevatorConstants.Setpoints.NONE;
+  protected ElevatorConstants.Setpoints setpoint = ElevatorConstants.Setpoints.COLLECT;
 
   public ElevatorIONeo() {}
 
@@ -16,5 +16,8 @@ public class ElevatorIONeo implements ElevatorIO {
   public void updateInputs(ElevatorIOInputs inputs) {
     inputs.point = this.setpoint;
     inputs.encoderReading = elevatorEncoder.getPosition();
+    inputs.motorCurrent = elevatorMotor.getOutputCurrent();
+    inputs.motorTemp = elevatorMotor.getMotorTemperature();
+    inputs.motorVelocity = elevatorEncoder.getVelocity();
   }
 }

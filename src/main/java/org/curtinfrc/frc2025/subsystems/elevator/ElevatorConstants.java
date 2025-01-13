@@ -22,7 +22,6 @@ public class ElevatorConstants {
   // TODO: MAKE SETPOINTS
   public enum Setpoints {
     /* in mm */
-    NONE(-1),
     L1(460),
     L2(810),
     L3(1210),

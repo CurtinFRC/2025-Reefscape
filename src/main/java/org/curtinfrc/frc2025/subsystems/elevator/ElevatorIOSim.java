@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 public class ElevatorIOSim implements ElevatorIO {
   private DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
   private DCMotorSim elevatorSim;
-  private ElevatorConstants.Setpoints set = ElevatorConstants.Setpoints.NONE;
+  private ElevatorConstants.Setpoints set = ElevatorConstants.Setpoints.COLLECT;
 
   public ElevatorIOSim() {
     elevatorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, 0.025, 4.0), motor);

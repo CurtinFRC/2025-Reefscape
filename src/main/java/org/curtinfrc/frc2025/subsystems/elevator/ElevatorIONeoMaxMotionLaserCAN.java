@@ -3,7 +3,7 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 import au.grapplerobotics.ConfigurationFailedException;
 import au.grapplerobotics.LaserCan;
 
-public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotionDistance {
+public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotion {
   private LaserCan lc;
   private double distance = -1;
 
@@ -18,6 +18,7 @@ public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotionDistan
     }
   }
 
+  @Override
   public void reset() {
     LaserCan.Measurement measurement = lc.getMeasurement();
     if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
@@ -31,8 +32,7 @@ public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotionDistan
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.point = this.setpoint;
+    super.updateInputs(inputs);
     inputs.distanceSensorReading = distance;
-    inputs.encoderReading = elevatorEncoder.getPosition();
   }
 }

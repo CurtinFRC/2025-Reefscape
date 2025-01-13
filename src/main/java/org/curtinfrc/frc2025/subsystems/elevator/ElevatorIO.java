@@ -9,6 +9,10 @@ public interface ElevatorIO {
     public double distanceSensorReading;
     public double encoderReading;
     public ElevatorConstants.Setpoints point;
+    public double motorVoltage;
+    public double motorCurrent; 
+    public double motorTemp;
+    public double motorVelocity;
   }
 
   public default void goToSetpoint(ElevatorConstants.Setpoints point) {}
@@ -16,6 +20,8 @@ public interface ElevatorIO {
   public default void applyVoltage(double volts) {}
 
   public default void updateInputs(ElevatorIOInputs inputs) {}
+
+  public default void reset() {}
 
   public default boolean isStable() {
     return false;
