@@ -2,6 +2,9 @@ package org.curtinfrc.frc2025;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+
+import java.util.Set;
+
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
@@ -16,7 +19,13 @@ public class Superstructure {
   }
 
   public Command align(Setpoints setpoint) {
-    return Commands.parallel(
-        m_drivebase.autoAlign(setpoint.toPose()), m_elevator.goToSetpoint(setpoint));
+    return Commands.defer(
+      () -> Commands.parallel(
+        m_drivebase.autoAlign(setpoint.toPose()), 
+        m_elevator.goToSetpoint(setpoint)
+      ),
+      Set.of() 
+    );
+
   }
 }
