@@ -1,14 +1,13 @@
 package org.curtinfrc.frc2025.util;
 
-import org.curtinfrc.frc2025.Constants;
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import org.curtinfrc.frc2025.Constants;
+import org.littletonrobotics.junction.Logger;
 
 public final class PoseUtil {
-    public static Pose3d mapPose(Pose2d pose) {
+  public static Pose3d mapPose(Pose2d pose) {
     double angle = pose.getRotation().getRadians();
     double cos = Math.cos(angle);
     double sin = Math.sin(angle);
@@ -29,9 +28,8 @@ public final class PoseUtil {
     Logger.recordOutput("PoseMapping/dimy", dimy);
 
     Pose3d new_pose = new Pose3d(forwardX, forwardY, 0, new Rotation3d(0, 0, angle));
-    
+
     Logger.recordOutput("PoseMapping/final", new_pose);
     return new_pose;
   }
-
 }
