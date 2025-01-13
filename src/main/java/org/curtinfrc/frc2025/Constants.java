@@ -15,6 +15,8 @@ package org.curtinfrc.frc2025;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
+import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.Alert;
@@ -24,6 +26,9 @@ import edu.wpi.first.wpilibj.RobotBase;
 import java.util.List;
 import java.util.Optional;
 
+import org.curtinfrc.frc2025.util.PoseUtil;
+import org.littletonrobotics.junction.Logger;
+
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
  * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
@@ -31,6 +36,8 @@ import java.util.Optional;
  */
 public final class Constants {
   private static final RobotType robotType = RobotType.SIMBOT;
+  public static final double DIMENSIONS_X = 550; // mm
+  public static final double DIMENSIONS_Y = 570;
 
   public static final Mode getMode() {
     return switch (robotType) {
@@ -76,7 +83,7 @@ public final class Constants {
     REPLAY
   }
 
-  public enum Setpoints {
+  static public enum Setpoints {
     /* in mm */
     NONE(-1, List.of(), List.of()),
     COLLECT(950, List.of(13, 12), List.of(1, 2)),
@@ -114,7 +121,8 @@ public final class Constants {
       for (int tagId : tagIds) {
         Optional<Pose3d> pose = aprilTagLayout.getTagPose(tagId);
         if (pose.isPresent()) {
-          return pose.get(); // Return the first valid pose found
+          return PoseUtil.mapPose(pose.get().toPose2d()); // Return the first valid pose found
+          // return pose.get();
         }
       }
 
