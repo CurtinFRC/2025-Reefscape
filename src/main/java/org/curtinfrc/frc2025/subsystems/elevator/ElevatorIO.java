@@ -10,7 +10,7 @@ public interface ElevatorIO {
     public double encoderReading;
     public ElevatorConstants.Setpoints point;
     public double motorVoltage;
-    public double motorCurrent; 
+    public double motorCurrent;
     public double motorTemp;
     public double motorVelocity;
   }
