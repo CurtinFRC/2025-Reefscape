@@ -19,7 +19,7 @@ public class ElevatorIONeo implements ElevatorIO {
     inputs.encoderReading = elevatorEncoder.getPosition();
     inputs.motorTemp = elevatorMotor.getMotorTemperature();
     inputs.motorVelocity = elevatorEncoder.getVelocity();
-    inputs.motorVoltage = elevatorMotor.getBusVoltage();  
+    inputs.motorVoltage = elevatorMotor.getBusVoltage();
     inputs.motorCurrent = elevatorMotor.getOutputCurrent();
   }
 }
