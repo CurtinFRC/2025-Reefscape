@@ -19,7 +19,6 @@ public class ElevatorConstants {
   public static double kMaxOutput = 0;
   public static double kV = 473;
 
-  // TODO: MAKE SETPOINTS
   public enum Setpoints {
     /* in mm */
     L1(460),
