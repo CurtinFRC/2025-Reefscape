@@ -15,14 +15,12 @@ package org.curtinfrc.frc2025;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +32,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
 import org.curtinfrc.frc2025.util.PoseUtil;
-import org.littletonrobotics.junction.Logger;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -119,27 +116,40 @@ public final class Constants {
       return this._elevator;
     }
 
-    public Pose3d toPose() {
+    public Pose3d toPose(Pose3d currentPose) {
       return resolvePose(
           DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
-              ? _tagIdsRed
-              : _tagIdsBlue);
+              ? _tagIdsBlue
+              : _tagIdsRed,
+          currentPose);
     }
 
-    private Pose3d resolvePose(List<Integer> tagIds) {
-      if (tagIds.isEmpty()) {
-        return new Pose3d(); // No valid pose
-      }
+    private Pose3d resolvePose(List<Integer> tagIds, Pose3d currentPose) {
+      if (tagIds.isEmpty()) return new Pose3d();
 
+      ArrayList<Pose3d> poses = new ArrayList<>();
       for (int tagId : tagIds) {
-        Optional<Pose3d> pose = aprilTagLayout.getTagPose(tagId);
-        if (pose.isPresent()) {
-          return PoseUtil.mapPose(pose.get().toPose2d()); // Return the first valid pose found
-          // return pose.get();
-        }
+        aprilTagLayout
+            .getTagPose(tagId)
+            .ifPresent(pose -> poses.add(PoseUtil.mapPose(pose.toPose2d())));
       }
+      if (poses.isEmpty()) return new Pose3d();
 
-      return new Pose3d(-1, -1, 1, new Rotation3d()); // No valid pose found
+      return poses.stream()
+          .min(
+              (pose1, pose2) ->
+                  Double.compare(
+                      distanceBetween(pose1, currentPose), distanceBetween(pose2, currentPose)))
+          .orElse(new Pose3d());
+    }
+
+    private double distanceBetween(Pose3d pose1, Pose3d pose2) {
+      var t1 = pose1.getTranslation();
+      var t2 = pose2.getTranslation();
+      return Math.sqrt(
+          Math.pow(t1.getX() - t2.getX(), 2)
+              + Math.pow(t1.getY() - t2.getY(), 2)
+              + Math.pow(t1.getZ() - t2.getZ(), 2));
     }
   }
 }

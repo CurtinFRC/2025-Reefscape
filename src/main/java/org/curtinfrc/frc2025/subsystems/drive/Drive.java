@@ -64,7 +64,7 @@ public class Drive extends SubsystemBase {
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
-  private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+  public SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
   private Rotation2d rawGyroRotation = Rotation2d.kZero;
   private SwerveModulePosition[] lastModulePositions = // For delta tracking
       new SwerveModulePosition[] {
@@ -503,7 +503,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
-  private SwerveModuleState[] getModuleStates() {
+  public SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
       states[i] = modules[i].getState();
@@ -599,12 +599,37 @@ public class Drive extends SubsystemBase {
           repulsorFieldPlanner.setGoal(_setpoint.toPose2d().getTranslation());
 
           var robotPose = getPose();
-          followTrajectory(
+          SwerveSample cmd =
               repulsorFieldPlanner.getCmd(
                   robotPose,
                   getChassisSpeeds(),
                   TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-                  true));
+                  true);
+
+          // Include rotational alignment using the existing heading controller
+          double adjustedOmega =
+              headingController.calculate(
+                  robotPose.getRotation().getRadians(),
+                  _setpoint.toPose2d().getRotation().getRadians());
+
+          // Apply the trajectory with rotation adjustment
+          SwerveSample adjustedSample =
+              new SwerveSample(
+                  cmd.t,
+                  cmd.x,
+                  cmd.y,
+                  _setpoint.toPose2d().getRotation().getRadians(),
+                  cmd.vx,
+                  cmd.vy,
+                  adjustedOmega,
+                  cmd.ax,
+                  cmd.ay,
+                  cmd.alpha,
+                  cmd.moduleForcesX(),
+                  cmd.moduleForcesY());
+
+          // Apply the adjusted sample
+          followTrajectory(adjustedSample);
         });
   }
 

@@ -32,6 +32,7 @@ import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
@@ -167,7 +168,7 @@ public class Robot extends LoggedRobot {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIO() {},
+                  new GyroIOSim(() -> drive.kinematics, () -> drive.getModuleStates()) {},
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
