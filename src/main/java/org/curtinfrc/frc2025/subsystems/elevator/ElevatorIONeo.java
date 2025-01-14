@@ -9,7 +9,7 @@ public class ElevatorIONeo implements ElevatorIO {
   protected final SparkMax elevatorMotor =
       new SparkMax(ElevatorConstants.motorPort, MotorType.kBrushless);
   protected final RelativeEncoder elevatorEncoder = elevatorMotor.getEncoder();
-  protected Setpoints setpoint = Setpoints.NONE;
+  protected Setpoints setpoint = Setpoints.COLLECT;
 
   public ElevatorIONeo() {}
 

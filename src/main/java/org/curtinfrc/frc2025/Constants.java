@@ -95,7 +95,6 @@ public final class Constants {
   // TODO: MAKE SETPOINTS  
   public enum Setpoints {
     /* in mm */
-    NONE(-1, List.of(), List.of()),
     COLLECT(950, List.of(13, 12), List.of(1, 2)),
     L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
     L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
