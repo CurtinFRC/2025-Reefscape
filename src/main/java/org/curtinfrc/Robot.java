@@ -33,6 +33,9 @@ import org.curtinfrc.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.subsystems.drive.ModuleIO;
 import org.curtinfrc.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.subsystems.intake.Intake;
+import org.curtinfrc.subsystems.intake.IntakeIOSim;
+// import org.curtinfrc.subsystems.intake.IntakeIOSparkMax;
 import org.curtinfrc.subsystems.vision.Vision;
 import org.curtinfrc.subsystems.vision.VisionIO;
 import org.curtinfrc.subsystems.vision.VisionIOLimelight;
@@ -57,6 +60,7 @@ public class Robot extends LoggedRobot {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
+  private final Intake intake;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -128,6 +132,9 @@ public class Robot extends LoggedRobot {
                 drive::addVisionMeasurement,
                 new VisionIOLimelightGamepiece(camera0Name),
                 new VisionIOLimelight(camera1Name, drive::getRotation));
+
+        // intake = new Intake(new IntakeIOSparkMax());
+        intake = new Intake(new IntakeIOSim());
         break;
 
       case SIM:
@@ -144,6 +151,9 @@ public class Robot extends LoggedRobot {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                 new VisionIOPhotonVisionSim(camera1Name, robotToCamera0, drive::getPose));
+
+        intake = new Intake(new IntakeIOSim() {});
+
         break;
 
       default:
@@ -156,6 +166,9 @@ public class Robot extends LoggedRobot {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+
+        intake = new Intake(new IntakeIOSim() {});
+
         break;
     }
 
@@ -210,6 +223,10 @@ public class Robot extends LoggedRobot {
 
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+    // intake.setDefaultCommand(intake.intakeCommand(2));
+
+    controller.y().whileTrue(intake.intakeCommand());
 
     // Reset gyro to 0° when B button is pressed
     controller
