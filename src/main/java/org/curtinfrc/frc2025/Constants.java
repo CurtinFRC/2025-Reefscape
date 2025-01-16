@@ -31,8 +31,8 @@ import org.curtinfrc.frc2025.util.PoseUtil;
  */
 public final class Constants {
   private static final RobotType robotType = RobotType.SIMBOT;
-  public static final double DIMENSIONS_X = 550; // mm
-  public static final double DIMENSIONS_Y = 570;
+  public static final double ROBOT_X = 550; // mm
+  public static final double ROBOT_Y = 570;
 
   public static final Mode getMode() {
     return switch (robotType) {
@@ -49,12 +49,6 @@ public final class Constants {
     }
     return robotType;
   }
-
-  // public static Alliance getAlliance() {
-  //   return getMode() == Mode.SIM ? (List.of(AllianceStationID.Blue1, AllianceStationID.Blue2,
-  // AllianceStationID.Blue3).contains(DriverStationSim.getAllianceStationId()) ? Alliance.Blue :
-  // Alliance.Red) : DriverStation.getAlliance().get();
-  // }
 
   public static enum RobotType {
     /** Running in simulation */
@@ -85,19 +79,18 @@ public final class Constants {
     L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
     L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6));
 
-    private final int _elevator;
+    private final int _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;
     private final List<Integer> _tagIdsRed;
-    private Pose3d _pose = null;
 
     Setpoints(int elevator, List<Integer> tagIdsBlue, List<Integer> tagIdsRed) {
-      this._elevator = elevator;
+      this._elevatorSetpoint = elevator;
       this._tagIdsBlue = tagIdsBlue;
       this._tagIdsRed = tagIdsRed;
     }
 
     public int elevatorSetpoint() {
-      return this._elevator;
+      return this._elevatorSetpoint;
     }
 
     public Pose3d toPose(Pose3d currentPose) {
