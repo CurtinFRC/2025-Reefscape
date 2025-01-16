@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ElevatorIO {
@@ -8,14 +9,14 @@ public interface ElevatorIO {
   public static class ElevatorIOInputs {
     public double distanceSensorReading;
     public double encoderReading;
-    public ElevatorConstants.Setpoints point;
+    public Setpoints point;
     public double motorVoltage;
     public double motorCurrent;
     public double motorTemp;
     public double motorVelocity;
   }
 
-  public default void goToSetpoint(ElevatorConstants.Setpoints point) {}
+  public default void goToSetpoint(Setpoints point) {}
 
   public default void applyVoltage(double volts) {}
 

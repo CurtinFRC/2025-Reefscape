@@ -20,6 +20,7 @@ import choreo.auto.AutoFactory.AutoBindings;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -27,15 +28,16 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
@@ -66,6 +68,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Elevator elevator;
+  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -122,6 +125,8 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
+    DriverStation.waitForDsConnection(60);
+
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.getRobot()) {
         case COMPBOT -> {
@@ -164,7 +169,7 @@ public class Robot extends LoggedRobot {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIO() {},
+                  new GyroIOSim(() -> drive.kinematics, () -> drive.getModuleStates()) {},
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
@@ -194,6 +199,8 @@ public class Robot extends LoggedRobot {
 
       elevator = new Elevator(new ElevatorIO() {});
     }
+
+    superstructure = new Superstructure(drive, elevator);
 
     autoFactory =
         new AutoFactory(
@@ -247,6 +254,8 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
+    // controller.x().whileTrue(drive.autoAlign(drive.findClosestTag(aprilTagLayout.getTags())));
+
     // Reset gyro to 0° when B button is pressed
     controller
         .b()
@@ -258,10 +267,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
-    controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));
-    controller.pov(180).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L3));
-    controller.pov(270).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.COLLECT));
+    controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
+    controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
+    controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
+    controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */

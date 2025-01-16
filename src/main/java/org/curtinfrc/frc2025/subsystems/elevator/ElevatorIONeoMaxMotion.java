@@ -5,6 +5,7 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
@@ -43,15 +44,17 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   }
 
   @Override
-  public void goToSetpoint(ElevatorConstants.Setpoints point) {
+  public void goToSetpoint(Setpoints point) {
     setpoint = point;
-    controller.setReference(convertSetpoint(point.setpoint), ControlType.kPosition);
+    controller.setReference(convertSetpoint(point.elevatorSetpoint()), ControlType.kPosition);
   }
 
   @Override
   public boolean isStable() {
-    double pos = elevatorEncoder.getPosition();
-    return setpoint.setpoint - ElevatorConstants.tolerance < pos
-        && pos < setpoint.setpoint + ElevatorConstants.tolerance;
+    double vel = elevatorEncoder.getVelocity();
+    return ElevatorConstants.tolerance > vel && vel > -ElevatorConstants.tolerance;
+    // double pos = elevatorEncoder.getPosition();
+    // return setpoint.elevatorSetpoint() - ElevatorConstants.tolerance < pos
+    //     && pos < setpoint.elevatorSetpoint() + ElevatorConstants.tolerance;
   }
 }
