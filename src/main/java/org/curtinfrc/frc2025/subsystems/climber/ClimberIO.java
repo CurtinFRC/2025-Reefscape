@@ -20,8 +20,4 @@ public interface ClimberIO {
   public default void setGrabberVoltage(double voltage) {}
 
   public default void goToPivotSetpoint() {}
-
-  public default boolean pivotIsStable() {
-    return false;
-  }
 }

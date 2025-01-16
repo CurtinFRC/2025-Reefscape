@@ -40,16 +40,9 @@ public class ClimberIONeoMaxMotion extends ClimberIONeo {
 
   @Override
   public void goToPivotSetpoint() {
+    System.out.println("before going to setpoint");
     pivotController.setReference(
         ClimberConstants.pivotMotorTargetPositionRotations, ControlType.kPosition);
-  }
-
-  @Override
-  public boolean pivotIsStable() {
-    double position = pivotEncoder.getPosition();
-    return ClimberConstants.pivotMotorTargetPositionRotations - ClimberConstants.pivotTolerance
-            < position
-        && position
-            < ClimberConstants.pivotMotorTargetPositionRotations + ClimberConstants.pivotTolerance;
+    System.out.println("after going to setpoint");
   }
 }

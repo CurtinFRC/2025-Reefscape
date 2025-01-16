@@ -48,15 +48,8 @@ public class ClimberIOSim implements ClimberIO {
 
   @Override
   public void goToPivotSetpoint() {
-    System.out.println("Going to pivot setpoint");
     pivotMotorSim.setAngle(
         ClimberConstants.pivotMotorTargetPositionRotations
             * (2 * Math.PI)); // convert rotations to radians
-    System.out.println("Pivot setpoint: " + ClimberConstants.pivotMotorTargetPositionRotations);
-  }
-
-  @Override
-  public boolean pivotIsStable() {
-    return true;
   }
 }
