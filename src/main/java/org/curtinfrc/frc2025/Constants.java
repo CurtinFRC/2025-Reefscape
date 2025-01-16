@@ -50,12 +50,6 @@ public final class Constants {
     return robotType;
   }
 
-  // public static Alliance getAlliance() {
-  //   return getMode() == Mode.SIM ? (List.of(AllianceStationID.Blue1, AllianceStationID.Blue2,
-  // AllianceStationID.Blue3).contains(DriverStationSim.getAllianceStationId()) ? Alliance.Blue :
-  // Alliance.Red) : DriverStation.getAlliance().get();
-  // }
-
   public static enum RobotType {
     /** Running in simulation */
     SIMBOT,
