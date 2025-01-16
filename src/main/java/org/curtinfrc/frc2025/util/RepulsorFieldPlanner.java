@@ -1,8 +1,6 @@
 package org.curtinfrc.frc2025.util;
 
 import choreo.trajectory.SwerveSample;
-import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -16,6 +14,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import org.littletonrobotics.junction.AutoLogOutput;
 
 public class RepulsorFieldPlanner {
 
@@ -145,14 +144,13 @@ public class RepulsorFieldPlanner {
           new HorizontalObstacle(0.0, 0.5, true),
           new HorizontalObstacle(FIELD_WIDTH, 0.5, false),
           new VerticalObstacle(0.0, 0.5, true),
-          new VerticalObstacle(FIELD_LENGTH, 0.5, false)
-          // new VerticalObstacle(7.55, 0.5, false),
-          // new VerticalObstacle(10, 0.5, true)
-          );
+          new VerticalObstacle(FIELD_LENGTH, 0.5, false));
 
   private List<Obstacle> fixedObstacles = new ArrayList<>();
+
   private Optional<Translation2d> goalOpt = Optional.empty();
 
+  @AutoLogOutput(key = "RepulsorFieldPlanner/GoalPose")
   public Pose2d goal() {
     return new Pose2d(goalOpt.orElse(Translation2d.kZero), Rotation2d.kZero);
   }
@@ -209,10 +207,11 @@ public class RepulsorFieldPlanner {
             DataLogManager.getLog(), "SmartDashboard/Alerts", "SmartDashboard/Alerts");
   }
 
-  @NotLogged private boolean useGoalInArrows = false;
-  @NotLogged private boolean useObstaclesInArrows = true;
-  @NotLogged private boolean useWallsInArrows = true;
+  private boolean useGoalInArrows = false;
+  private boolean useObstaclesInArrows = true;
+  private boolean useWallsInArrows = true;
   private Pose2d arrowBackstage = new Pose2d(-10, -10, Rotation2d.kZero);
+
   // A grid of arrows drawn in AScope
   void updateArrows() {
     for (int x = 0; x <= ARROWS_X; x++) {
@@ -238,6 +237,7 @@ public class RepulsorFieldPlanner {
     }
   }
 
+  @AutoLogOutput(key = "RepulsorFieldPlanner/GoalForce")
   Force getGoalForce(Translation2d curLocation, Translation2d goal) {
     var displacement = goal.minus(curLocation);
     if (displacement.getNorm() == 0) {
@@ -249,6 +249,7 @@ public class RepulsorFieldPlanner {
     return new Force(mag, direction);
   }
 
+  @AutoLogOutput(key = "RepulsorFieldPlanner/WallForce")
   Force getWallForce(Translation2d curLocation, Translation2d target) {
     var force = Force.kZero;
     for (Obstacle obs : WALLS) {
@@ -257,6 +258,7 @@ public class RepulsorFieldPlanner {
     return force;
   }
 
+  @AutoLogOutput(key = "RepulsorFieldPlanner/ObstacleForce")
   Force getObstacleForce(Translation2d curLocation, Translation2d target) {
     var force = Force.kZero;
     for (Obstacle obs : FIELD_OBSTACLES) {
@@ -265,6 +267,7 @@ public class RepulsorFieldPlanner {
     return force;
   }
 
+  @AutoLogOutput(key = "RepulsorFieldPlanner/Force")
   Force getForce(Translation2d curLocation, Translation2d target) {
     var goalForce =
         getGoalForce(curLocation, target)
