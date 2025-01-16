@@ -16,7 +16,6 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import choreo.auto.AutoFactory;
-import choreo.auto.AutoFactory.AutoBindings;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -37,7 +36,6 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
@@ -139,7 +137,8 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          elevator = new Elevator(new ElevatorIO() {});
         }
 
         case DEVBOT -> {
@@ -157,7 +156,8 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          elevator = new Elevator(new ElevatorIO() {});
         }
 
         case SIMBOT -> {
@@ -202,7 +202,6 @@ public class Robot extends LoggedRobot {
             drive::followTrajectory,
             true,
             drive,
-            new AutoBindings(),
             drive::logTrajectory);
 
     autoChooser = new AutoChooser("Auto Chooser");
@@ -213,6 +212,7 @@ public class Robot extends LoggedRobot {
     autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
     autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
     autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
+    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -234,8 +234,8 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Lock to 0° when A button is held
@@ -243,9 +243,7 @@ public class Robot extends LoggedRobot {
         .a()
         .whileTrue(
             drive.joystickDriveAtAngle(
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> Rotation2d.kZero));
+                () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -257,6 +255,16 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+
+    controller
+        .x()
+        .whileTrue(
+            drive.joystickDrive(
+                () -> controller.getLeftY() * 0.5,
+                () -> controller.getLeftX() * 0.5,
+                () -> -controller.getRightX() * 0.5));
+
+    controller.y().onTrue(drive.runOnce(() -> drive.setPose(Pose2d.kZero)));
 
     controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
     controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));

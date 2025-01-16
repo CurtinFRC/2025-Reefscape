@@ -17,7 +17,7 @@ public class Autos {
 
     AutoTrajectory trajectory = routine.trajectory(path);
 
-    routine.active().onTrue(Commands.sequence(routine.resetOdometry(trajectory), trajectory.cmd()));
+    routine.active().onTrue(Commands.sequence(trajectory.resetOdometry(), trajectory.cmd()));
 
     return routine;
   }
