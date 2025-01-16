@@ -135,7 +135,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          climber = new Climber(new ClimberIOSim() {});
+          climber = new Climber(new ClimberIONeo() {});
         }
 
         case DEVBOT -> {
@@ -153,7 +153,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          climber = new Climber(new ClimberIOSim() {});
+          climber = new Climber(new ClimberIONeo() {});
         }
 
         case SIMBOT -> {
@@ -233,6 +233,7 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
+    climber.setDefaultCommand(climber.stop());
     // Lock to 0° when A button is held
     controller
         .a()
@@ -253,7 +254,9 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.y().whileTrue(climber.ClimberCommand());
+    controller.y().whileTrue(climber.grabberRaw());
+
+    controller.a().whileTrue(climber.goToPivotSetpoint());
   }
 
   /** This function is called periodically during all modes. */

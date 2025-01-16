@@ -6,22 +6,57 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class ClimberIOSim implements ClimberIO {
-  private DCMotorSim climberMotorSim =
-      new DCMotorSim(
-          LinearSystemId.createDCMotorSystem(DCMotor.getCIM(1), 0.025, 4.0), DCMotor.getCIM(1));
+  private DCMotorSim pivotMotorSim;
+  private DCMotorSim grabberMotorSim;
 
-  private double climberAppliedVoltage = 0.0;
+  private DCMotor pivotMotor = DCMotor.getNEO(1);
+  private DCMotor grabberMotor = DCMotor.getNEO(1);
+
+  public ClimberIOSim() {
+    pivotMotorSim =
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(pivotMotor, 0.025, 4.0), pivotMotor);
+    grabberMotorSim =
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(grabberMotor, 0.025, 4.0), grabberMotor);
+  }
+
+  private double pivotAppliedVoltage = 0.0;
+  private double grabberAppliedVoltage = 0.0;
 
   @Override
   public void updateInputs(ClimberIOInputs inputs) {
-    climberMotorSim.update(0.02);
-    inputs.climberAppliedVoltage = climberMotorSim.getInputVoltage();
-    inputs.climberCurrent = climberMotorSim.getCurrentDrawAmps();
+    pivotMotorSim.update(0.02);
+    grabberMotorSim.update(0.02);
+    inputs.pivotAppliedVoltage = pivotMotorSim.getInputVoltage();
+    inputs.pivotCurrent = pivotMotorSim.getCurrentDrawAmps();
+    inputs.pivotEncoderPosition = pivotMotorSim.getAngularPositionRad();
+
+    inputs.grabberAppliedVoltage = grabberMotorSim.getInputVoltage();
+    inputs.grabberCurrent = grabberMotorSim.getCurrentDrawAmps();
   }
 
   @Override
-  public void setClimberVoltage(double voltage) {
-    climberAppliedVoltage = MathUtil.clamp(voltage, -12.0, 12.0);
-    climberMotorSim.setInputVoltage(voltage);
+  public void setPivotVoltage(double voltage) {
+    pivotAppliedVoltage = MathUtil.clamp(voltage, -12.0, 12.0);
+    pivotMotorSim.setInputVoltage(pivotAppliedVoltage);
+  }
+
+  @Override
+  public void setGrabberVoltage(double voltage) {
+    grabberAppliedVoltage = MathUtil.clamp(voltage, -12.0, 12.0);
+    grabberMotorSim.setInputVoltage(grabberAppliedVoltage);
+  }
+
+  @Override
+  public void goToPivotSetpoint() {
+    System.out.println("Going to pivot setpoint");
+    pivotMotorSim.setAngle(
+        ClimberConstants.pivotMotorTargetPositionRotations
+            * (2 * Math.PI)); // convert rotations to radians
+    System.out.println("Pivot setpoint: " + ClimberConstants.pivotMotorTargetPositionRotations);
+  }
+
+  @Override
+  public boolean pivotIsStable() {
+    return true;
   }
 }

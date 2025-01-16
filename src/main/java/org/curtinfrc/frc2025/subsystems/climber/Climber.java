@@ -12,7 +12,7 @@ public class Climber extends SubsystemBase {
 
   public Climber(ClimberIO io) {
     this.io = io;
-    setDefaultCommand(run(() -> io.setClimberVoltage(0)));
+    setDefaultCommand(run(() -> stop()));
   }
 
   @Override
@@ -21,7 +21,27 @@ public class Climber extends SubsystemBase {
     Logger.processInputs("Climber", inputs);
   }
 
-  public Command ClimberCommand() {
-    return run(() -> io.setClimberVoltage(4)); // implement actual logic for climber command
+  public Command grabberRaw() {
+    return run(
+        () ->
+            io.setGrabberVoltage(
+                grabberTargetVoltage)); // implement actual logic for climber command
+  }
+
+  public Command pivotRaw() {
+    return run(
+        () -> io.setPivotVoltage(pivotTargetVoltage)); // implement actual logic for climber command
+  }
+
+  public Command goToPivotSetpoint() {
+    return run(() -> io.goToPivotSetpoint()); // implement actual logic for climber command
+  }
+
+  public Command stop() {
+    return run(
+        () -> {
+          io.setGrabberVoltage(0);
+          io.setPivotVoltage(0);
+        });
   }
 }
