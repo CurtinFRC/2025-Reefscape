@@ -17,7 +17,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
-@Logged
 public class RepulsorFieldPlanner {
 
   abstract static class Obstacle {
