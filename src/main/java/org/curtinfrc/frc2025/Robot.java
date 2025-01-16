@@ -254,9 +254,7 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.y().whileTrue(climber.goToGrabberSetpoint());
-
-    controller.a().whileTrue(climber.goToPivotSetpoint());
+    controller.y().whileTrue(climber.run());
   }
 
   /** This function is called periodically during all modes. */

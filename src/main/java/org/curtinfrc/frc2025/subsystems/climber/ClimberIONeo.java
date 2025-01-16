@@ -25,6 +25,8 @@ public class ClimberIONeo implements ClimberIO {
     inputs.pivotAppliedVoltage = pivotMotor.getBusVoltage() * pivotMotor.getAppliedOutput();
     inputs.pivotCurrent = pivotMotor.getOutputCurrent();
     inputs.pivotEncoderPosition = pivotEncoder.getPosition();
+
+    inputs.grabberIsStable = grabberIsStable();
   }
 
   @Override

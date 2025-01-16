@@ -8,7 +8,7 @@ public class ClimberConstants {
   public static final double grabberTargetVoltage = 4.0; // "               "
 
   private static double pivotGearRatio = 160.0;
-  private static double pivotTargetPositionRotations = 0.0125 * Math.PI; // 45 degrees
+  private static double pivotTargetPositionRotations = 0.125; // 45 degrees
   public static double pivotMotorTargetPositionRotations =
       pivotTargetPositionRotations * pivotGearRatio;
 
@@ -24,7 +24,7 @@ public class ClimberConstants {
   public static double pivotAllowedError = 0.0;
 
   private static double grabberGearRatio = 100.0;
-  private static double grabberTargetPositionRotations = 0.25 * Math.PI; // 90 degrees
+  private static double grabberTargetPositionRotations = 0.25; // 90 degrees
   public static double grabberMotorTargetPositionRotations =
       grabberTargetPositionRotations * grabberGearRatio;
 
@@ -38,4 +38,6 @@ public class ClimberConstants {
   public static double grabberMaxVelocity = 1.0;
   public static double grabberMaxAcceleration = 1.0;
   public static double grabberAllowedError = 0.0;
+
+  public static double grabberTolerance = 0.1;
 }

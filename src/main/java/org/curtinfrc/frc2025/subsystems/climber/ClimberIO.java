@@ -12,6 +12,8 @@ public interface ClimberIO {
     public double grabberAppliedVoltage = 0.0;
     public double grabberCurrent = 0.0;
     public double grabberEncoderPosition = 0.0;
+
+    public boolean grabberIsStable = false;
   }
 
   public default void updateInputs(ClimberIOInputs inputs) {}
@@ -23,4 +25,8 @@ public interface ClimberIO {
   public default void goToPivotSetpoint() {}
 
   public default void goToGrabberSetpoint() {}
+
+  public default boolean grabberIsStable() {
+    return false;
+  }
 }

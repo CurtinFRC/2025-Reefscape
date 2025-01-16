@@ -75,4 +75,14 @@ public class ClimberIONeoMaxMotion extends ClimberIONeo {
     grabberController.setReference(
         ClimberConstants.grabberMotorTargetPositionRotations, ControlType.kPosition);
   }
+
+  @Override
+  public boolean grabberIsStable() {
+    double position = grabberEncoder.getPosition(); // rotations
+    return ClimberConstants.grabberMotorTargetPositionRotations - ClimberConstants.grabberTolerance
+            < position
+        && position
+            < ClimberConstants.grabberMotorTargetPositionRotations
+                + ClimberConstants.grabberTolerance;
+  }
 }

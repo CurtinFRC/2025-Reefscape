@@ -33,6 +33,8 @@ public class ClimberIOSim implements ClimberIO {
     inputs.grabberAppliedVoltage = grabberMotorSim.getInputVoltage();
     inputs.grabberCurrent = grabberMotorSim.getCurrentDrawAmps();
     inputs.grabberEncoderPosition = grabberMotorSim.getAngularPositionRad();
+
+    inputs.grabberIsStable = grabberIsStable();
   }
 
   @Override
@@ -59,5 +61,17 @@ public class ClimberIOSim implements ClimberIO {
     grabberMotorSim.setAngle(
         ClimberConstants.grabberMotorTargetPositionRotations
             * (2 * Math.PI)); // convert rotations to radians
+    System.out.println(
+        "Grabber setpoint: " + ClimberConstants.grabberMotorTargetPositionRotations * 2 * Math.PI);
+  }
+
+  @Override
+  public boolean grabberIsStable() {
+    double position = grabberMotorSim.getAngularPositionRotations(); // rotations
+    return ClimberConstants.grabberMotorTargetPositionRotations - ClimberConstants.grabberTolerance
+            < position
+        && position
+            < ClimberConstants.grabberMotorTargetPositionRotations
+                + ClimberConstants.grabberTolerance;
   }
 }

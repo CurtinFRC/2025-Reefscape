@@ -22,23 +22,19 @@ public class Climber extends SubsystemBase {
   }
 
   public Command grabberRaw() {
-    return run(
-        () ->
-            io.setGrabberVoltage(
-                grabberTargetVoltage)); // implement actual logic for climber command
+    return run(() -> io.setGrabberVoltage(grabberTargetVoltage));
   }
 
   public Command pivotRaw() {
-    return run(
-        () -> io.setPivotVoltage(pivotTargetVoltage)); // implement actual logic for climber command
+    return run(() -> io.setPivotVoltage(pivotTargetVoltage));
   }
 
   public Command goToPivotSetpoint() {
-    return run(() -> io.goToPivotSetpoint()); // implement actual logic for climber command
+    return run(() -> io.goToPivotSetpoint());
   }
 
   public Command goToGrabberSetpoint() {
-    return run(() -> io.goToGrabberSetpoint()); // implement actual logic for climber command
+    return run(() -> io.goToGrabberSetpoint()).until(() -> io.grabberIsStable());
   }
 
   public Command stop() {
@@ -47,5 +43,11 @@ public class Climber extends SubsystemBase {
           io.setGrabberVoltage(0);
           io.setPivotVoltage(0);
         });
+  }
+
+  public Command run() {
+    return run(() -> io.goToGrabberSetpoint())
+        .until(() -> io.grabberIsStable())
+        .andThen(goToPivotSetpoint());
   }
 }
