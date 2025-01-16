@@ -37,6 +37,10 @@ public class Climber extends SubsystemBase {
     return run(() -> io.goToPivotSetpoint()); // implement actual logic for climber command
   }
 
+  public Command goToGrabberSetpoint() {
+    return run(() -> io.goToGrabberSetpoint()); // implement actual logic for climber command
+  }
+
   public Command stop() {
     return run(
         () -> {

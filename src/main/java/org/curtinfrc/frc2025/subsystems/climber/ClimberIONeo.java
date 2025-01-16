@@ -12,6 +12,7 @@ public class ClimberIONeo implements ClimberIO {
 
   protected final SparkMax grabberMotor =
       new SparkMax(ClimberConstants.grabberMotorPort, MotorType.kBrushless);
+  protected final RelativeEncoder grabberEncoder = grabberMotor.getEncoder();
 
   public ClimberIONeo() {}
 
@@ -19,6 +20,7 @@ public class ClimberIONeo implements ClimberIO {
   public void updateInputs(ClimberIOInputs inputs) {
     inputs.grabberAppliedVoltage = grabberMotor.getBusVoltage() * grabberMotor.getAppliedOutput();
     inputs.grabberCurrent = grabberMotor.getOutputCurrent();
+    inputs.grabberEncoderPosition = grabberEncoder.getPosition();
 
     inputs.pivotAppliedVoltage = pivotMotor.getBusVoltage() * pivotMotor.getAppliedOutput();
     inputs.pivotCurrent = pivotMotor.getOutputCurrent();

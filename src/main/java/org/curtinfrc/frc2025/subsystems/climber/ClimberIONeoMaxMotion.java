@@ -9,40 +9,70 @@ import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ClimberIONeoMaxMotion extends ClimberIONeo {
   private SparkClosedLoopController pivotController = pivotMotor.getClosedLoopController();
+  private SparkClosedLoopController grabberController = grabberMotor.getClosedLoopController();
 
   public ClimberIONeoMaxMotion() {
-    var config = new SparkMaxConfig();
-    config.voltageCompensation(12.0).smartCurrentLimit(80);
+    var pivotConfig = new SparkMaxConfig();
+    var grabberConfig = new SparkMaxConfig();
 
-    config
+    pivotConfig.voltageCompensation(12.0).smartCurrentLimit(80);
+    grabberConfig.voltageCompensation(12.0).smartCurrentLimit(80);
+
+    pivotConfig
         .closedLoop
         .p(ClimberConstants.pivotkP)
         .i(ClimberConstants.pivotkI)
         .d(ClimberConstants.pivotkD)
         .outputRange(ClimberConstants.pivotkMinOutput, ClimberConstants.pivotkMaxOutput);
 
-    config.closedLoop.velocityFF(1 / ClimberConstants.pivotkV);
+    grabberConfig
+        .closedLoop
+        .p(ClimberConstants.grabberkP)
+        .i(ClimberConstants.grabberkI)
+        .d(ClimberConstants.grabberkD)
+        .outputRange(ClimberConstants.grabberkMinOutput, ClimberConstants.grabberkMaxOutput);
 
-    config
+    pivotConfig.closedLoop.velocityFF(1 / ClimberConstants.pivotkV);
+    grabberConfig.closedLoop.velocityFF(1 / ClimberConstants.grabberkV);
+
+    pivotConfig
         .closedLoop
         .maxMotion
         .maxVelocity(ClimberConstants.pivotMaxVelocity)
         .maxAcceleration(ClimberConstants.pivotMaxAcceleration)
         .allowedClosedLoopError(ClimberConstants.pivotAllowedError);
 
+    grabberConfig
+        .closedLoop
+        .maxMotion
+        .maxVelocity(ClimberConstants.grabberMaxVelocity)
+        .maxAcceleration(ClimberConstants.grabberMaxAcceleration)
+        .allowedClosedLoopError(ClimberConstants.grabberAllowedError);
+
     SparkUtil.tryUntilOk(
         pivotMotor,
         5,
         () ->
             pivotMotor.configure(
-                config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+                pivotConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    SparkUtil.tryUntilOk(
+        grabberMotor,
+        5,
+        () ->
+            grabberMotor.configure(
+                grabberConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
   }
 
   @Override
   public void goToPivotSetpoint() {
-    System.out.println("before going to setpoint");
     pivotController.setReference(
         ClimberConstants.pivotMotorTargetPositionRotations, ControlType.kPosition);
-    System.out.println("after going to setpoint");
+  }
+
+  @Override
+  public void goToGrabberSetpoint() {
+    grabberController.setReference(
+        ClimberConstants.grabberMotorTargetPositionRotations, ControlType.kPosition);
   }
 }
