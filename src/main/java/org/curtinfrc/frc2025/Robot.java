@@ -121,7 +121,7 @@ public class Robot extends LoggedRobot {
     Logger.start();
 
     if (Constants.getMode() != Mode.REPLAY) {
-      switch (Constants.getRobot()) {
+      switch (Constants.robotType) {
         case COMPBOT -> {
           // Real robot, instantiate hardware IO implementationsRobot
           drive =

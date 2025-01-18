@@ -13,8 +13,6 @@
 
 package org.curtinfrc.frc2025;
 
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -23,22 +21,13 @@ import edu.wpi.first.wpilibj.RobotBase;
  * (log replay from a file).
  */
 public final class Constants {
-  private static final RobotType robotType = RobotType.SIMBOT;
+  public static final RobotType robotType = RobotType.SIMBOT;
 
   public static final Mode getMode() {
     return switch (robotType) {
       case DEVBOT, COMPBOT -> RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
       case SIMBOT -> Mode.SIM;
     };
-  }
-
-  @SuppressWarnings("resource")
-  public static RobotType getRobot() {
-    if (RobotBase.isReal() && RobotType.SIMBOT == robotType) {
-      new Alert("Robot type is invalid, defaulting to competition robot.", AlertType.kWarning);
-      return RobotType.COMPBOT;
-    }
-    return robotType;
   }
 
   public static enum RobotType {
@@ -61,5 +50,12 @@ public final class Constants {
 
     /** Replaying from a log file. */
     REPLAY
+  }
+
+  public static void main(String... args) {
+    if (robotType == RobotType.SIMBOT) {
+      System.out.println("Invalid robot type selected for deploy: SIMBOT.");
+      System.exit(1);
+    }
   }
 }
