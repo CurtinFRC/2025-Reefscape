@@ -1,0 +1,4 @@
+See file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/linkTrajoptLibDebugSharedLibrary/output.txt for all output for linkTrajoptLibDebugSharedLibrary.
+linking libTrajoptLib.so successful.
+
+Finished linkTrajoptLibDebugSharedLibrary, see full log file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/linkTrajoptLibDebugSharedLibrary/output.txt.

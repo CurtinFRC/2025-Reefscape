@@ -1,0 +1,4 @@
+See file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/createTrajoptLibReleaseStaticLibrary/output.txt for all output for createTrajoptLibReleaseStaticLibrary.
+archiving libTrajoptLib.a successful.
+
+Finished createTrajoptLibReleaseStaticLibrary, see full log file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/createTrajoptLibReleaseStaticLibrary/output.txt.

@@ -75,6 +75,19 @@ task(checkRobot, dependsOn: "classes", type: JavaExec) {
 
 deployroborio.dependsOn(checkRobot)
 
+task(regenerateTrajectories, dependsOn: "classes", type: Exec) {
+    workingDir = rootDir
+    def args = [
+        "choreo-cli",
+        "--chor=src/main/deploy/choreo/autos.chor",
+        "--generate",
+        "--all-trajectory"
+    ]
+    commandLine args
+}
+
+project.compileJava.finalizedBy(regenerateTrajectories)
+
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
 dependencies {
