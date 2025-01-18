@@ -1,8 +1,79 @@
 plugins {
     id "java"
+    id "cpp"
     id "edu.wpi.first.GradleRIO" version "2025.2.1"
+    id 'edu.wpi.first.GradleJni' version '1.1.0'
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.12.0"
+}
+
+import edu.wpi.first.gradlerio.wpi.java.*;
+import edu.wpi.first.gradlerio.wpi.WPIPlugin;
+import org.gradle.internal.os.OperatingSystem;
+import java.util.concurrent.Callable;
+
+def configureExecutableNatives(JavaForkOptions t, Provider<ExtractNativeJavaArtifacts> extract) {
+    Task tt = (Task) t
+    tt.dependsOn extract
+    Provider<DirectoryProperty> destDir = project.getProviders().provider({
+        return extract.get().getDestinationDirectory()
+    })
+    tt.getInputs().dir(destDir)
+    tt.doFirst(new TestTaskDoFirstAction(t, destDir))
+}
+
+def configureJavaExecTask(JavaExec t, boolean debug) {
+    def extractArtifacts;
+    PatternFilterable filterable = new PatternSet()
+    filterable.include("**/*.so*", "**/*.dylib", "**/*.pdb", "**/*.dll")
+
+    if (debug) {
+        extractArtifacts = project.getTasks().register("extractDebugNative2", ExtractNativeJavaArtifacts.class)
+        def debugNativeConfiguration = project.getConfigurations().create("nativeDebug2")
+        ArtifactView debugView = debugNativeConfiguration.getIncoming().artifactView({ viewConfiguration ->
+            viewConfiguration.attributes({ attributeContainer ->
+                attributeContainer.attribute(WPIPlugin.NATIVE_ARTIFACT_FORMAT, WPIPlugin.NATIVE_ARTIFACT_DIRECTORY_TYPE)
+            })
+        })
+        Callable<Set<File>> debugCallable = {
+            return debugView.getFiles()
+                    .getAsFileTree()
+                    .matching(filterable)
+                    .getFiles()
+        }
+        def debugFileCollection = project.files(debugCallable)
+        extractArtifacts.configure({ extract ->
+            extract.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("jni/debug"))
+            extract.getFiles().from(wpi.sim.getDebugFileCollection())
+            extract.getFiles().from(debugFileCollection)
+        })
+    } else {
+        extractArtifacts = project.getTasks().register("extractReleaseNative2", ExtractNativeJavaArtifacts.class)
+        def releaseNativeConfiguration = project.getConfigurations().create("nativeRelease2;")
+        ArtifactView releaseView = releaseNativeConfiguration.getIncoming().artifactView({ viewConfiguration ->
+            viewConfiguration.attributes({ attributeContainer ->
+                attributeContainer.attribute(WPIPlugin.NATIVE_ARTIFACT_FORMAT,
+                        WPIPlugin.NATIVE_ARTIFACT_DIRECTORY_TYPE);
+            });
+        });
+        Callable<Set<File>> releaseCallable = {
+            return releaseView.getFiles()
+                    .getAsFileTree()
+                    .matching(filterable)
+                    .getFiles()
+        }
+        def releaseFileCollection = project.files(releaseCallable)
+        extractArtifacts.configure({ extract ->
+            extract.getDestinationDirectory().set(project.getLayout().getBuildDirectory().dir("jni/release"))
+            extract.getFiles().from(wpi.sim.getReleaseFileCollection())
+            extract.getFiles().from(releaseFileCollection)
+        })
+    }
+
+    configureExecutableNatives(t, extractArtifacts)
+    if (OperatingSystem.current().isMacOsX()) {
+        t.jvmArgs("-XstartOnFirstThread")
+    }
 }
 
 java {
@@ -11,6 +82,14 @@ java {
 }
 
 def ROBOT_MAIN_CLASS = "org.curtinfrc.frc2025.Main"
+
+nativeUtils {
+    exportsConfigs {
+        // Only export explicit symbols from driver library
+        TrajgenJNI {
+        }
+    }
+}
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -54,6 +133,46 @@ deploy {
     }
 }
 
+task refreshCompileCommands(type: Exec) {
+    workingDir = rootDir
+    def args = [
+        "rm",
+        "-rf",
+        "$buildDir/TargetedCompileCommands"
+    ]
+    commandLine args
+}
+
+model {
+    components {
+        TrajgenJNI(JniNativeLibrarySpec) {
+            targetPlatform wpi.platforms.desktop
+            enableCheckTask = true
+            javaCompileTasks << compileJava
+            jniCrossCompileOptions << JniCrossCompileOptions(wpi.platforms.desktop)
+
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/main/native/cpp'
+                        include '**/*.cpp'
+                    }
+
+                    exportedHeaders {
+                        srcDir 'src/main/native/include'
+                    }
+                }
+            }
+
+            binaries.all {
+                lib project: ':trajoptlib', library: 'TrajoptLib', linkage: 'static'
+            }
+
+            nativeUtils.useRequiredLibrary(it, "wpilib_shared")
+        }
+    }
+}
+
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
 // Set to true to use debug for JNI.
@@ -87,6 +206,13 @@ task(regenerateTrajectories, dependsOn: "classes", type: Exec) {
 }
 
 project.compileJava.finalizedBy(regenerateTrajectories)
+
+task(generateTrajectories, dependsOn: "classes", type: JavaExec) {
+    mainClass = "org.curtinfrc.frc2025.auto.TrajectoryGenerator"
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs += "-Djava.library.path=${buildDir}/libs/trajgenJNI/shared/release"
+}
+configureJavaExecTask(generateTrajectories, project.frc.getDebugOrDefault(false))
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.

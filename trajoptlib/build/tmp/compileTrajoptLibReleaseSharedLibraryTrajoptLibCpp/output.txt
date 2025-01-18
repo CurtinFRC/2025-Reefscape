@@ -1,8 +1,0 @@
-See file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/compileTrajoptLibReleaseSharedLibraryTrajoptLibCpp/output.txt for all output for compileTrajoptLibReleaseSharedLibraryTrajoptLibCpp.
-compiling Cancellation.cpp successful.
-
-compiling DifferentialTrajectoryGenerator.cpp successful.
-
-compiling SwerveTrajectoryGenerator.cpp successful.
-
-Finished compileTrajoptLibReleaseSharedLibraryTrajoptLibCpp, see full log file:///home/jadey/Documents/frc/2025-Reefscape/trajoptlib/build/tmp/compileTrajoptLibReleaseSharedLibraryTrajoptLibCpp/output.txt.
