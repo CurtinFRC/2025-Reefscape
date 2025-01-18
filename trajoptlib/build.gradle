@@ -1,0 +1,27 @@
+import edu.wpi.first.toolchain.NativePlatforms
+
+apply plugin: 'cpp'
+apply plugin: 'edu.wpi.first.GradleRIO'
+
+model {
+    components {
+        TrajoptLib(NativeLibrarySpec) {
+            targetPlatform NativePlatforms.desktop
+
+            sources {
+                sources.cpp {
+                    source {
+                        srcDir 'src/main/cpp'
+                        include '**/*.cpp'
+                    }
+
+                    exportedHeaders {
+                        srcDir 'src/main/include'
+                    }
+                }
+            }
+
+            wpi.cpp.deps.wpilib(it)
+        }
+    }
+}
