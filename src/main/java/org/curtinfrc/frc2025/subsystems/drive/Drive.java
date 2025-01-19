@@ -331,11 +331,14 @@ public class Drive extends SubsystemBase {
     runVelocity(speeds);
   }
 
-  public void logTrajectory(Trajectory<SwerveSample> traj, boolean flipped) {
+  public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {
     SwerveSample[] trajarray = new SwerveSample[0];
+    boolean flip =
+        DriverStation.isDSAttached() && DriverStation.getAlliance().get() != Alliance.Blue;
     Logger.recordOutput(
         "Odometry/Trajectory",
-        flipped ? traj.flipped().samples().toArray(trajarray) : traj.samples().toArray(trajarray));
+        flip ? traj.flipped().samples().toArray(trajarray) : traj.samples().toArray(trajarray));
+    Logger.recordOutput("Odometry/TrajectoryFinished", isFinished);
   }
 
   /**
