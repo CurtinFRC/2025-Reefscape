@@ -288,6 +288,8 @@ public class Robot extends LoggedRobot {
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
 
+    autoChooser.periodic();
+
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
   }
