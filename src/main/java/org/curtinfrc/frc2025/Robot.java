@@ -214,6 +214,7 @@ public class Robot extends LoggedRobot {
     autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
     autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
     autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addCmd("Follow Medium Repro", () -> autoFactory.trajectoryCmd(""));
 
     // Set up SysId routines
     autoChooser.addCmd(

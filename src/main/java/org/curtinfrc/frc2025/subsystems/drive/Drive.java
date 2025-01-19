@@ -282,6 +282,7 @@ public class Drive extends SubsystemBase {
             0.0,
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+    angleController.setTolerance(0.1);
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
     // Construct command
@@ -296,11 +297,20 @@ public class Drive extends SubsystemBase {
                   getRotation().getRadians(), rotationSupplier.get().getRadians());
 
           // Convert to field relative speeds & send command
-          ChassisSpeeds speeds =
-              new ChassisSpeeds(
-                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
-                  omega);
+          ChassisSpeeds speeds;
+          if (angleController.atGoal()) {
+            speeds =
+                new ChassisSpeeds(
+                    linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
+                    linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
+                    omega);
+          } else {
+            speeds =
+                new ChassisSpeeds(
+                    linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
+                    linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
+                    0);
+          }
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
