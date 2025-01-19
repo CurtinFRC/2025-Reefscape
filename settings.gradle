@@ -29,4 +29,5 @@ pluginManagement {
 Properties props = System.getProperties();
 props.setProperty("org.gradle.internal.native.headers.unresolved.dependencies.ignore", "true");
 
+include "trajoptlib"
 rootProject.name = "2025-Reefscape"

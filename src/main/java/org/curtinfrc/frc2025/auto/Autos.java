@@ -1,4 +1,4 @@
-package org.curtinfrc.frc2025;
+package org.curtinfrc.frc2025.auto;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;

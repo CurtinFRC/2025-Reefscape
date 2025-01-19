@@ -7,13 +7,18 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
-    container: wpilib/roborio-cross-ubuntu:2024-22.04
+    runs-on: ubuntu-22.04
+    container: wpilib/roborio-cross-ubuntu:2025-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Grant execute permission
         run: chmod +x gradlew
+      - name: Install Choreo
+        run: |
+          wget https://github.com/SleipnirGroup/Choreo/releases/download/v2025.0.1/Choreo-v2025.0.1-Linux-x86_64-standalone.zip
+          unzip Choreo-v2025.0.1-Linux-x86_64-standalone.zip
+          sudo mv choreo-cli /usr/bin/choreo-cli
       - name: Check Formatting
         run: ./gradlew spotlessCheck
       - name: Build robot code
