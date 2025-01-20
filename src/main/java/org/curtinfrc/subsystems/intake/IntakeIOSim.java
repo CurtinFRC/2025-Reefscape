@@ -24,7 +24,7 @@ public class IntakeIOSim implements IntakeIO {
     // inputs.appliedVolts = appliedVolts;
     inputs.appliedVolts = intakeMotorSim.getInputVoltage();
     // inputs.encoderOutput = intakeMotorSim.getAngularVelocity();
-    inputs.encoderOutput = intakeMotorSim.getAngularVelocityRPM();
+    inputs.encoderOutput = intakeMotorSim.getAngularVelocityRadPerSec();
   }
 
   @Override
@@ -34,8 +34,8 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
-  public void achieveRPM(double RPM) {
-    intakeMotorSim.setAngularVelocity(RPM);
+  public void achieveRPM(double goalRPM) {
+    intakeMotorSim.setAngularVelocity(IntakeConstants.goalRPM);
   }
 
   @Override
