@@ -98,9 +98,9 @@ public class Drive extends SubsystemBase {
     sysIdTranslation =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                null,
-                null,
-                null,
+                Volts.of(0.5).per(Second),
+                Volts.of(2.5),
+                Seconds.of(7.5),
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runTranslationCharacterization(voltage.in(Volts)), null, this));

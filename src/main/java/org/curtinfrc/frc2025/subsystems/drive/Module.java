@@ -1,4 +1,4 @@
-// Copyright 2021-2024 FRC 6328
+// Copyright 2021-2024 FRC 6328Module.java
 // http://github.com/Mechanical-Advantage
 //
 // This program is free software; you can redistribute it and/or
@@ -62,6 +62,8 @@ public class Module {
       Rotation2d angle = inputs.odometryTurnPositions[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
+
+    Logger.recordOutput("Drive/Module" + Integer.toString(index), inputs.turnPosition.getRadians());
 
     // Update alerts
     driveDisconnectedAlert.set(!inputs.driveConnected);
