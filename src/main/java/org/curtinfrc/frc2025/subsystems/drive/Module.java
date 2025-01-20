@@ -63,8 +63,6 @@ public class Module {
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
 
-    Logger.recordOutput("Drive/Module" + Integer.toString(index), inputs.turnPosition.getRadians());
-
     // Update alerts
     driveDisconnectedAlert.set(!inputs.driveConnected);
     turnDisconnectedAlert.set(!inputs.turnConnected);
