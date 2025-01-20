@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
@@ -68,7 +55,8 @@ public class Drive extends SubsystemBase {
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-  private final SysIdRoutine sysId;
+  private final SysIdRoutine sysIdTranslation;
+  private final SysIdRoutine sysIdSteer;
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
@@ -107,7 +95,18 @@ public class Drive extends SubsystemBase {
     PhoenixOdometryThread.getInstance().start();
 
     // Configure SysId
-    sysId =
+    sysIdTranslation =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(0.5).per(Second),
+                Volts.of(2.5),
+                Seconds.of(7.5),
+                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runTranslationCharacterization(voltage.in(Volts)), null, this));
+
+    // Configure SysId
+    sysIdSteer =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
@@ -115,7 +114,7 @@ public class Drive extends SubsystemBase {
                 null,
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+                (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -203,22 +202,45 @@ public class Drive extends SubsystemBase {
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
-  private void runCharacterization(double output) {
+  private void runSteerCharacterization(double output) {
     for (int i = 0; i < 4; i++) {
-      modules[i].runCharacterization(output);
+      modules[i].runSteerCharacterization(output);
     }
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0))
+  public Command sysIdSteerQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
         .withTimeout(1.0)
-        .andThen(sysId.quasistatic(direction));
+        .andThen(sysIdSteer.quasistatic(direction));
   }
 
   /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
+  public Command sysIdSteerDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdSteer.dynamic(direction));
+  }
+
+  /** Runs the drive in a straight line with the specified drive output. */
+  private void runTranslationCharacterization(double output) {
+    for (int i = 0; i < 4; i++) {
+      modules[i].runTranslationCharacterization(output);
+    }
+  }
+
+  /** Returns a command to run a quasistatic test in the specified direction. */
+  public Command sysIdTranslationQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runTranslationCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdTranslation.quasistatic(direction));
+  }
+
+  /** Returns a command to run a dynamic test in the specified direction. */
+  public Command sysIdTranslationDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runTranslationCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdTranslation.dynamic(direction));
   }
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -361,7 +383,7 @@ public class Drive extends SubsystemBase {
 
         // Allow modules to orient
         run(() -> {
-              runCharacterization(0.0);
+              runTranslationCharacterization(0.0);
             })
             .withTimeout(FF_START_DELAY),
 
@@ -371,7 +393,7 @@ public class Drive extends SubsystemBase {
         // Accelerate and gather data
         run(() -> {
               double voltage = timer.get() * FF_RAMP_RATE;
-              runCharacterization(voltage);
+              runTranslationCharacterization(voltage);
               velocitySamples.add(getFFCharacterizationVelocity());
               voltageSamples.add(voltage);
             })

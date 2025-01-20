@@ -41,7 +41,6 @@ import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -154,9 +153,9 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOPhotonVision(camera1Name, robotToCamera1),
-                  new VisionIOQuestNav());
+                  new VisionIO() {},
+                  new VisionIO() {},
+                  new VisionIO() {});
           // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
         }
@@ -220,16 +219,33 @@ public class Robot extends LoggedRobot {
         "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
     autoChooser.addCmd(
         "Drive Simple FF Characterization", () -> drive.feedforwardCharacterization());
+
     autoChooser.addCmd(
-        "Drive SysId (Quasistatic Forward)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        "Drive Translation SysId (Quasistatic Forward)",
+        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kForward));
     autoChooser.addCmd(
-        "Drive SysId (Quasistatic Reverse)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        "Drive Translation SysId (Quasistatic Reverse)",
+        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kReverse));
     autoChooser.addCmd(
-        "Drive SysId (Dynamic Forward)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Drive Translation SysId (Dynamic Forward)",
+        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addCmd(
-        "Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        "Drive Translation SysId (Dynamic Reverse)",
+        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kReverse));
+
+    autoChooser.addCmd(
+        "Drive Steer SysId (Quasistatic Forward)",
+        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Quasistatic Reverse)",
+        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Dynamic Forward)",
+        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Dynamic Reverse)",
+        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
+
     RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
     // Default command, normal field-relative drive
