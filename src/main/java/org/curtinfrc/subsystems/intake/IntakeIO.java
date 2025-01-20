@@ -7,11 +7,20 @@ public interface IntakeIO {
   public static class IntakeIOInputs {
     public double appliedVolts;
     public double currentAmps;
+    // public AngularVelocity encoderOutput;
     public double encoderOutput;
+    public double goalRPM = 500;
+    public boolean intakeAtRPM = false;
     // double intakeVolts = IntakeConstants.intakeVolts;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
+
+  public default void achieveRPM(double RPM) {}
+
+  public default boolean intakeAtRPM() {
+    return false;
+  }
 
   public default void setIntakeVolts(double volts) {}
 

@@ -26,4 +26,8 @@ public class Intake extends SubsystemBase {
   public Command intakeCommand() {
     return run(() -> io.setIntakeVolts(6));
   }
+
+  public Command goToTargetRPM(double RPM) {
+    return run(() -> io.achieveRPM(RPM)).until(() -> io.intakeAtRPM());
+  }
 }

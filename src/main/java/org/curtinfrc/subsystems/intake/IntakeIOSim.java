@@ -6,23 +6,42 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IntakeIOSim implements IntakeIO {
-  private DCMotorSim intakeSim =
-      new DCMotorSim(
-          LinearSystemId.createDCMotorSystem(DCMotor.getCIM(1), 0.025, 4.0), DCMotor.getCIM(1));
+
+  private DCMotor intakeMotor = DCMotor.getNEO(1);
+  private DCMotorSim intakeMotorSim;
+
+  public IntakeIOSim() {
+    intakeMotorSim =
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(intakeMotor, 0.025, 4.0), intakeMotor);
+  }
 
   private double appliedVolts = 0.0;
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    intakeSim.setInputVoltage(appliedVolts);
-    intakeSim.update(0.02);
+    intakeMotorSim.setInputVoltage(appliedVolts);
+    intakeMotorSim.update(0.02);
     // inputs.appliedVolts = appliedVolts;
-    inputs.appliedVolts = intakeSim.getInputVoltage();
+    inputs.appliedVolts = intakeMotorSim.getInputVoltage();
+    // inputs.encoderOutput = intakeMotorSim.getAngularVelocity();
+    inputs.encoderOutput = intakeMotorSim.getAngularVelocityRPM();
   }
 
   @Override
   public void setIntakeVolts(double volts) {
-    appliedVolts = MathUtil.clamp(volts, 12.0, -12.0);
-    intakeSim.setInputVoltage(volts);
+    appliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    intakeMotorSim.setInputVoltage(volts);
+  }
+
+  @Override
+  public void achieveRPM(double RPM) {
+    intakeMotorSim.setAngularVelocity(RPM);
+  }
+
+  @Override
+  public boolean intakeAtRPM() {
+    double angularVelocity = intakeMotorSim.getAngularVelocityRadPerSec();
+    return IntakeConstants.goalRPM - IntakeConstants.intakeTolerance < angularVelocity
+        && angularVelocity < IntakeConstants.goalRPM + IntakeConstants.intakeTolerance;
   }
 }

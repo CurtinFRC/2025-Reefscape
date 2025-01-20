@@ -227,6 +227,7 @@ public class Robot extends LoggedRobot {
     // intake.setDefaultCommand(intake.intakeCommand(2));
 
     controller.y().whileTrue(intake.intakeCommand());
+    controller.x().whileTrue(intake.goToTargetRPM(500));
 
     // Reset gyro to 0° when B button is pressed
     controller
