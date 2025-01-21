@@ -1,7 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.vision;
 
-import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.questResetPosition;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -12,13 +10,18 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj.RobotController;
 
 public class VisionIOQuestNav implements VisionIO {
-  // Configure Network Tables topics (oculus/...) to communicate with the Quest HMD
-  NetworkTable nt4Table = NetworkTableInstance.getDefault().getTable("oculus");
+  // Configure Network Tables topics (questnav/...) to communicate with the Quest HMD
+  NetworkTable nt4Table = NetworkTableInstance.getDefault().getTable("questnav");
   private IntegerSubscriber questMiso = nt4Table.getIntegerTopic("miso").subscribe(0);
   private IntegerPublisher questMosi = nt4Table.getIntegerTopic("mosi").publish();
+  private StructSubscriber<Pose2d> resetPose =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("Auto Chooser/resetPose", Pose2d.struct)
+          .subscribe(Pose2d.kZero);
 
   // Subscribe to the Network Tables oculus data topics
   private DoubleSubscriber questTimestamp = nt4Table.getDoubleTopic("timestamp").subscribe(0.0f);
@@ -68,8 +71,11 @@ public class VisionIOQuestNav implements VisionIO {
   }
 
   private Pose2d getOculusPose() {
-    var oculousPositionCompensated = getOculusPosition().minus(questResetPosition); // 6.5
-    return new Pose2d(oculousPositionCompensated, Rotation2d.fromDegrees(getOculusYaw()));
+    var pose = resetPose.get();
+    var oculousPositionCompensated = getOculusPosition().minus(pose.getTranslation()); // 6.5
+    return new Pose2d(
+        oculousPositionCompensated,
+        Rotation2d.fromDegrees(getOculusYaw()).minus(pose.getRotation()));
   }
 
   // Clean up questnav subroutine messages after processing on the headset
