@@ -264,7 +264,7 @@ public class Robot extends LoggedRobot {
 
     // Reset gyro to 0° when B button is pressed
     controller
-        .b()
+        .y()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -280,8 +280,6 @@ public class Robot extends LoggedRobot {
                 () -> controller.getLeftY() * 0.5,
                 () -> controller.getLeftX() * 0.5,
                 () -> -controller.getRightX() * 0.5));
-
-    controller.y().onTrue(drive.runOnce(() -> drive.setPose(Pose2d.kZero)));
 
     controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
     controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));
