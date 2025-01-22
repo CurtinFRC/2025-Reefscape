@@ -306,6 +306,14 @@ public class Robot extends LoggedRobot {
             drive.joystickDriveAtAngle(
                 () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
 
+    controller
+        .b()
+        .whileTrue(
+            drive.joystickDriveAtAngle(
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> vision.getTargetX(1)));
+
     // Reset gyro to 0° when B button is pressed
     controller
         .y()
