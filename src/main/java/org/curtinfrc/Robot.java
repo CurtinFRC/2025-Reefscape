@@ -34,7 +34,6 @@ import org.curtinfrc.subsystems.drive.ModuleIO;
 import org.curtinfrc.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.subsystems.intake.Intake;
-import org.curtinfrc.subsystems.intake.IntakeConstants;
 import org.curtinfrc.subsystems.intake.IntakeIOSim;
 // import org.curtinfrc.subsystems.intake.IntakeIOSparkMax;
 import org.curtinfrc.subsystems.vision.Vision;
@@ -228,7 +227,7 @@ public class Robot extends LoggedRobot {
     // intake.setDefaultCommand(intake.intakeCommand(2));
 
     controller.y().whileTrue(intake.intakeCommand());
-    controller.x().whileTrue(intake.goToTargetRPM(IntakeConstants.goalRPM));
+    controller.x().whileTrue(intake.goToTargetRPM());
 
     // Reset gyro to 0° when B button is pressed
     controller

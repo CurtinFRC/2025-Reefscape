@@ -34,7 +34,7 @@ public class IntakeIOSim implements IntakeIO {
   }
 
   @Override
-  public void achieveRPM(double goalRPM) {
+  public void achieveRPM() {
     intakeMotorSim.setAngularVelocity(IntakeConstants.goalRPM);
   }
 
