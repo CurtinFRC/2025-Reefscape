@@ -339,6 +339,7 @@ public class Drive extends SubsystemBase {
     // Get the current pose of the robot
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+    Logger.recordOutput("Odometry/Sample", sample);
 
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
