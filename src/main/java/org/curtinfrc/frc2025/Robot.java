@@ -41,6 +41,7 @@ import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -154,8 +155,8 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIO() {},
-                  new VisionIO() {},
-                  new VisionIO() {});
+                  new VisionIOPhotonVision(camera1Name, robotToCamera1) {},
+                  new VisionIOQuestNav() {});
           // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
         }
@@ -213,6 +214,7 @@ public class Robot extends LoggedRobot {
     autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
     autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
     autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addRoutine("Accuracy Test", () -> autos.followPath("Accuracy Test"));
 
     // Set up SysId routines
     autoChooser.addCmd(

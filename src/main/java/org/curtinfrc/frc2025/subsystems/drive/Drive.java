@@ -340,6 +340,9 @@ public class Drive extends SubsystemBase {
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
 
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -347,10 +350,10 @@ public class Drive extends SubsystemBase {
             sample.vy + yController.calculate(pose.getY(), sample.y),
             sample.omega
                 + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
-            getRotation());
+            isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation());
 
     // Apply the generated speeds
-    runVelocity(speeds);
+    runVelocity(speeds.unaryMinus());
   }
 
   public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {
