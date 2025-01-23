@@ -1,6 +1,6 @@
 <factorypath>
-    <factorypathentry kind="EXTJAR" id="C:\Users\foxlo\.gradle\caches\modules-2\files-2.1\org.littletonrobotics.akit\akit-autolog\4.0.0-beta-1\fd98433df3cb4130e3ccd2e9c051d9c5203da8ef\akit-autolog-4.0.0-beta-1.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="EXTJAR" id="C:\Users\foxlo\.gradle\caches\modules-2\files-2.1\edu.wpi.first.epilogue\epilogue-runtime-java\2025.2.1\d018e9d1e191c1aaee28b676b928295532c63f6f\epilogue-runtime-java-2025.2.1.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="EXTJAR" id="C:\Users\foxlo\.gradle\caches\modules-2\files-2.1\com.squareup\javapoet\1.13.0\d6562d385049f35eb50403fa86bb11cce76b866a\javapoet-1.13.0.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="EXTJAR" id="C:\Users\Public\wpilib\2025\maven\edu\wpi\first\epilogue\epilogue-processor-java\2025.1.1-beta-3\epilogue-processor-java-2025.1.1-beta-3.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="EXTJAR" id="C:\Users\Public\wpilib\2025\maven\edu\wpi\first\epilogue\epilogue-runtime-java\2025.1.1-beta-3\epilogue-runtime-java-2025.1.1-beta-3.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="EXTJAR" id="C:\Users\foxlo\.gradle\caches\modules-2\files-2.1\org.littletonrobotics.akit\akit-autolog\4.1.0\35c0548f3da9a58dedf2ac13eb896d346b140e9e\akit-autolog-4.1.0.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="EXTJAR" id="C:\Users\foxlo\.gradle\caches\modules-2\files-2.1\edu.wpi.first.epilogue\epilogue-processor-java\2025.2.1\ed8cb2b53e7e1055b5545abd5bfc6db122d2dd0e\epilogue-processor-java-2025.2.1.jar" enabled="true" runInBatchMode="false"/>
 </factorypath>

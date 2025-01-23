@@ -5,7 +5,3 @@ Find a variety of documentation from vendors and the team [here](https://4788-do
 
 ## Simulation GUI
 Run with -PsimGui for the simulation gui. This shouldn't be used when doing replay.
-
-## TODO:
-- ctre force feedforward with Choreo
-- better gyro sim
