@@ -39,8 +39,8 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMPC;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSimMPC;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -144,7 +144,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          elevator = new Elevator(new ElevatorIONeoMPC());
         }
 
         case DEVBOT -> {
@@ -162,7 +162,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          elevator = new Elevator(new ElevatorIONeoMPC());
         }
 
         case SIMBOT -> {
@@ -181,7 +181,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIOSim());
+          elevator = new Elevator(new ElevatorIOSimMPC());
         }
       }
     } else {

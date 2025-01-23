@@ -22,4 +22,8 @@ public class Elevator extends SubsystemBase {
   public Command goToSetpoint(Setpoints point) {
     return run(() -> io.goToSetpoint(point)).until(() -> io.isStable());
   }
+
+  public boolean isStable() {
+    return io.isStable();
+  }
 }

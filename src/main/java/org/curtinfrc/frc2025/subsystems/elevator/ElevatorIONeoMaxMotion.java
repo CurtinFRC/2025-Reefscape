@@ -53,8 +53,5 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   public boolean isStable() {
     double vel = elevatorEncoder.getVelocity();
     return ElevatorConstants.tolerance > vel && vel > -ElevatorConstants.tolerance;
-    // double pos = elevatorEncoder.getPosition();
-    // return setpoint.elevatorSetpoint() - ElevatorConstants.tolerance < pos
-    //     && pos < setpoint.elevatorSetpoint() + ElevatorConstants.tolerance;
   }
 }
