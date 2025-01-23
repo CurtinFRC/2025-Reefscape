@@ -7,7 +7,7 @@ import org.curtinfrc.frc2025.Constants.Setpoints;
 
 public class ElevatorIOSim implements ElevatorIO {
   private DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
-  private DCMotorSim elevatorSim;
+  public DCMotorSim elevatorSim;
   private Setpoints set = Setpoints.COLLECT;
 
   public ElevatorIOSim() {

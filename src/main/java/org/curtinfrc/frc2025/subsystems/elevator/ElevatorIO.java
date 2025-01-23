@@ -10,15 +10,21 @@ public interface ElevatorIO {
     public double distanceSensorReading;
     public double encoderReading;
     public Setpoints point;
+    public double pointRot;
     public double motorVoltage;
     public double motorCurrent;
     public double motorTemp;
     public double motorVelocity;
+    public double positionError;
+    public double velocityError;
+    public boolean stable;
+    public int predictionHorizon;
+    public boolean useFallbackPID;
+    public double predictedPosition;
+    public double predictedVelocity;
   }
 
   public default void goToSetpoint(Setpoints point) {}
-
-  public default void applyVoltage(double volts) {}
 
   public default void updateInputs(ElevatorIOInputs inputs) {}
 
