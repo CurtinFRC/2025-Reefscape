@@ -6,11 +6,10 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.util.Util;
 
-/** Simulated Elevator implementation using Model Predictive Control (MPC). */
 public class ElevatorIOSimMPC implements ElevatorIO {
   private final DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
   private final DCMotorSim elevatorSim;
-  private final double controlLoopPeriod = 0.02; // 50 Hz simulation step
+  private final double controlLoopPeriod = 0.02; 
 
   private Setpoints set = Setpoints.COLLECT;
   private double computedVoltage = 0.0;
@@ -18,7 +17,6 @@ public class ElevatorIOSimMPC implements ElevatorIO {
   private double[] referenceTrajectory = new double[20];
   private double velocityError = 0;
 
-  /** Constructor to initialize the simulated elevator with MPC. */
   public ElevatorIOSimMPC() {
     elevatorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, 0.025, 4.0), motor);
   }
@@ -27,43 +25,32 @@ public class ElevatorIOSimMPC implements ElevatorIO {
   public void updateInputs(ElevatorIOInputs inputs) {
     elevatorSim.update(controlLoopPeriod);
 
-    // Simulate sensor readings and MPC state
-    inputs.distanceSensorReading = 0.0; // Distance sensor is not used in this simulation
-    inputs.encoderReading = elevatorSim.getAngularPositionRotations(); // Simulated encoder reading
-    inputs.point = set; // Current setpoint
+    inputs.distanceSensorReading = 0.0; 
+    inputs.encoderReading = elevatorSim.getAngularPositionRotations(); 
+    inputs.point = set; 
     inputs.pointRot =
-        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); // Setpoint in rotations
+        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); 
 
-    // Voltage applied to the motor (computed by the MPC)
     inputs.motorVoltage = computedVoltage;
 
-    // Simulated motor properties
-    inputs.motorCurrent = elevatorSim.getCurrentDrawAmps(); // Simulated motor current
-    inputs.motorTemp = 25.0; // Assume constant motor temperature for the simulation
+    inputs.motorCurrent = elevatorSim.getCurrentDrawAmps(); 
+    inputs.motorTemp = 25.0; 
     inputs.motorVelocity = elevatorSim.getAngularVelocityRPM() / 60.0; // Convert RPM to RPS
 
-    // Position error: difference between current position and target
     inputs.positionError =
         Math.abs(
             elevatorSim.getAngularPositionRotations()
                 - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
 
-    // Stability check based on position and velocity thresholds
     inputs.stable = isStable();
 
-    // Prediction horizon used by the MPC
     inputs.predictionHorizon = predictionHorizon;
 
-    // Fallback PID status (disabled in this simulation)
-    inputs.useFallbackPID = false;
-
-    // Simulated predicted position and velocity
     inputs.predictedPosition =
-        elevatorSim.getAngularPositionRotations(); // Predicted position from simulation
+        elevatorSim.getAngularPositionRotations(); 
     inputs.predictedVelocity =
-        elevatorSim.getAngularVelocityRPM() / 60.0; // Predicted velocity in RPS
+        elevatorSim.getAngularVelocityRPM() / 60.0; 
 
-    // Velocity error (difference between desired and actual velocity)
     inputs.velocityError = velocityError;
   }
 
@@ -80,7 +67,6 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
     computedVoltage = computeMPCControl(currentPosition, velocity);
 
-    // Apply clamping and deadband logic
     computedVoltage =
         clampVoltageForDeadband(
             computedVoltage, Math.abs(targetPosition - currentPosition), velocity);
@@ -89,7 +75,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     // reduceVoltageNearSetpoint(computedVoltage, Math.abs(targetPosition - currentPosition));
 
     if (Math.abs(targetPosition - currentPosition) < ElevatorConstants.positionTolerance) {
-      computedVoltage = 0; // Force motor to stop
+      computedVoltage = 0; 
     }
 
     elevatorSim.setInputVoltage(computedVoltage);
@@ -114,7 +100,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     for (int i = 0; i < predictionHorizon; i++) {
       double factor = (double) i / (predictionHorizon - 1);
       referenceTrajectory[i] =
-          currentPosition + distance * Math.pow(factor, 2); // Quadratic slowdown
+          currentPosition + distance * Math.pow(factor, 2); 
     }
   }
 
@@ -144,7 +130,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
       if (Math.abs(positionError) < ElevatorConstants.positionTolerance) {
         stepVoltage *= Math.abs(positionError) / ElevatorConstants.positionTolerance;
         if (Math.abs(stepVoltage) < 0.1) {
-          stepVoltage = 0; // Stop applying voltage when near the setpoint
+          stepVoltage = 0; 
         }
       }
 
@@ -160,7 +146,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
       if (Math.abs(predictedPosition[i] - referenceTrajectory[i])
           < ElevatorConstants.positionTolerance) {
-        predictedVelocity[i] = 0; // Stop when the position is close to the target
+        predictedVelocity[i] = 0; 
       }
 
       totalVoltage = stepVoltage;
@@ -188,18 +174,18 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
   private double clampVoltageForDeadband(double voltage, double positionError, double velocity) {
     if (isWithinDeadband(positionError, velocity)) {
-      return 0.0; // Stop applying voltage when within deadband
+      return 0.0; 
     }
     return voltage;
   }
 
   private double reduceVoltageNearSetpoint(double voltage, double positionError) {
     if (positionError < ElevatorConstants.positionTolerance) {
-      return 0.0; // Stop voltage entirely near the setpoint
+      return 0.0; 
     }
     double scalingFactor =
         Math.max(0.1, 1.0 - Math.abs(positionError) / (2 * ElevatorConstants.positionTolerance));
-    return voltage * scalingFactor; // Scale voltage more aggressively near setpoint
+    return voltage * scalingFactor; 
   }
 
   private double clampVoltage(double voltage) {
