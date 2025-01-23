@@ -19,7 +19,6 @@ public interface ElevatorIO {
     public double velocityError;
     public boolean stable;
     public int predictionHorizon;
-    public boolean useFallbackPID;
     public double predictedPosition;
     public double predictedVelocity;
   }

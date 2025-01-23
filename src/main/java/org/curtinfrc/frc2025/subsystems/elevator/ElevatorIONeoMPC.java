@@ -4,9 +4,8 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.util.Util;
 
-/** Simulated Elevator implementation using Model Predictive Control (MPC). */
 public class ElevatorIONeoMPC extends ElevatorIONeo {
-  private final double controlLoopPeriod = 0.02; // 50 Hz simulation step
+  private final double controlLoopPeriod = 0.02; 
 
   private Setpoints set = Setpoints.COLLECT;
   private double computedVoltage = 0.0;
@@ -16,43 +15,32 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    // Simulate sensor readings and MPC state
-    inputs.distanceSensorReading = 0.0; // Distance sensor is not used in this simulation
-    inputs.encoderReading = elevatorEncoder.getPosition(); // Simulated encoder reading
-    inputs.point = set; // Current setpoint
+    inputs.distanceSensorReading = 0.0; 
+    inputs.encoderReading = elevatorEncoder.getPosition(); 
+    inputs.point = set; 
     inputs.pointRot =
-        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); // Setpoint in rotations
+        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); 
 
-    // Voltage applied to the motor (computed by the MPC)
     inputs.motorVoltage = computedVoltage;
 
-    // Simulated motor properties
-    inputs.motorCurrent = elevatorMotor.getOutputCurrent(); // Simulated motor current
-    inputs.motorTemp = 25.0; // Assume constant motor temperature for the simulation
-    inputs.motorVelocity = elevatorEncoder.getVelocity() / 60.0; // Convert RPM to RPS
+    inputs.motorCurrent = elevatorMotor.getOutputCurrent(); 
+    inputs.motorTemp = elevatorMotor.getMotorTemperature(); 
+    inputs.motorVelocity = elevatorEncoder.getVelocity() / 60.0; 
 
-    // Position error: difference between current position and target
     inputs.positionError =
         Math.abs(
             elevatorEncoder.getPosition()
                 - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
 
-    // Stability check based on position and velocity thresholds
     inputs.stable = isStable();
 
-    // Prediction horizon used by the MPC
     inputs.predictionHorizon = predictionHorizon;
 
-    // Fallback PID status (disabled in this simulation)
-    inputs.useFallbackPID = false;
-
-    // Simulated predicted position and velocity
     inputs.predictedPosition =
-        elevatorEncoder.getPosition(); // Predicted position from simulation
+        elevatorEncoder.getPosition(); 
     inputs.predictedVelocity =
-        elevatorEncoder.getVelocity() / 60.0; // Predicted velocity in RPS
+        elevatorEncoder.getVelocity() / 60.0; 
 
-    // Velocity error (difference between desired and actual velocity)
     inputs.velocityError = velocityError;
   }
 
@@ -62,14 +50,13 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
     double targetPosition = ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint());
     double currentPosition = elevatorEncoder.getPosition();
-    double velocity = elevatorEncoder.getVelocity() / 60.0; // Convert RPM to RPS
+    double velocity = elevatorEncoder.getVelocity() / 60.0; 
 
     adjustPredictionHorizon(currentPosition, targetPosition);
     generateReferenceTrajectory(targetPosition);
 
     computedVoltage = computeMPCControl(currentPosition, velocity);
 
-    // Apply clamping and deadband logic
     computedVoltage =
         clampVoltageForDeadband(
             computedVoltage, Math.abs(targetPosition - currentPosition), velocity);
@@ -78,7 +65,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
     // reduceVoltageNearSetpoint(computedVoltage, Math.abs(targetPosition - currentPosition));
 
     if (Math.abs(targetPosition - currentPosition) < ElevatorConstants.positionTolerance) {
-      computedVoltage = 0; // Force motor to stop
+      computedVoltage = 0; 
     }
 
     elevatorMotor.setVoltage(computedVoltage);
@@ -103,7 +90,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
     for (int i = 0; i < predictionHorizon; i++) {
       double factor = (double) i / (predictionHorizon - 1);
       referenceTrajectory[i] =
-          currentPosition + distance * Math.pow(factor, 2); // Quadratic slowdown
+          currentPosition + distance * Math.pow(factor, 2); 
     }
   }
 
@@ -133,7 +120,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
       if (Math.abs(positionError) < ElevatorConstants.positionTolerance) {
         stepVoltage *= Math.abs(positionError) / ElevatorConstants.positionTolerance;
         if (Math.abs(stepVoltage) < 0.1) {
-          stepVoltage = 0; // Stop applying voltage when near the setpoint
+          stepVoltage = 0; 
         }
       }
 
@@ -149,7 +136,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
       if (Math.abs(predictedPosition[i] - referenceTrajectory[i])
           < ElevatorConstants.positionTolerance) {
-        predictedVelocity[i] = 0; // Stop when the position is close to the target
+        predictedVelocity[i] = 0; 
       }
 
       totalVoltage = stepVoltage;
@@ -177,18 +164,18 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
   private double clampVoltageForDeadband(double voltage, double positionError, double velocity) {
     if (isWithinDeadband(positionError, velocity)) {
-      return 0.0; // Stop applying voltage when within deadband
+      return 0.0; 
     }
     return voltage;
   }
 
   private double reduceVoltageNearSetpoint(double voltage, double positionError) {
     if (positionError < ElevatorConstants.positionTolerance) {
-      return 0.0; // Stop voltage entirely near the setpoint
+      return 0.0; 
     }
     double scalingFactor =
         Math.max(0.1, 1.0 - Math.abs(positionError) / (2 * ElevatorConstants.positionTolerance));
-    return voltage * scalingFactor; // Scale voltage more aggressively near setpoint
+    return voltage * scalingFactor; 
   }
 
   private double clampVoltage(double voltage) {
