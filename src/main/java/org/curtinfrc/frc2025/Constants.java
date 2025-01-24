@@ -86,7 +86,7 @@ public final class Constants {
     COLLECT(950, List.of(13, 12), List.of(1, 2)),
     L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7, 10, 6, 11)),
     L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7, 10, 6, 11)),
-    L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7,10, 6, 11));
+    L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7, 10, 6, 11));
 
     private final int _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;
@@ -112,49 +112,77 @@ public final class Constants {
 
     private Pose3d resolvePose(List<Integer> tagIds, Pose3d currentPose) {
       if (tagIds.isEmpty()) return new Pose3d();
-  
+
       double sideOffset = Math.max(ROBOT_X, ROBOT_Y) / 2000.0;
-  
+
       class ClosestPose {
-          Pose3d pose = null;
-          double distance = Double.MAX_VALUE;
+        Pose3d pose = null;
+        double distance = Double.MAX_VALUE;
       }
-  
+
       ClosestPose closest = new ClosestPose();
-  
+
       for (int tagId : tagIds) {
-          aprilTagLayout.getTagPose(tagId).ifPresent(tagPose -> {
-              Pose3d mappedPose = PoseUtil.mapPose(tagPose);
-              Rotation3d rotation = mappedPose.getRotation();
-              double baseAngle = rotation.getAngle(), cos = Math.cos(baseAngle), sin = Math.sin(baseAngle);
-              double xOffset = sideOffset * sin, yOffset = sideOffset * cos;
-  
-              for (Pose3d pose : new Pose3d[] {
-                  new Pose3d(mappedPose.getX() + xOffset, mappedPose.getY() - yOffset, mappedPose.getZ(), rotation),
-                  new Pose3d(mappedPose.getX() - xOffset, mappedPose.getY() + yOffset, mappedPose.getZ(), rotation)
-              }) {
-                  double distance = distanceBetween(pose, currentPose);
-                  if (distance < closest.distance) {
+        aprilTagLayout
+            .getTagPose(tagId)
+            .ifPresent(
+                tagPose -> {
+                  Pose3d mappedPose = PoseUtil.mapPose(tagPose);
+                  Rotation3d rotation = mappedPose.getRotation();
+                  double baseAngle = rotation.getAngle(),
+                      cos = Math.cos(baseAngle),
+                      sin = Math.sin(baseAngle);
+                  double xOffset = sideOffset * sin, yOffset = sideOffset * cos;
+
+                  for (Pose3d pose :
+                      new Pose3d[] {
+                        new Pose3d(
+                            mappedPose.getX() + xOffset,
+                            mappedPose.getY() - yOffset,
+                            mappedPose.getZ(),
+                            rotation),
+                        new Pose3d(
+                            mappedPose.getX() - xOffset,
+                            mappedPose.getY() + yOffset,
+                            mappedPose.getZ(),
+                            rotation)
+                      }) {
+                    double distance = distanceBetween(pose, currentPose);
+                    if (distance < closest.distance) {
                       closest.pose = pose;
                       closest.distance = distance;
+                    }
                   }
-              }
-  
-              String tagPrefix = String.format("resolvePose.tagId_%d", tagId);
-              Logger.recordOutput(tagPrefix + "/baseAngle", String.format("%.2f", baseAngle));
-              Logger.recordOutput(tagPrefix + "/leftPose", formatPose(new Pose3d(mappedPose.getX() + xOffset, mappedPose.getY() - yOffset, mappedPose.getZ(), rotation)));
-              Logger.recordOutput(tagPrefix + "/rightPose", formatPose(new Pose3d(mappedPose.getX() - xOffset, mappedPose.getY() + yOffset, mappedPose.getZ(), rotation)));
-              Logger.recordOutput(tagPrefix + "/currentPose", formatPose(currentPose));
-              Logger.recordOutput(tagPrefix + "/tagPose", formatPose(tagPose));
-          });
+
+                  String tagPrefix = String.format("resolvePose.tagId_%d", tagId);
+                  Logger.recordOutput(tagPrefix + "/baseAngle", String.format("%.2f", baseAngle));
+                  Logger.recordOutput(
+                      tagPrefix + "/leftPose",
+                      formatPose(
+                          new Pose3d(
+                              mappedPose.getX() + xOffset,
+                              mappedPose.getY() - yOffset,
+                              mappedPose.getZ(),
+                              rotation)));
+                  Logger.recordOutput(
+                      tagPrefix + "/rightPose",
+                      formatPose(
+                          new Pose3d(
+                              mappedPose.getX() - xOffset,
+                              mappedPose.getY() + yOffset,
+                              mappedPose.getZ(),
+                              rotation)));
+                  Logger.recordOutput(tagPrefix + "/currentPose", formatPose(currentPose));
+                  Logger.recordOutput(tagPrefix + "/tagPose", formatPose(tagPose));
+                });
       }
       return closest.pose != null ? closest.pose : new Pose3d();
-  }
-  
-  private String formatPose(Pose3d pose) {
+    }
+
+    private String formatPose(Pose3d pose) {
       return String.format("(%.2f, %.2f, %.2f)", pose.getX(), pose.getY(), pose.getZ());
-  }
-  
+    }
+
     private double distanceBetween(Pose3d pose1, Pose3d pose2) {
       var t1 = pose1.getTranslation();
       var t2 = pose2.getTranslation();
