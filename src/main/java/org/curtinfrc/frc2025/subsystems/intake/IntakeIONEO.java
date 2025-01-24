@@ -1,6 +1,6 @@
-package org.curtinfrc.subsystems.intake;
+package org.curtinfrc.frc2025.subsystems.intake;
 
-import static org.curtinfrc.subsystems.intake.IntakeConstants.*;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.*;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;

@@ -1,7 +1,7 @@
-package org.curtinfrc.subsystems.intake;
+package org.curtinfrc.frc2025.subsystems.intake;
 
-import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeBackSensorPort;
-import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeBackSensorPort;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
 
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;

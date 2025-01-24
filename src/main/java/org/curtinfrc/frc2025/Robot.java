@@ -1,7 +1,7 @@
 package org.curtinfrc.frc2025;
 
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
-import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeVolts;
 
 import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
@@ -28,6 +28,10 @@ import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.intake.Intake;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -36,10 +40,6 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
-import org.curtinfrc.subsystems.intake.Intake;
-import org.curtinfrc.subsystems.intake.IntakeIO;
-import org.curtinfrc.subsystems.intake.IntakeIONEO;
-import org.curtinfrc.subsystems.intake.IntakeIOSim;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
