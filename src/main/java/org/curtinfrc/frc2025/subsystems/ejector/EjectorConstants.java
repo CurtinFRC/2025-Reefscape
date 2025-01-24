@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.ejector;
+package org.curtinfrc.frc2025.subsystems.ejector;
 
 public class EjectorConstants {
   public static double goalRPM = 2000;

@@ -1,9 +1,12 @@
-package org.curtinfrc.subsystems.intake;
+package org.curtinfrc.frc2025.subsystems.intake;
 
 import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class IntakeIONeoMaxMotion extends IntakeIONEO {
   private SparkClosedLoopController intakeController = intakeNeo.getClosedLoopController();
@@ -31,6 +34,13 @@ public class IntakeIONeoMaxMotion extends IntakeIONEO {
         .maxMotion
         .maxVelocity(IntakeConstants.intakeMaxVelocity)
         .allowedClosedLoopError(IntakeConstants.intakeTolerance);
+
+    SparkUtil.tryUntilOk(
+        intakeNeo,
+        5,
+        () ->
+            intakeNeo.configure(
+                config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
   }
 
   @Override

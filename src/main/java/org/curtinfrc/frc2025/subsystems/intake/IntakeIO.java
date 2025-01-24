@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.intake;
+package org.curtinfrc.frc2025.subsystems.intake;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -11,6 +11,7 @@ public interface IntakeIO {
     public double encoderOutput;
     public double goalRPM = 500;
     public boolean intakeAtRPM = false;
+    public boolean beamBreakBroken = false;
     // double intakeVolts = IntakeConstants.intakeVolts;
   }
 

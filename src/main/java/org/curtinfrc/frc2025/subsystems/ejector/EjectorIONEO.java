@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.ejector;
+package org.curtinfrc.frc2025.subsystems.ejector;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;

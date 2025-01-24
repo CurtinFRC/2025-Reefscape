@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.intake;
+package org.curtinfrc.frc2025.subsystems.intake;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;

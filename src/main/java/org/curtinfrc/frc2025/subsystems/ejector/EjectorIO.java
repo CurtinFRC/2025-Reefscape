@@ -1,11 +1,11 @@
-package org.curtinfrc.subsystems.ejector;
+package org.curtinfrc.frc2025.subsystems.ejector;
 
 import org.littletonrobotics.junction.AutoLog;
 
 public interface EjectorIO {
   @AutoLog
   public static class EjectorIOInputs {
-    public double EjectorGoalRPM = 2000;
+    public double EjectorGoalRPM;
     public double ejectorEncoderOutput;
     public double appliedVolts;
   }

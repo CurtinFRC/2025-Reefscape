@@ -1,4 +1,4 @@
-package org.curtinfrc.subsystems.ejector;
+package org.curtinfrc.frc2025.subsystems.ejector;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;

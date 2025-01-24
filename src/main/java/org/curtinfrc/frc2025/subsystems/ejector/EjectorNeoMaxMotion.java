@@ -1,5 +1,9 @@
-package org.curtinfrc.subsystems.ejector;
+package org.curtinfrc.frc2025.subsystems.ejector;
 
+
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import org.curtinfrc.frc2025.util.SparkUtil;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -24,6 +28,13 @@ public class EjectorNeoMaxMotion extends EjectorIONEO {
         .maxMotion
         .maxVelocity(EjectorConstants.ejectorMaxVelocity)
         .allowedClosedLoopError(0.01);
+
+        SparkUtil.tryUntilOk(
+          ejectorNeo,
+          5,
+          () ->
+              ejectorNeo.configure(
+                  config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
   }
 
   @Override
