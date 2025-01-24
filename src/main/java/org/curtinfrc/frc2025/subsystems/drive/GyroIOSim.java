@@ -40,8 +40,7 @@ public class GyroIOSim implements GyroIO {
   private final Supplier<SwerveModuleState[]> getStates;
 
   public GyroIOSim(
-      final Supplier<SwerveDriveKinematics> kinematics,
-      final Supplier<SwerveModuleState[]> getStates) {
+      Supplier<SwerveDriveKinematics> kinematics, Supplier<SwerveModuleState[]> getStates) {
     pigeon.getConfigurator().apply(new Pigeon2Configuration());
     pigeon.getConfigurator().setYaw(0.0);
     yaw.setUpdateFrequency(ODOMETRY_FREQUENCY);
