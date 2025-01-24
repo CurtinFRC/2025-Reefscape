@@ -2,9 +2,11 @@ package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -15,6 +17,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -47,6 +50,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -60,7 +64,7 @@ public class Drive extends SubsystemBase {
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
-  private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+  public SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
   private Rotation2d rawGyroRotation = Rotation2d.kZero;
   private SwerveModulePosition[] lastModulePositions = // For delta tracking
       new SwerveModulePosition[] {
@@ -75,6 +79,8 @@ public class Drive extends SubsystemBase {
   private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
+
+  RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
       GyroIO gyroIO,
@@ -497,7 +503,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
-  private SwerveModuleState[] getModuleStates() {
+  public SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
       states[i] = modules[i].getState();
@@ -581,5 +587,90 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
+  }
+
+  public Command autoAlign(Pose3d _setpoint) {
+    // this.setpoint = _setpoint;
+
+    return run(
+        () -> {
+          Logger.recordOutput("Drive/Setpoint", _setpoint);
+
+          repulsorFieldPlanner.setGoal(_setpoint.toPose2d().getTranslation());
+
+          var robotPose = getPose();
+          SwerveSample cmd =
+              repulsorFieldPlanner.getCmd(
+                  robotPose,
+                  getChassisSpeeds(),
+                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  true);
+
+          // Include rotational alignment using the existing heading controller
+          double adjustedOmega =
+              headingController.calculate(
+                  robotPose.getRotation().getRadians(),
+                  _setpoint.toPose2d().getRotation().getRadians());
+
+          // Apply the trajectory with rotation adjustment
+          SwerveSample adjustedSample =
+              new SwerveSample(
+                  cmd.t,
+                  cmd.x,
+                  cmd.y,
+                  _setpoint.toPose2d().getRotation().getRadians(),
+                  cmd.vx,
+                  cmd.vy,
+                  adjustedOmega,
+                  cmd.ax,
+                  cmd.ay,
+                  cmd.alpha,
+                  cmd.moduleForcesX(),
+                  cmd.moduleForcesY());
+
+          // Apply the adjusted sample
+          followTrajectory(adjustedSample);
+        });
+  }
+
+  // public Command autoAlign(Pose3d pose) {
+  //   Logger.recordOutput("Odometry/DesiredPose", pose);
+  //   // PIDController xController = new PIDController(10, 0, 0);
+  //   // xController.setSetpoint(pose.getX());
+  //   // PIDController yController = new PIDController(10, 0, 0);
+  //   // yController.setSetpoint(pose.getY());
+  //   // PIDController rotController = new PIDController(7.5, 0, 0);
+  //   // rotController.setSetpoint(pose.getRotation().getAngle());
+  //   // rotController.enableContinuousInput(-Math.PI, Math.PI);
+  //   repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
+
+  //   return run(
+  //       () -> {
+  //         var robotPose = getPose();
+  //         followTrajectory(
+  //             repulsorFieldPlanner.getCmd(
+  //                 robotPose,
+  //                 getChassisSpeeds(),
+  //                 TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+  //                 true));
+  //       });
+  // }
+
+  public Pose3d findClosestTag(List<AprilTag> tags) {
+    Transform2d lowestTransform = null;
+    int closestTagId = 99;
+    for (var tag : tags) {
+      var transform = getPose().minus(tag.pose.toPose2d());
+      if (lowestTransform == null) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+        break;
+      }
+      if (lowestTransform.getTranslation().getNorm() > transform.getTranslation().getNorm()) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+      }
+    }
+    return aprilTagLayout.getTagPose(closestTagId).get();
   }
 }
