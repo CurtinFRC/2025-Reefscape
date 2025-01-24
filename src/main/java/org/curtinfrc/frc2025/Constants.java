@@ -39,7 +39,7 @@ import org.curtinfrc.frc2025.util.PoseUtil;
  * (log replay from a file).
  */
 public final class Constants {
-  private static final RobotType robotType = RobotType.SIMBOT;
+  public static final RobotType robotType = RobotType.SIMBOT;
   public static final double ROBOT_X = 550; // mm
   public static final double ROBOT_Y = 570;
 
