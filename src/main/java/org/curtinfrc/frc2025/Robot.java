@@ -24,6 +24,10 @@ import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMPC;
@@ -56,6 +60,7 @@ public class Robot extends LoggedRobot {
   private Vision vision;
   private Intake intake;
   private Elevator elevator;
+  private Ejector ejector;
   private Superstructure superstructure;
 
   // Controller
@@ -134,6 +139,7 @@ public class Robot extends LoggedRobot {
           // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
         }
 
         case DEVBOT -> {
@@ -153,6 +159,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOQuestNav());
           elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
         }
 
         case SIMBOT -> {
@@ -175,6 +182,7 @@ public class Robot extends LoggedRobot {
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
+          ejector = new Ejector(new EjectorIOSim());
         }
       }
     } else {
@@ -192,6 +200,7 @@ public class Robot extends LoggedRobot {
 
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
+      ejector = new Ejector(new EjectorIO() {});
     }
 
     superstructure = new Superstructure(drive, elevator);
@@ -257,8 +266,12 @@ public class Robot extends LoggedRobot {
             () -> -controller.getRightX()));
 
     intake.setDefaultCommand(intake.intake(intakeVolts / 4));
+    ejector.setDefaultCommand(ejector.stop());
     intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
     intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
+    intake.backSensor.whileTrue(ejector.eject(15).until(ejector.sensor));
+
+    controller.x().whileTrue(ejector.eject(1500).until(ejector.sensor.negate()));
 
     // Lock to 0° when A button is held
     controller
