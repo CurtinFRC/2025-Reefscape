@@ -9,7 +9,7 @@ import org.curtinfrc.frc2025.util.Util;
 public class ElevatorIOSimMPC implements ElevatorIO {
   private final DCMotor motor = DCMotor.getNEO(ElevatorConstants.motorCount);
   private final DCMotorSim elevatorSim;
-  private final double controlLoopPeriod = 0.02; 
+  private final double controlLoopPeriod = 0.02;
 
   private Setpoints set = Setpoints.COLLECT;
   private double computedVoltage = 0.0;
@@ -25,16 +25,15 @@ public class ElevatorIOSimMPC implements ElevatorIO {
   public void updateInputs(ElevatorIOInputs inputs) {
     elevatorSim.update(controlLoopPeriod);
 
-    inputs.distanceSensorReading = 0.0; 
-    inputs.encoderReading = elevatorSim.getAngularPositionRotations(); 
-    inputs.point = set; 
-    inputs.pointRot =
-        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); 
+    inputs.distanceSensorReading = 0.0;
+    inputs.encoderReading = elevatorSim.getAngularPositionRotations();
+    inputs.point = set;
+    inputs.pointRot = ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint());
 
-    inputs.motorVoltage = computedVoltage;
+    inputs.motorVoltage = elevatorSim.getInputVoltage();
 
-    inputs.motorCurrent = elevatorSim.getCurrentDrawAmps(); 
-    inputs.motorTemp = 25.0; 
+    inputs.motorCurrent = elevatorSim.getCurrentDrawAmps();
+    inputs.motorTemp = 25.0;
     inputs.motorVelocity = elevatorSim.getAngularVelocityRPM() / 60.0; // Convert RPM to RPS
 
     inputs.positionError =
@@ -46,10 +45,8 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
     inputs.predictionHorizon = predictionHorizon;
 
-    inputs.predictedPosition =
-        elevatorSim.getAngularPositionRotations(); 
-    inputs.predictedVelocity =
-        elevatorSim.getAngularVelocityRPM() / 60.0; 
+    inputs.predictedPosition = elevatorSim.getAngularPositionRotations();
+    inputs.predictedVelocity = elevatorSim.getAngularVelocityRPM() / 60.0;
 
     inputs.velocityError = velocityError;
   }
@@ -75,7 +72,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     // reduceVoltageNearSetpoint(computedVoltage, Math.abs(targetPosition - currentPosition));
 
     if (Math.abs(targetPosition - currentPosition) < ElevatorConstants.positionTolerance) {
-      computedVoltage = 0; 
+      computedVoltage = 0;
     }
 
     elevatorSim.setInputVoltage(computedVoltage);
@@ -99,8 +96,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
     for (int i = 0; i < predictionHorizon; i++) {
       double factor = (double) i / (predictionHorizon - 1);
-      referenceTrajectory[i] =
-          currentPosition + distance * Math.pow(factor, 2); 
+      referenceTrajectory[i] = currentPosition + distance * Math.pow(factor, 2);
     }
   }
 
@@ -130,7 +126,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
       if (Math.abs(positionError) < ElevatorConstants.positionTolerance) {
         stepVoltage *= Math.abs(positionError) / ElevatorConstants.positionTolerance;
         if (Math.abs(stepVoltage) < 0.1) {
-          stepVoltage = 0; 
+          stepVoltage = 0;
         }
       }
 
@@ -146,7 +142,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
       if (Math.abs(predictedPosition[i] - referenceTrajectory[i])
           < ElevatorConstants.positionTolerance) {
-        predictedVelocity[i] = 0; 
+        predictedVelocity[i] = 0;
       }
 
       totalVoltage = stepVoltage;
@@ -174,21 +170,26 @@ public class ElevatorIOSimMPC implements ElevatorIO {
 
   private double clampVoltageForDeadband(double voltage, double positionError, double velocity) {
     if (isWithinDeadband(positionError, velocity)) {
-      return 0.0; 
+      return 0.0;
     }
     return voltage;
   }
 
   private double reduceVoltageNearSetpoint(double voltage, double positionError) {
     if (positionError < ElevatorConstants.positionTolerance) {
-      return 0.0; 
+      return 0.0;
     }
     double scalingFactor =
         Math.max(0.1, 1.0 - Math.abs(positionError) / (2 * ElevatorConstants.positionTolerance));
-    return voltage * scalingFactor; 
+    return voltage * scalingFactor;
   }
 
   private double clampVoltage(double voltage) {
     return Math.max(ElevatorConstants.kMinOutput, Math.min(ElevatorConstants.kMaxOutput, voltage));
+  }
+
+  @Override
+  public void stop() {
+    elevatorSim.setInputVoltage(0);
   }
 }

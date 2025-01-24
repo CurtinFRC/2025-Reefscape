@@ -16,13 +16,14 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
-import java.util.ArrayList;
 import java.util.List;
 import org.curtinfrc.frc2025.util.PoseUtil;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -83,9 +84,9 @@ public final class Constants {
   public enum Setpoints {
     /* in mm */
     COLLECT(950, List.of(13, 12), List.of(1, 2)),
-    L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
-    L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
-    L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6));
+    L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7, 10, 6, 11)),
+    L2(810, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7, 10, 6, 11)),
+    L3(1210, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 7,10, 6, 11));
 
     private final int _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;
@@ -112,20 +113,84 @@ public final class Constants {
     private Pose3d resolvePose(List<Integer> tagIds, Pose3d currentPose) {
       if (tagIds.isEmpty()) return new Pose3d();
 
-      ArrayList<Pose3d> poses = new ArrayList<>();
+      double sideOffset = Math.max(ROBOT_X / 1000.0, ROBOT_Y / 1000.0) / 2.0;
+
+      final class Closest {
+        Pose3d pose = null;
+        double distance = Double.MAX_VALUE;
+      }
+
+      Closest closest = new Closest();
+
       for (int tagId : tagIds) {
         aprilTagLayout
             .getTagPose(tagId)
-            .ifPresent(pose -> poses.add(PoseUtil.mapPose(pose.toPose2d())));
-      }
-      if (poses.isEmpty()) return new Pose3d();
+            .ifPresent(
+                tagPose -> {
+                  Pose3d mappedPose = PoseUtil.mapPose(tagPose);
+                  Rotation3d rotation = mappedPose.getRotation();
 
-      return poses.stream()
-          .min(
-              (pose1, pose2) ->
-                  Double.compare(
-                      distanceBetween(pose1, currentPose), distanceBetween(pose2, currentPose)))
-          .orElse(new Pose3d());
+                  double baseAngle = /*normalizeAngle(*/rotation.getAngle()/*)*/;
+
+                  double cosHeading = Math.cos(baseAngle);
+                  double sinHeading = Math.sin(baseAngle);
+
+                  double adjustedXLeft, adjustedYLeft, adjustedXRight, adjustedYRight;
+
+                  adjustedXLeft = mappedPose.getX() + sideOffset * sinHeading;
+                  adjustedYLeft = mappedPose.getY() - sideOffset * cosHeading;
+
+                  adjustedXRight = mappedPose.getX() - sideOffset * sinHeading;
+                  adjustedYRight = mappedPose.getY() + sideOffset * cosHeading;
+
+                  Pose3d leftPose =
+                      new Pose3d(adjustedXLeft, adjustedYLeft, mappedPose.getZ(), rotation);
+
+                  Pose3d rightPose =
+                    new Pose3d(adjustedXRight, adjustedYRight, mappedPose.getZ(), rotation);
+
+                  double leftDistance = distanceBetween(leftPose, currentPose);
+                  if (leftDistance < closest.distance) {
+                    closest.pose = leftPose;
+                    closest.distance = leftDistance;
+                  }
+
+                  double rightDistance = distanceBetween(rightPose, currentPose);
+                  if (rightDistance < closest.distance) {
+                  closest.pose = rightPose;
+                  closest.distance = rightDistance;
+                  }
+
+                  String tagPrefix = String.format("resolvePose.tagId_%d", tagId);
+                  Logger.recordOutput(tagPrefix + "/baseAngle", String.format("%.2f", baseAngle));
+                  Logger.recordOutput(
+                      tagPrefix + "/leftPose",
+                      String.format(
+                          "(%.2f, %.2f, %.2f)", adjustedXLeft, adjustedYLeft, mappedPose.getZ()));
+                  Logger.recordOutput(
+                      tagPrefix + "/rightPose",
+                      String.format(
+                          "(%.2f, %.2f, %.2f)", adjustedXRight, adjustedYRight, mappedPose.getZ()));
+                  Logger.recordOutput(
+                      tagPrefix + "/currentPose",
+                      String.format(
+                          "(%.2f, %.2f, %.2f)",
+                          currentPose.getX(), currentPose.getY(), currentPose.getZ()));
+                  Logger.recordOutput(
+                            tagPrefix + "/tagPose",
+                            String.format(
+                                "(%.2f, %.2f, %.2f)",
+                                tagPose.getX(), tagPose.getY(), tagPose.getZ()));
+                      });
+      }
+
+      return closest.pose != null ? closest.pose : new Pose3d();
+    }
+
+    private double normalizeAngle(double angle) {
+      while (angle > Math.PI) angle -= 2 * Math.PI;
+      while (angle < -Math.PI) angle += 2 * Math.PI;
+      return angle;
     }
 
     private double distanceBetween(Pose3d pose1, Pose3d pose2) {

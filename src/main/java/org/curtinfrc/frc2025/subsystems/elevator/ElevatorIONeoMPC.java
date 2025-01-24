@@ -1,11 +1,10 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import edu.wpi.first.math.system.plant.DCMotor;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.util.Util;
 
 public class ElevatorIONeoMPC extends ElevatorIONeo {
-  private final double controlLoopPeriod = 0.02; 
+  private final double controlLoopPeriod = 0.02;
 
   private Setpoints set = Setpoints.COLLECT;
   private double computedVoltage = 0.0;
@@ -15,17 +14,16 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.distanceSensorReading = 0.0; 
-    inputs.encoderReading = elevatorEncoder.getPosition(); 
-    inputs.point = set; 
-    inputs.pointRot =
-        ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()); 
+    inputs.distanceSensorReading = 0.0;
+    inputs.encoderReading = elevatorEncoder.getPosition();
+    inputs.point = set;
+    inputs.pointRot = ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint());
 
     inputs.motorVoltage = computedVoltage;
 
-    inputs.motorCurrent = elevatorMotor.getOutputCurrent(); 
-    inputs.motorTemp = elevatorMotor.getMotorTemperature(); 
-    inputs.motorVelocity = elevatorEncoder.getVelocity() / 60.0; 
+    inputs.motorCurrent = elevatorMotor.getOutputCurrent();
+    inputs.motorTemp = elevatorMotor.getMotorTemperature();
+    inputs.motorVelocity = elevatorEncoder.getVelocity() / 60.0;
 
     inputs.positionError =
         Math.abs(
@@ -36,10 +34,8 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
     inputs.predictionHorizon = predictionHorizon;
 
-    inputs.predictedPosition =
-        elevatorEncoder.getPosition(); 
-    inputs.predictedVelocity =
-        elevatorEncoder.getVelocity() / 60.0; 
+    inputs.predictedPosition = elevatorEncoder.getPosition();
+    inputs.predictedVelocity = elevatorEncoder.getVelocity() / 60.0;
 
     inputs.velocityError = velocityError;
   }
@@ -50,7 +46,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
     double targetPosition = ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint());
     double currentPosition = elevatorEncoder.getPosition();
-    double velocity = elevatorEncoder.getVelocity() / 60.0; 
+    double velocity = elevatorEncoder.getVelocity() / 60.0;
 
     adjustPredictionHorizon(currentPosition, targetPosition);
     generateReferenceTrajectory(targetPosition);
@@ -65,7 +61,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
     // reduceVoltageNearSetpoint(computedVoltage, Math.abs(targetPosition - currentPosition));
 
     if (Math.abs(targetPosition - currentPosition) < ElevatorConstants.positionTolerance) {
-      computedVoltage = 0; 
+      computedVoltage = 0;
     }
 
     elevatorMotor.setVoltage(computedVoltage);
@@ -89,8 +85,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
     for (int i = 0; i < predictionHorizon; i++) {
       double factor = (double) i / (predictionHorizon - 1);
-      referenceTrajectory[i] =
-          currentPosition + distance * Math.pow(factor, 2); 
+      referenceTrajectory[i] = currentPosition + distance * Math.pow(factor, 2);
     }
   }
 
@@ -120,7 +115,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
       if (Math.abs(positionError) < ElevatorConstants.positionTolerance) {
         stepVoltage *= Math.abs(positionError) / ElevatorConstants.positionTolerance;
         if (Math.abs(stepVoltage) < 0.1) {
-          stepVoltage = 0; 
+          stepVoltage = 0;
         }
       }
 
@@ -136,7 +131,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
       if (Math.abs(predictedPosition[i] - referenceTrajectory[i])
           < ElevatorConstants.positionTolerance) {
-        predictedVelocity[i] = 0; 
+        predictedVelocity[i] = 0;
       }
 
       totalVoltage = stepVoltage;
@@ -164,21 +159,26 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
   private double clampVoltageForDeadband(double voltage, double positionError, double velocity) {
     if (isWithinDeadband(positionError, velocity)) {
-      return 0.0; 
+      return 0.0;
     }
     return voltage;
   }
 
   private double reduceVoltageNearSetpoint(double voltage, double positionError) {
     if (positionError < ElevatorConstants.positionTolerance) {
-      return 0.0; 
+      return 0.0;
     }
     double scalingFactor =
         Math.max(0.1, 1.0 - Math.abs(positionError) / (2 * ElevatorConstants.positionTolerance));
-    return voltage * scalingFactor; 
+    return voltage * scalingFactor;
   }
 
   private double clampVoltage(double voltage) {
     return Math.max(ElevatorConstants.kMinOutput, Math.min(ElevatorConstants.kMaxOutput, voltage));
+  }
+
+  @Override
+  public void stop() {
+    elevatorMotor.setVoltage(0);
   }
 }

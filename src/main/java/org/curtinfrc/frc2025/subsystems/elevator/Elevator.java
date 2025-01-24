@@ -26,4 +26,8 @@ public class Elevator extends SubsystemBase {
   public boolean isStable() {
     return io.isStable();
   }
+
+  public void stop() {
+    io.stop();
+  }
 }

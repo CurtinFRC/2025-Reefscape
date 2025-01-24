@@ -32,4 +32,6 @@ public interface ElevatorIO {
   public default boolean isStable() {
     return false;
   }
+
+  public default void stop() {}
 }
