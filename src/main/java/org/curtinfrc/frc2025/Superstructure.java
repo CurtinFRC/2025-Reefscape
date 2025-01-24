@@ -22,7 +22,7 @@ public class Superstructure {
         () ->
             Commands.parallel(
                 m_drivebase.autoAlign(setpoint.toPose(new Pose3d(m_drivebase.getPose()))),
-                m_elevator.goToSetpoint(setpoint)),
+                m_elevator.goToSetpoint(setpoint).finallyDo(() -> m_elevator.stop())),
         Set.of());
   }
 }
