@@ -30,7 +30,6 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
@@ -40,6 +39,7 @@ import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -158,12 +158,12 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIO() {},
+                  new VisionIOPhotonVision(camera1Name, robotToCamera1),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
-          intake = new Intake(new IntakeIONEO());
-          ejector = new Ejector(new EjectorIONEO());
+          elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIO() {});
+          ejector = new Ejector(new EjectorIO() {});
         }
 
         case SIMBOT -> {
@@ -275,7 +275,7 @@ public class Robot extends LoggedRobot {
     intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
     intake.backSensor.whileTrue(ejector.eject(15).until(ejector.sensor));
 
-    controller.x().whileTrue(ejector.eject(1500).until(ejector.sensor.negate()));
+    // controller.x().whileTrue(ejector.eject(1500).until(ejector.sensor.negate()));
 
     // Lock to 0° when A button is held
     controller
@@ -283,6 +283,14 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             drive.joystickDriveAtAngle(
                 () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
+
+    controller
+        .x()
+        .whileTrue(
+            drive.joystickDriveAtAngle(
+                () -> controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> vision.getTargetX(1)));
 
     // Reset gyro to 0° when B button is pressed
     controller
