@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import choreo.auto.AutoFactory;
@@ -27,6 +28,10 @@ import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.intake.Intake;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -53,6 +58,7 @@ public class Robot extends LoggedRobot {
   // Subsystems
   private Drive drive;
   private Vision vision;
+  private Intake intake;
   private Elevator elevator;
   private Superstructure superstructure;
 
@@ -131,6 +137,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOQuestNav());
           // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIONEO());
         }
 
         case DEVBOT -> {
@@ -149,6 +156,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
           elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+          intake = new Intake(new IntakeIONEO());
         }
 
         case SIMBOT -> {
@@ -170,6 +178,7 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSim());
+          intake = new Intake(new IntakeIOSim());
         }
       }
     } else {
@@ -186,6 +195,7 @@ public class Robot extends LoggedRobot {
               drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
 
       elevator = new Elevator(new ElevatorIO() {});
+      intake = new Intake(new IntakeIO() {});
     }
 
     superstructure = new Superstructure(drive, elevator);
@@ -250,14 +260,16 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
+    intake.setDefaultCommand(intake.intake(intakeVolts / 4));
+    intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
+    intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
+
     // Lock to 0° when A button is held
     controller
         .a()
         .whileTrue(
             drive.joystickDriveAtAngle(
                 () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
-
-    // controller.x().whileTrue(drive.autoAlign(drive.findClosestTag(aprilTagLayout.getTags())));
 
     // Reset gyro to 0° when B button is pressed
     controller
