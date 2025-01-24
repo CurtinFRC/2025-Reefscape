@@ -55,7 +55,7 @@ public class DeltaTime {
       return dtSeconds;
     } else {
       final double lastFPGASeconds = lastRealFPGASeconds;
-      final double newRealTimestampSeconds = MICRO_TO_SEC * Logger.getRealTimestamp();
+      final double newRealTimestampSeconds = MICRO_TO_SEC * RobotController.getFPGATime();
 
       lastRealFPGASeconds = newRealTimestampSeconds;
       return newRealTimestampSeconds - lastFPGASeconds;

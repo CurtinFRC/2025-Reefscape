@@ -9,20 +9,20 @@ import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 
 public class Superstructure {
-  private final Elevator m_elevator;
-  private final Drive m_drivebase;
+  private final Elevator elevator;
+  private final Drive drive;
 
   public Superstructure(Drive drive, Elevator elevator) {
-    m_elevator = elevator;
-    m_drivebase = drive;
+    this.elevator = elevator;
+    this.drive = drive;
   }
 
   public Command align(Setpoints setpoint) {
     return Commands.defer(
         () ->
             Commands.parallel(
-                m_drivebase.autoAlign(setpoint.toPose(new Pose3d(m_drivebase.getPose()))),
-                m_elevator.goToSetpoint(setpoint).finallyDo(() -> m_elevator.stop())),
-        Set.of());
+              drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))),
+              elevator.goToSetpoint(setpoint).finallyDo(() -> elevator.stop())),
+        Set.of(drive, elevator));
   }
 }
