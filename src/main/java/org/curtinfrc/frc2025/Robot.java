@@ -19,6 +19,7 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -26,16 +27,18 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
@@ -69,6 +72,7 @@ public class Robot extends LoggedRobot {
   private final Vision vision;
   private final Intake intake;
   private Elevator elevator;
+  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -97,7 +101,6 @@ public class Robot extends LoggedRobot {
         break;
     }
 
-    // Set up data receivers & replay source
     switch (Constants.getMode()) {
       case REAL:
         // Running on a real robot, log to a USB stick ("/U/logs")
@@ -124,6 +127,8 @@ public class Robot extends LoggedRobot {
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
+
+    DriverStation.waitForDsConnection(60);
 
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.robotType) {
@@ -159,11 +164,10 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIO() {},
-                  new VisionIO() {},
-                  new VisionIO() {});
-          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
-          elevator = new Elevator(new ElevatorIO() {});
+                  new VisionIOLimelightGamepiece(camera0Name),
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOQuestNav());
+          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           intake = new Intake(new IntakeIONEO());
         }
 
@@ -171,7 +175,7 @@ public class Robot extends LoggedRobot {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIO() {},
+                  new GyroIOSim(() -> drive.kinematics, () -> drive.getModuleStates()) {},
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
@@ -203,6 +207,8 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
     }
+
+    superstructure = new Superstructure(drive, elevator);
 
     autoFactory =
         new AutoFactory(
@@ -271,11 +277,6 @@ public class Robot extends LoggedRobot {
             drive.joystickDriveAtAngle(
                 () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
 
-    intake.setDefaultCommand(intake.intakeCommand(2));
-
-    controller.y().whileTrue(intake.intakeCommand());
-    controller.x().whileTrue(intake.goToTargetRPM());
-
     // Reset gyro to 0° when B button is pressed
     controller
         .y()
@@ -287,18 +288,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller
-        .x()
-        .whileTrue(
-            drive.joystickDrive(
-                () -> controller.getLeftY() * 0.5,
-                () -> controller.getLeftX() * 0.5,
-                () -> -controller.getRightX() * 0.5));
-
-    controller.pov(0).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L1));
-    controller.pov(90).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L2));
-    controller.pov(180).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.L3));
-    controller.pov(270).onTrue(elevator.goToSetpoint(ElevatorConstants.Setpoints.COLLECT));
+    controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
+    controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
+    controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
+    controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
