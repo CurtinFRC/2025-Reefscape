@@ -22,15 +22,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import org.curtinfrc.frc2025.subsystems.drive.Drive;
-
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.RobotBase;
 import org.curtinfrc.frc2025.util.PoseUtil;
 
 /**
@@ -87,8 +78,8 @@ public final class Constants {
       System.exit(1);
     }
   }
-  
-  // TODO: MAKE SETPOINTS  
+
+  // TODO: MAKE SETPOINTS
   public enum Setpoints {
     /* in mm */
     COLLECT(950, List.of(13, 12), List.of(1, 2)),
