@@ -202,7 +202,9 @@ public class RepulsorFieldPlanner {
     for (int x = 0; x <= ARROWS_X; x++) {
       for (int y = 0; y <= ARROWS_Y; y++) {
         var translation =
-            new Translation2d(x * RepulsorConstants.FIELD_LENGTH / ARROWS_X, y * RepulsorConstants.FIELD_WIDTH / ARROWS_Y);
+            new Translation2d(
+                x * RepulsorConstants.FIELD_LENGTH / ARROWS_X,
+                y * RepulsorConstants.FIELD_WIDTH / ARROWS_Y);
         var force = Force.kZero;
         if (useObstaclesInArrows)
           force = force.plus(getObstacleForce(translation, goal().getTranslation()));
@@ -230,7 +232,8 @@ public class RepulsorFieldPlanner {
     }
     var direction = displacement.getAngle();
     var mag =
-        RepulsorConstants.GOAL_STRENGTH * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
+        RepulsorConstants.GOAL_STRENGTH
+            * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
     return new Force(mag, direction);
   }
 
