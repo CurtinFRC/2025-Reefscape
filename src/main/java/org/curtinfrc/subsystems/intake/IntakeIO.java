@@ -7,26 +7,13 @@ public interface IntakeIO {
   public static class IntakeIOInputs {
     public double appliedVolts;
     public double currentAmps;
-    // public AngularVelocity encoderOutput;
-    public double encoderOutput;
-    public double goalRPM = 500;
-    public boolean intakeAtRPM = false;
-    // double intakeVolts = IntakeConstants.intakeVolts;
+    public double positionRotations;
+    public double angularVelocityRotationsPerMinute;
+    public boolean frontSensor;
+    public boolean backSensor;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
 
-  public default void achieveRPM() {}
-
-  public default boolean intakeAtRPM() {
-    return false;
-  }
-
-  public default void beamBreakState() {}
-
-  public default void setIntakeVolts(double volts) {}
-
-  public default void intake() {}
-
-  public default void stop() {}
+  public default void setVoltage(double volts) {}
 }

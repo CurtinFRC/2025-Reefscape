@@ -1,6 +1,7 @@
 package org.curtinfrc.frc2025;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
+import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeVolts;
 
 import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
@@ -55,9 +56,9 @@ import org.littletonrobotics.urcl.URCL;
  */
 public class Robot extends LoggedRobot {
   // Subsystems
-  private final Drive drive;
-  private final Vision vision;
-  private final Intake intake;
+  private Drive drive;
+  private Vision vision;
+  private Intake intake;
   private Elevator elevator;
   private Superstructure superstructure;
 
@@ -258,6 +259,10 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftY(),
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
+
+    intake.setDefaultCommand(intake.intake(intakeVolts / 4));
+    intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
+    intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
 
     // Lock to 0° when A button is held
     controller

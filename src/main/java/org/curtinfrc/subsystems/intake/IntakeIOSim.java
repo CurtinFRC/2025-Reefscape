@@ -1,47 +1,49 @@
 package org.curtinfrc.subsystems.intake;
 
-import edu.wpi.first.math.MathUtil;
+import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeBackSensorPort;
+import static org.curtinfrc.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
+
+import edu.wpi.first.hal.SimBoolean;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IntakeIOSim implements IntakeIO {
-
   private DCMotor intakeMotor = DCMotor.getNEO(1);
   private DCMotorSim intakeMotorSim;
+  private SimDevice frontImpl;
+  private SimBoolean frontSensor;
+  private SimDevice backImpl;
+  private SimBoolean backSensor;
+  private double volts = 0;
 
   public IntakeIOSim() {
     intakeMotorSim =
         new DCMotorSim(LinearSystemId.createDCMotorSystem(intakeMotor, 0.025, 4.0), intakeMotor);
-  }
 
-  private double appliedVolts = 0.0;
+    frontImpl = SimDevice.create("IntakeSensorFront", intakeFrontSensorPort);
+    frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    backImpl = SimDevice.create("IntakeSensorBack", intakeBackSensorPort);
+    backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
+  }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    intakeMotorSim.setInputVoltage(appliedVolts);
-    intakeMotorSim.update(0.02);
-    // inputs.appliedVolts = appliedVolts;
-    inputs.appliedVolts = intakeMotorSim.getInputVoltage();
-    // inputs.encoderOutput = intakeMotorSim.getAngularVelocity();
-    inputs.encoderOutput = intakeMotorSim.getAngularVelocityRadPerSec();
-  }
-
-  @Override
-  public void setIntakeVolts(double volts) {
-    appliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     intakeMotorSim.setInputVoltage(volts);
+    intakeMotorSim.update(0.02);
+    inputs.appliedVolts = intakeMotorSim.getInputVoltage();
+    inputs.currentAmps = intakeMotorSim.getCurrentDrawAmps();
+    inputs.positionRotations = intakeMotorSim.getAngularPositionRotations();
+    inputs.angularVelocityRotationsPerMinute = intakeMotorSim.getAngularVelocityRPM();
+    inputs.frontSensor = frontSensor.get();
+    inputs.backSensor = backSensor.get();
   }
 
   @Override
-  public void achieveRPM() {
-    intakeMotorSim.setAngularVelocity(IntakeConstants.goalRPM);
-  }
-
-  @Override
-  public boolean intakeAtRPM() {
-    double angularVelocity = intakeMotorSim.getAngularVelocityRadPerSec();
-    return IntakeConstants.goalRPM - IntakeConstants.intakeTolerance < angularVelocity
-        && angularVelocity < IntakeConstants.goalRPM + IntakeConstants.intakeTolerance;
+  public void setVoltage(double volts) {
+    this.volts = volts;
+    intakeMotorSim.setInputVoltage(volts);
   }
 }
