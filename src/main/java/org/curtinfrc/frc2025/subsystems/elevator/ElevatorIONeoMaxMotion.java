@@ -36,7 +36,6 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
         .allowedClosedLoopError(ElevatorConstants.allowedErr);
 
     SparkUtil.tryUntilOk(
-        elevatorMotor,
         5,
         () ->
             elevatorMotor.configure(
