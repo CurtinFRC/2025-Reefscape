@@ -19,7 +19,7 @@ def nativeDir = "$projectDir/app/native"
 def tinympcDir = "$nativeDir/tinympc"
 def eigenDir = "$projectDir/../../eigen"
 def libsDir = "$projectDir/app/libs"
-def libsLinkDir = "$libsDir/Debug"
+def libsLinkDir = "$libsDir"
 
 // Detect operating system
 def os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem()
