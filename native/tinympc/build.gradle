@@ -18,14 +18,15 @@ java {
 def nativeDir = "$projectDir/app/native"
 def tinympcDir = "$nativeDir/tinympc"
 def eigenDir = "$projectDir/../../eigen"
-def libsDir = "$projectDir/app/libs"
-def libsLinkDir = "$libsDir"
+def libsDir = "$projectDir/app/libs/Debug"
 
 // Detect operating system
 def os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem()
 def isWindows = os.isWindows()
 def isLinux = os.isLinux()
 def isMac = os.isMacOsX()
+
+def libsLinkDir = "$libsDir"
 
 // Dynamically detect WPILib JDK based on OS
 def wpilibJdkPath = isWindows
@@ -122,7 +123,8 @@ task compileJNI(type: Exec, dependsOn: buildTinyMPC) {
             // '-ltinympcstatic', // Link static TinyMPC library
             '-ltinympc',       // Link shared TinyMPC library
             '-o', outputLibrary,
-            "TinyMPCWrapper.cpp"
+            "TinyMPCWrapper.cpp",
+            "-v"
 }
 
 // Link tasks
