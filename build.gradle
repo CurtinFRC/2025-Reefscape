@@ -43,6 +43,14 @@ deploy {
 
                 // Static files artifact
                 frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
+                    files = project.fileTree('src/main/deploy/native') {
+                        include 'tinympc_jni.dll', 'libtinympc_jni.so', 'libtinympc_jni.dylib'
+                    }
+                    directory = '/home/lvuser/deploy/native'
+                    deleteOldFiles = true
+                }
+
+                frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
                     files = project.fileTree('src/main/deploy')
                     directory = '/home/lvuser/deploy'
                     // Change to true to delete files on roboRIO that no

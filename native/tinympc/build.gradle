@@ -17,6 +17,7 @@ java {
 
 def nativeDir = "$projectDir/app/native"
 def tinympcDir = "$nativeDir/tinympc"
+def eigenDir = "$projectDir/../../eigen"
 def libsDir = "$projectDir/app/libs"
 def libsLinkDir = "$libsDir/Debug"
 
@@ -51,8 +52,29 @@ def jniIncludeOSPath = isWindows
         ? ""
         : "${javaHome}/include/linux"
 
+// Build Eigen library using CMake
+task buildEigen(type: Exec) {
+    description = 'Build Eigen library using CMake'
+    workingDir = eigenDir
+    doFirst {
+        file("$eigenDir/build").mkdirs()
+    }
+    commandLine 'cmake', '-Bbuild', '-H.', '-DCMAKE_BUILD_TYPE=Release',
+            "-DCMAKE_INSTALL_PREFIX=${libsDir}/eigen",
+            '-DEIGEN_TEST_NOQT=ON', // Disable Qt-based tests
+            '-DEIGEN_TESTS=OFF',    // Disable all unit tests
+            '-DBUILD_TESTING=OFF',  // Disable CTest integration
+            '-DEIGEN_BUILD_DOC=OFF' // Skip building documentation
+}
+
+task installEigen(type: Exec, dependsOn: buildEigen) {
+    description = 'Install Eigen library'
+    workingDir = "$eigenDir/build"
+    commandLine 'cmake', '--install', '.'
+}
+
 // TinyMPC build commands
-task compileTinyMPC(type: Exec) {
+task compileTinyMPC(type: Exec, dependsOn: installEigen) {
     description = 'Compile the TinyMPC library using CMake'
     workingDir = tinympcDir
     doFirst {
@@ -63,6 +85,7 @@ task compileTinyMPC(type: Exec) {
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${libsDir}",
             "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${libsDir}",
             '-DBUILD_SHARED_LIBS=ON',
+            "-DEIGEN3_INCLUDE_DIR=${libsDir}/eigen/include/eigen3",
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE=${libsDir}",
             "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${libsDir}",
             "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE=${libsDir}"
@@ -87,8 +110,6 @@ task compileJNI(type: Exec, dependsOn: buildTinyMPC) {
 
     def compiler = isWindows ? 'g++' : 'clang++'
 
-    def eigenIncludeDir = "$projectDir/../../eigen"
-
     commandLine compiler,
             '-shared',
             '-fPIC',
@@ -96,10 +117,10 @@ task compileJNI(type: Exec, dependsOn: buildTinyMPC) {
             '-I', jniIncludePath,
             '-I', jniIncludeOSPath,
             '-I', tinympcDir,
-            '-I', eigenIncludeDir,
-            '-L', libsLinkDir,
-            '-ltinympcstatic', // Explicitly add the library
-            '-ltinympc',
+            '-I', "${libsDir}/eigen/include/eigen3", // Include compiled Eigen headers
+            '-L', libsDir,
+            // '-ltinympcstatic', // Link static TinyMPC library
+            '-ltinympc',       // Link shared TinyMPC library
             '-o', outputLibrary,
             "TinyMPCWrapper.cpp"
 }

@@ -124,6 +124,8 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
+    TinyMPC mpc = new TinyMPC();
+
     DriverStation.waitForDsConnection(60);
 
     if (Constants.getMode() != Mode.REPLAY) {

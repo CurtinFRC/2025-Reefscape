@@ -1,3 +1,5 @@
+package org.curtinfrc.frc2025;
+
 public class TinyMPCWrapper {
   static {
     System.loadLibrary("tinympc_jni"); // Load the native library
