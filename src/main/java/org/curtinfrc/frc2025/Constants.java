@@ -17,8 +17,6 @@ import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLa
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import java.util.List;
@@ -31,7 +29,7 @@ import org.littletonrobotics.junction.Logger;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final RobotType robotType = RobotType.SIMBOT;
+  public static final RobotType robotType = RobotType.DEVBOT;
   public static final double ROBOT_X = 550; // mm
   public static final double ROBOT_Y = 570;
 
@@ -40,15 +38,6 @@ public final class Constants {
       case DEVBOT, COMPBOT -> RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
       case SIMBOT -> Mode.SIM;
     };
-  }
-
-  @SuppressWarnings("resource")
-  public static RobotType getRobot() {
-    if (RobotBase.isReal() && RobotType.SIMBOT == robotType) {
-      new Alert("Robot type is invalid, defaulting to competition robot.", AlertType.kWarning);
-      return RobotType.COMPBOT;
-    }
-    return robotType;
   }
 
   public static enum RobotType {

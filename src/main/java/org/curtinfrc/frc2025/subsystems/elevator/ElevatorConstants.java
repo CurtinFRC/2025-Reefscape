@@ -25,4 +25,6 @@ public class ElevatorConstants {
   public static double kMinOutput = -12.0; // Minimum voltage output
   public static double kMaxOutput = 12.0; // Maximum voltage output
   public static double kV = 473; // Voltage constant (i for it from the datasheet)
+
+  public static double height = 0; // Height of the base of the elevator from ground (in mm)
 }

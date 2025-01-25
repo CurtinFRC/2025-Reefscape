@@ -101,6 +101,8 @@ dependencies {
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
+
+    implementation project(':native:tinympc') // Include the tinympc subproject
 }
 
 test {
@@ -129,6 +131,9 @@ jar {
     from sourceSets.main.allSource
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from {
+        zipTree(project(':native:tinympc').tasks.named('jar').get().archiveFile.get().asFile)
+    }
 }
 
 // Configure jar and deploy tasks

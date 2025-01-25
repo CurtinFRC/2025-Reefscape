@@ -30,3 +30,5 @@ Properties props = System.getProperties();
 props.setProperty("org.gradle.internal.native.headers.unresolved.dependencies.ignore", "true");
 
 rootProject.name = "2025-Reefscape"
+
+include 'native:tinympc'

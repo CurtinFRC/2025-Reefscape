@@ -18,7 +18,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
   private double velocityError = 0;
 
   public ElevatorIOSimMPC() {
-    elevatorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, 0.025, 4.0), motor);
+    elevatorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, 0.025, 10.7), motor);
   }
 
   @Override
@@ -28,7 +28,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     inputs.distanceSensorReading = 0.0;
     inputs.encoderReading = elevatorSim.getAngularPositionRotations();
     inputs.point = set;
-    inputs.pointRot = ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint());
+    inputs.pointRot = ElevatorIO.convertSetpoint(set.elevatorSetpoint());
 
     inputs.motorVoltage = elevatorSim.getInputVoltage();
 
@@ -39,7 +39,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     inputs.positionError =
         Math.abs(
             elevatorSim.getAngularPositionRotations()
-                - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
+                - ElevatorIO.convertSetpoint(set.elevatorSetpoint()));
 
     inputs.stable = isStable();
 
@@ -55,7 +55,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
   public void goToSetpoint(Setpoints point) {
     set = point;
 
-    double targetPosition = ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint());
+    double targetPosition = ElevatorIO.convertSetpoint(point.elevatorSetpoint());
     double currentPosition = elevatorSim.getAngularPositionRotations();
     double velocity = elevatorSim.getAngularVelocityRPM() / 60.0; // Convert RPM to RPS
 
@@ -83,7 +83,7 @@ public class ElevatorIOSimMPC implements ElevatorIO {
     double positionError =
         Math.abs(
             elevatorSim.getAngularPositionRotations()
-                - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
+                - ElevatorIO.convertSetpoint(set.elevatorSetpoint()));
     double velocity = elevatorSim.getAngularVelocityRPM() / 60.0; // Convert RPM to RPS
 
     return positionError < ElevatorConstants.positionTolerance

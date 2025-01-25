@@ -11,10 +11,6 @@ import org.curtinfrc.frc2025.util.SparkUtil;
 public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   private SparkClosedLoopController controller = elevatorMotor.getClosedLoopController();
 
-  public static double convertSetpoint(double set /* in mm */) {
-    return set / 21; /* mm to revolutions */
-  }
-
   public ElevatorIONeoMaxMotion() {
     var config = new SparkMaxConfig();
     config.voltageCompensation(12.0).smartCurrentLimit(80);
@@ -46,7 +42,8 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
   @Override
   public void goToSetpoint(Setpoints point) {
     setpoint = point;
-    controller.setReference(convertSetpoint(point.elevatorSetpoint()), ControlType.kPosition);
+    controller.setReference(
+        ElevatorIO.convertSetpoint(point.elevatorSetpoint()), ControlType.kPosition);
   }
 
   @Override

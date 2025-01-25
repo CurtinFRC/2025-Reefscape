@@ -26,7 +26,7 @@ public class ElevatorIOSim implements ElevatorIO {
   public void goToSetpoint(Setpoints point) {
     set = point;
 
-    elevatorSim.setAngle(ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint()));
+    elevatorSim.setAngle(ElevatorIO.convertSetpoint(point.elevatorSetpoint()));
   }
 
   @Override

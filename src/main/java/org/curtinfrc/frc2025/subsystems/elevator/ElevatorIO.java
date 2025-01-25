@@ -34,4 +34,8 @@ public interface ElevatorIO {
   }
 
   public default void stop() {}
+
+  public static double convertSetpoint(double set /* in mm */) {
+    return (set - ElevatorConstants.height) / 21; /* mm to revolutions */
+  }
 }

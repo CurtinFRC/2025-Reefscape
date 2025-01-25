@@ -17,7 +17,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
     inputs.distanceSensorReading = 0.0;
     inputs.encoderReading = elevatorEncoder.getPosition();
     inputs.point = set;
-    inputs.pointRot = ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint());
+    inputs.pointRot = ElevatorIO.convertSetpoint(set.elevatorSetpoint());
 
     inputs.motorVoltage = computedVoltage;
 
@@ -27,8 +27,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
 
     inputs.positionError =
         Math.abs(
-            elevatorEncoder.getPosition()
-                - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
+            elevatorEncoder.getPosition() - ElevatorIO.convertSetpoint(set.elevatorSetpoint()));
 
     inputs.stable = isStable();
 
@@ -44,7 +43,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
   public void goToSetpoint(Setpoints point) {
     set = point;
 
-    double targetPosition = ElevatorIONeoMaxMotion.convertSetpoint(point.elevatorSetpoint());
+    double targetPosition = ElevatorIO.convertSetpoint(point.elevatorSetpoint());
     double currentPosition = elevatorEncoder.getPosition();
     double velocity = elevatorEncoder.getVelocity() / 60.0;
 
@@ -71,8 +70,7 @@ public class ElevatorIONeoMPC extends ElevatorIONeo {
   public boolean isStable() {
     double positionError =
         Math.abs(
-            elevatorEncoder.getPosition()
-                - ElevatorIONeoMaxMotion.convertSetpoint(set.elevatorSetpoint()));
+            elevatorEncoder.getPosition() - ElevatorIO.convertSetpoint(set.elevatorSetpoint()));
     double velocity = elevatorEncoder.getVelocity() / 60.0; // Convert RPM to RPS
 
     return positionError < ElevatorConstants.positionTolerance

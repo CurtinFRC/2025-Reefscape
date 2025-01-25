@@ -26,7 +26,7 @@ public class ElevatorIONeoMaxMotionLaserCAN extends ElevatorIONeoMaxMotion {
     }
 
     if (distance >= 0) {
-      elevatorEncoder.setPosition(ElevatorIONeoMaxMotion.convertSetpoint(distance));
+      elevatorEncoder.setPosition(ElevatorIO.convertSetpoint(distance));
     }
   }
 

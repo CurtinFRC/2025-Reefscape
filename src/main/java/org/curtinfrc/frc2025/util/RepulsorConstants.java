@@ -12,8 +12,8 @@ public class RepulsorConstants {
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
-          new SnowmanObstacle(new Translation2d(4.49, 4), 1, true),
-          new SnowmanObstacle(new Translation2d(13.08, 4), 1, true));
+          new SnowmanObstacle(new Translation2d(4.49, 4), 0, true),
+          new SnowmanObstacle(new Translation2d(13.08, 4), 0, true));
   public static final double FIELD_LENGTH = 16.42;
   public static final double FIELD_WIDTH = 8.16;
   public static final List<Obstacle> WALLS =
