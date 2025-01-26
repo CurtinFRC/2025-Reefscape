@@ -18,7 +18,7 @@ public class IntakeIONEO implements IntakeIO {
 
   public IntakeIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
-    config.smartCurrentLimit(0, intakeCurrentLimit).idleMode(IdleMode.kCoast);
+    config.smartCurrentLimit(0, intakeCurrentLimit).idleMode(IdleMode.kCoast).inverted(true);
     SparkUtil.tryUntilOk(
         5,
         () ->

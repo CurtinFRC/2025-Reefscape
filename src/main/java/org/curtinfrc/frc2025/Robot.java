@@ -30,8 +30,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
@@ -140,7 +139,6 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
@@ -158,10 +156,10 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+                  new VisionIO() {},
+                  new VisionIO() {},
+                  new VisionIO() {});
+          elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
         }
@@ -184,7 +182,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIOSim());
+          elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
         }
@@ -269,13 +267,20 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts / 4));
+    intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
-    intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
     intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
-    intake.backSensor.whileTrue(ejector.eject(15).until(ejector.sensor));
+    intake.backSensor.whileTrue(intake.intake(intakeVolts / 2));
+    intake.backSensor.onTrue(
+        ejector
+            .eject(300)
+            .until(intake.backSensor.negate())
+            .andThen(ejector.eject(-60).until(intake.backSensor)));
+    ejector.sensor.whileTrue(intake.stop());
 
-    controller.x().whileTrue(ejector.eject(1500).until(ejector.sensor.negate()));
+    // controller.x().whileTrue(ejector.eject(150).until(ejector.sensor.negate()));
+    controller.x().whileTrue(ejector.eject(5000));
 
     // Lock to 0° when A button is held
     controller
@@ -290,15 +295,12 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                        drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kPi)),
                     drive)
                 .ignoringDisable(true));
 
-    controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
-    controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
-    controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
-    controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
+    controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
+    controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
   }
 
   /** This function is called periodically during all modes. */
@@ -316,6 +318,12 @@ public class Robot extends LoggedRobot {
 
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
+
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
 
     autoChooser.periodic();
 
