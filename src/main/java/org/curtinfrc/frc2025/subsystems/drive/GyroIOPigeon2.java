@@ -13,6 +13,7 @@
 
 package org.curtinfrc.frc2025.subsystems.drive;
 
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -24,8 +25,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.util.CircularBuffer;
 import java.util.Queue;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.util.BufferUtil;
 
 /** IO implementation for Pigeon 2. */
 public class GyroIOPigeon2 implements GyroIO {
@@ -34,9 +38,13 @@ public class GyroIOPigeon2 implements GyroIO {
           TunerConstants.DrivetrainConstants.Pigeon2Id,
           TunerConstants.DrivetrainConstants.CANBusName);
   private final StatusSignal<Angle> yaw = pigeon.getYaw();
+  private final StatusSignal<LinearAcceleration> xAcceleration = pigeon.getAccelerationX();
+  private final StatusSignal<LinearAcceleration> yAcceleration = pigeon.getAccelerationY();
   private final Queue<Double> yawPositionQueue;
   private final Queue<Double> yawTimestampQueue;
   private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
+  private final CircularBuffer<Double> xAccelerationBuffer = new CircularBuffer<>(6);
+  private final CircularBuffer<Double> yAccelerationBuffer = new CircularBuffer<>(6);
 
   public GyroIOPigeon2() {
     pigeon.getConfigurator().apply(new Pigeon2Configuration());
@@ -50,7 +58,9 @@ public class GyroIOPigeon2 implements GyroIO {
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
+    inputs.connected =
+        BaseStatusSignal.refreshAll(yaw, yawVelocity, xAcceleration, yAcceleration)
+            .equals(StatusCode.OK);
     inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
 
@@ -60,7 +70,21 @@ public class GyroIOPigeon2 implements GyroIO {
         yawPositionQueue.stream()
             .map((Double value) -> Rotation2d.fromDegrees(value))
             .toArray(Rotation2d[]::new);
+    inputs.xAcceleration = xAcceleration.getValue().in(MetersPerSecondPerSecond);
+    xAccelerationBuffer.addLast(inputs.xAcceleration);
+    inputs.yAcceleration = yAcceleration.getValue().in(MetersPerSecondPerSecond);
+    yAccelerationBuffer.addLast(inputs.yAcceleration);
     yawTimestampQueue.clear();
     yawPositionQueue.clear();
+  }
+
+  @Override
+  public double xAcceleration() {
+    return BufferUtil.average(xAccelerationBuffer);
+  }
+
+  @Override
+  public double yAcceleration() {
+    return BufferUtil.average(yAccelerationBuffer);
   }
 }
