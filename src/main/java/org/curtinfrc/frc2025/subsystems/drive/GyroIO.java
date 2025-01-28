@@ -15,6 +15,7 @@ package org.curtinfrc.frc2025.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
 
 public interface GyroIO {
   @AutoLog
@@ -24,7 +25,19 @@ public interface GyroIO {
     public double yawVelocityRadPerSec = 0.0;
     public double[] odometryYawTimestamps = new double[] {};
     public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
+    public double xAcceleration = 0;
+    public double yAcceleration = 0;
   }
 
   public default void updateInputs(GyroIOInputs inputs) {}
+
+  @AutoLogOutput(key = "Gyro/FilteredXAcceleration")
+  public default double xAcceleration() {
+    return 0;
+  }
+
+  @AutoLogOutput(key = "Gyro/FilteredYAcceleration")
+  public default double yAcceleration() {
+    return 0;
+  }
 }
