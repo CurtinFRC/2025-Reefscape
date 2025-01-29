@@ -27,6 +27,6 @@ public class Intake extends SubsystemBase {
   }
 
   public Command intake(double volts) {
-    return run(() -> io.setVoltage(volts));
+    return run(() -> io.setVoltage(-volts));
   }
 }

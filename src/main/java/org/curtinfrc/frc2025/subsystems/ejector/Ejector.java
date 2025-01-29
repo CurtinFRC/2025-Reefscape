@@ -39,7 +39,7 @@ public class Ejector extends SubsystemBase {
           var pid_out = pid.calculate(inputs.angularVelocityRotationsPerMinute, rpm);
           Logger.recordOutput("Ejector/VelocityErrror", pid.getError());
           var ff_out = ff.calculate(rpm);
-          io.setVoltage(pid_out + ff_out);
+          io.setVoltage(-(pid_out + ff_out));
         });
   }
 }

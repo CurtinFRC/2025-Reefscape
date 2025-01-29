@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.Set;
@@ -21,8 +20,8 @@ public class Superstructure {
     return Commands.defer(
         () ->
             Commands.parallel(
-              drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))),
-              elevator.goToSetpoint(setpoint).finallyDo(() -> elevator.stop())),
-        Set.of(drive, elevator));
+                // drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))),
+                elevator.goToSetpoint(setpoint)),
+        Set.of(elevator));
   }
 }

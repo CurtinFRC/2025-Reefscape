@@ -8,13 +8,12 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class IntakeIONEO implements IntakeIO {
   private final SparkMax intakeNeo = new SparkMax(intakeMotorId, MotorType.kBrushless);
-  private final DigitalInput frontSensor = new DigitalInput(intakeFrontSensorPort);
-  private final DigitalInput backSensor = new DigitalInput(intakeBackSensorPort);
+  // private final DigitalInput frontSensor = new DigitalInput(intakeFrontSensorPort);
+  // private final DigitalInput backSensor = new DigitalInput(intakeBackSensorPort);
 
   public IntakeIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
@@ -32,8 +31,8 @@ public class IntakeIONEO implements IntakeIO {
     inputs.currentAmps = intakeNeo.getOutputCurrent();
     inputs.positionRotations = intakeNeo.getEncoder().getPosition();
     inputs.angularVelocityRotationsPerMinute = intakeNeo.getEncoder().getVelocity();
-    inputs.frontSensor = frontSensor.get();
-    inputs.backSensor = backSensor.get();
+    // inputs.frontSensor = frontSensor.get();
+    // inputs.backSensor = backSensor.get();
   }
 
   @Override

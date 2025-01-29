@@ -44,13 +44,17 @@ public class ElevatorIONeoMaxMotion extends ElevatorIONeo {
 
   @Override
   public void goToSetpoint(Setpoints point) {
-    setpoint = point;
+    super.setpoint = point;
     controller.setReference(convertSetpoint(point.elevatorSetpoint()), ControlType.kPosition);
   }
 
   @Override
   public boolean isStable() {
     double vel = elevatorEncoder.getVelocity();
-    return ElevatorConstants.tolerance > vel && vel > -ElevatorConstants.tolerance;
+    return false;
+    // return ElevatorConstants.tolerance > vel && vel > -ElevatorConstants.tolerance;
+    // double pos = elevatorEncoder.getPosition();
+    // return setpoint.elevatorSetpoint() - ElevatorConstants.tolerance < pos
+    //     && pos < setpoint.elevatorSetpoint() + ElevatorConstants.tolerance;
   }
 }
