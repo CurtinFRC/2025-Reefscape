@@ -40,6 +40,7 @@
   },
   "java.debug.settings.onBuildFailureProceed": true,
   "files.associations": {
-    "eigen": "cpp"
+    "eigen": "cpp",
+    "stdexcept": "cpp"
   }
 }

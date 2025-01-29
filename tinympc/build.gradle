@@ -1,0 +1,39 @@
+import edu.wpi.first.toolchain.NativePlatforms
+import edu.wpi.first.gradlerio.wpi.java.*;
+import edu.wpi.first.gradlerio.wpi.WPIPlugin;
+import org.gradle.internal.os.OperatingSystem;
+import java.util.concurrent.Callable;
+import edu.wpi.first.jni.JniNativeLibrarySpec;
+
+apply plugin: 'cpp'
+apply plugin: 'edu.wpi.first.GradleRIO'
+apply plugin: 'edu.wpi.first.GradleJni'
+
+model {
+    components {
+        TinyMPC(NativeLibrarySpec) {
+            // targetPlatform NativePlatforms.desktop
+            targetPlatform NativePlatforms.roborio  // Build for RoboRIO
+
+            // targetPlatform wpi.platforms.roborio
+            // enableCheckTask = true
+
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/main/cpp'
+                        include '**/*.cpp'
+                    }
+
+                    exportedHeaders {
+                        srcDir 'src/main/include'
+                    }
+                }
+            }
+
+            wpi.cpp.vendor.cpp(it)
+            wpi.cpp.deps.wpilib(it)
+            nativeUtils.useRequiredLibrary(it, "wpilib_shared")
+        }
+    }
+}

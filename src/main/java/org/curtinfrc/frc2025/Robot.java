@@ -69,6 +69,8 @@ public class Robot extends LoggedRobot {
   private Vision vision;
   private Elevator elevator;
   private Superstructure superstructure;
+  
+  private TinyMPCJNI mpc;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -181,6 +183,8 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSimMPC());
+
+          mpc = new TinyMPCJNI();
         }
       }
     } else {
@@ -287,6 +291,8 @@ public class Robot extends LoggedRobot {
     controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
     controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
     controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
+
+    mpc.test();
   }
 
   /** This function is called periodically during all modes. */

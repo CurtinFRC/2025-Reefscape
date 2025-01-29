@@ -1,8 +1,11 @@
 plugins {
     id "java"
+    id "cpp"
     id "edu.wpi.first.GradleRIO" version "2025.2.1"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.12.0"
+    id 'edu.wpi.first.GradleJni' version '1.1.0'
+    id 'edu.wpi.first.DeployUtils' version "2025.2.0"
 }
 
 java {
@@ -41,15 +44,7 @@ deploy {
                     jvmArgs.add("-XX:MaxGCPauseMillis=50")
                 }
 
-                // Static files artifact
-                frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
-                    files = project.fileTree('src/main/deploy/native') {
-                        include 'tinympc_jni.dll', 'libtinympc_jni.so', 'libtinympc_jni.dylib'
-                    }
-                    directory = '/home/lvuser/deploy/native'
-                    deleteOldFiles = true
-                }
-
+                
                 frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
                     files = project.fileTree('src/main/deploy')
                     directory = '/home/lvuser/deploy'
@@ -57,9 +52,66 @@ deploy {
                     // longer exist in deploy directory on roboRIO
                     deleteOldFiles = true
                 }
+
+                deployTinyMPC(getArtifactTypeClass('FRCJNILibraryArtifact')) {
+                    getFiles().set(fileTree("build/libs/TinyMPCJNI/roborio/release/") {
+                        include("libTinyMPCJNI.so")
+                    })
+                }
             }
         }
     }
+}
+
+model {
+    components {
+        TinyMPCJNI(JniNativeLibrarySpec) {
+            // targetPlatform wpi.platforms.desktop
+            targetPlatform wpi.platforms.roborio  // Build for RoboRIO
+            enableCheckTask = true
+            javaCompileTasks << compileJava
+            // jniCrossCompileOptions << JniCrossCompileOptions(wpi.platforms.desktop)
+            jniCrossCompileOptions << JniCrossCompileOptions(wpi.platforms.roborio)
+
+
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/main/native/cpp'
+                        include '**/*.cpp'
+                    }
+
+                    exportedHeaders {
+                        srcDir 'src/main/native/include'
+                    }
+                }
+            }
+
+            binaries.all {
+                lib project: ':tinympc', library: 'TinyMPC', linkage: 'static'
+            }
+
+            nativeUtils.useRequiredLibrary(it, "wpilib_shared")
+        }
+    }
+}
+
+nativeUtils {
+    exportsConfigs {
+        // Only export explicit symbols from driver library
+        TinyMPCJNI {
+        }
+    }
+}
+
+task refreshCompileCommands(type: Exec) {
+    workingDir = rootDir
+    def args = [
+        "rm",
+        "-rf",
+        "$buildDir/TargetedCompileCommands"
+    ]
+    commandLine args
 }
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
@@ -110,7 +162,11 @@ dependencies {
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
 
-    implementation project(':native:tinympc') // Include the tinympc subproject
+    // roborioRelease fileTree(dir: "build/libs", include: ["libTinyMPCJNI.so"])
+
+    // Correct usage for Desktop JNI libraries
+    // nativeRelease fileTree(dir: "build/libs", include: ["*.dll", "*.dylib", "*.so"])
+
 }
 
 test {
@@ -139,9 +195,6 @@ jar {
     from sourceSets.main.allSource
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    from {
-        zipTree(project(':native:tinympc').tasks.named('jar').get().archiveFile.get().asFile)
-    }
 }
 
 // Configure jar and deploy tasks
@@ -154,6 +207,7 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
     options.encoding = 'UTF-8'
 }
+
 
 // Create version file
 project.compileJava.dependsOn(createVersionFile)
@@ -201,42 +255,43 @@ createVersionFile.dependsOn(eventDeploy)
 
 // Spotless formatting
 project.compileJava.dependsOn(spotlessApply)
-spotless {
-    java {
-        target fileTree(".") {
-            include "**/*.java"
-            exclude "**/build/**", "**/build-*/**"
-        }
-        toggleOffOn()
-        googleJavaFormat()
-        removeUnusedImports()
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-    groovyGradle {
-        target fileTree(".") {
-            include "**/*.gradle"
-            exclude "**/build/**", "**/build-*/**"
-        }
-        greclipse()
-        indentWithSpaces(4)
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-    json {
-        target fileTree(".") {
-            include "**/*.json"
-            exclude "**/build/**", "**/build-*/**"
-        }
-        gson().indentWithSpaces(2)
-    }
-    format "misc", {
-        target fileTree(".") {
-            include "**/*.md", "**/.gitignore"
-            exclude "**/build/**", "**/build-*/**"
-        }
-        trimTrailingWhitespace()
-        indentWithSpaces(2)
-        endWithNewline()
-    }
-}
+
+// spotless {
+//     java {
+//         target fileTree(".") {
+//             include "**/*.java"
+//             exclude "**/build/**", "**/build-*/**", "build", "bin/**"
+//         }
+//         toggleOffOn()
+//         // googleJavaFormat()
+//         removeUnusedImports()
+//         trimTrailingWhitespace()
+//         endWithNewline()
+//     }
+//     groovyGradle {
+//         target fileTree(".") {
+//             include "**/*.gradle"
+//             exclude "**/build/**", "**/build-*/**"
+//         }
+//         greclipse()
+//         indentWithSpaces(4)
+//         trimTrailingWhitespace()
+//         endWithNewline()
+//     }
+//     json {
+//         target fileTree(".") {
+//             include "**/*.json"
+//             exclude "**/build/**", "**/build-*/**"
+//         }
+//         gson().indentWithSpaces(2)
+//     }
+//     format "misc", {
+//         target fileTree(".") {
+//             include "**/*.md", "**/.gitignore"
+//             exclude "**/build/**", "**/build-*/**"
+//         }
+//         trimTrailingWhitespace()
+//         indentWithSpaces(2)
+//         endWithNewline()
+//     }
+// }
