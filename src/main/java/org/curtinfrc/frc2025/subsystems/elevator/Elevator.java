@@ -8,22 +8,52 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Setpoints;
+import org.curtinfrc.frc2025.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private final PIDController pid = new PIDController(kP, 0, kD);
+  private final PIDController pid = new PIDController(0, 0, 0);
+
+  @AutoLogOutput(key = "Elevator/Setpoint")
   private Setpoints setpoint = Setpoints.COLLECT;
 
+  // Tunable Numbers
+  LoggedTunableNumber kP = new LoggedTunableNumber("Elevator/kP");
+  LoggedTunableNumber kD = new LoggedTunableNumber("Elevator/kD");
+
+  @AutoLogOutput(key = "Elevator/IsNotAtCollect")
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
+
   public final Trigger toZero = new Trigger(() -> inputs.touchSensor);
+
+  @AutoLogOutput(key = "Elevator/AtSetpoint")
+  public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
     pid.setTolerance(tolerance);
+    switch (Constants.robotType) {
+      case COMPBOT:
+        kP.initDefault(16);
+        kD.initDefault(0);
+        pid.setPID(kP.get(), 0, kD.get());
+        break;
+      case DEVBOT:
+        kP.initDefault(16);
+        kD.initDefault(0);
+        pid.setPID(kP.get(), 0, kD.get());
+        break;
+      case SIMBOT:
+        kP.initDefault(16);
+        kD.initDefault(0);
+        pid.setPID(kP.get(), 0, kD.get());
+        break;
+    }
   }
 
   @Override
@@ -34,9 +64,11 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/setpoint", setpoint);
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
-  }
 
-  public Trigger atSetpoint = new Trigger(pid::atSetpoint);
+    if (kP.hasChanged(hashCode()) || kD.hasChanged(hashCode())) {
+      pid.setPID(kP.get(), 0, kD.get());
+    }
+  }
 
   public Command goToSetpoint(Setpoints point) {
     return run(

@@ -5,12 +5,11 @@ public class ElevatorConstants {
   public static int motorPort = 31;
 
   // TODO: TUNE PID and ff
-  public static double tolerance = 0.05;
-  public static double kP = 16;
-  public static double kD = 0;
+  // TODO: not using tunables for this yet
   public static double kV = 0;
   public static double kA = 0.01;
   public static double kG = 0;
+  public static double tolerance = 1;
 
   public static final double pulleyRadiusMeters = 0.002927789;
   public static final double maxHeightMeters = 0.8;

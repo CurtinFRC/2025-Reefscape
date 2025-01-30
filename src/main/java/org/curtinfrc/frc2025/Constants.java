@@ -17,6 +17,7 @@ import org.littletonrobotics.junction.Logger;
  */
 public final class Constants {
   public static final RobotType robotType = RobotType.DEVBOT;
+  public static final boolean tuningMode = true;
   public static final double ROBOT_X = 660; // mm
   public static final double ROBOT_Y = 680;
 
