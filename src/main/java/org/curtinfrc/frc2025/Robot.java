@@ -270,12 +270,16 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts / 4));
-    ejector.setDefaultCommand(ejector.stop());
-    // intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
+    intake.backSensor.and(intake.frontSensor).whileTrue(intake.intake(intakeVolts / 2).until(intake.frontSensor.negate().and(intake.backSensor)));
     // intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
-    // intake.backSensor.whileTrue(ejector.eject(15).until(ejector.sensor));
-
+    // intake.backSensor.whileTrue(intake.intake(intakeVolts / 2));
+    // intake.backSensor.onTrue(
+      // ejector
+        // .eject(300)
+        // .until(intake.backSensor.negate())
+        // .andThen(ejector.eject(-60).until(intake.backSensor)));
+    // ejector.sensor.whileTrue(intake.stop());
+        
     controller.x().whileTrue(ejector.eject(1500)); // .until(ejector.sensor.negate()));
 
     // Lock to 0° when A button is held

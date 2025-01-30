@@ -80,6 +80,11 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
 
+  private final SlewRateLimiter xLimiter =
+      new SlewRateLimiter(5 * 0.02); // Limits acceleration to 3 mps
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(5 * 0.02);
+  private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(0 * 0.02);
+
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
@@ -270,25 +275,36 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          // Get linear velocity
-          Translation2d linearVelocity =
-              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
-          // Apply rotation deadband
-          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+          double xSpeed = xSupplier.getAsDouble();
 
-          // Square rotation value for more precise control
+          double ySpeed = ySupplier.getAsDouble();
+
+          double omegaSpeed = omegaSupplier.getAsDouble();
+
+          Translation2d linearVelocity = getLinearVelocityFromJoysticks(xSpeed, ySpeed);
+
+          double omega = MathUtil.applyDeadband(omegaSpeed, DEADBAND);
+
           omega = Math.copySign(omega * omega, omega);
 
-          // Convert to field relative speeds & send command
+          Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
+
+          var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
+
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
-                  omega * getMaxAngularSpeedRadPerSec());
+                  xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
+                  yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
+                  limited
+                  );
+
+          Logger.recordOutput("Drive/OmegaLimited", limited);
+
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
+
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
