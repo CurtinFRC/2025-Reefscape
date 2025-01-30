@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
@@ -30,8 +31,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMaxMotionLaserCAN;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
@@ -140,7 +140,6 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          // elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
@@ -158,10 +157,10 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
-                  new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeoMaxMotionLaserCAN());
+                  new VisionIO() {},
+                  new VisionIO() {},
+                  new VisionIO() {});
+          elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
         }
@@ -184,7 +183,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIOSim());
+          elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
         }
@@ -269,13 +268,33 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts / 4));
-    ejector.setDefaultCommand(ejector.stop());
-    intake.frontSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor));
-    intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
-    intake.backSensor.whileTrue(ejector.eject(15).until(ejector.sensor));
+    // elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    controller
+        .rightBumper()
+        .negate()
+        .and(controller.leftBumper().negate())
+        .onTrue(elevator.goToSetpoint(Setpoints.COLLECT));
 
-    controller.x().whileTrue(ejector.eject(1500).until(ejector.sensor.negate()));
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    ejector.setDefaultCommand(ejector.stop());
+
+    intake
+        .backSensor
+        .and(intake.frontSensor.negate())
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+    intake
+        .backSensor
+        .and(intake.frontSensor)
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
+                .withName("front and back"));
+    intake
+        .backSensor
+        .and(intake.frontSensor.negate())
+        .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
+
+    controller.x().whileTrue(ejector.eject(1000));
 
     // Lock to 0° when A button is held
     controller
@@ -290,15 +309,16 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                        drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kPi)),
                     drive)
                 .ignoringDisable(true));
 
-    controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
-    controller.pov(90).whileTrue(superstructure.align(Setpoints.L2));
-    controller.pov(180).whileTrue(superstructure.align(Setpoints.L3));
-    controller.pov(270).whileTrue(superstructure.align(Setpoints.COLLECT));
+    controller
+        .rightBumper()
+        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L3), Set.of(elevator)));
+    controller
+        .leftBumper()
+        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L2), Set.of(elevator)));
   }
 
   /** This function is called periodically during all modes. */
@@ -316,6 +336,12 @@ public class Robot extends LoggedRobot {
 
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
+
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
 
     autoChooser.periodic();
 
@@ -345,7 +371,19 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("IntakeCommand", "null");
+    }
+  }
 
   /** This function is called once when test mode is enabled. */
   @Override

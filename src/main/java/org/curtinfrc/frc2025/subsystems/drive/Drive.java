@@ -80,6 +80,10 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
 
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
+  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
+
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
@@ -167,11 +171,11 @@ public class Drive extends SubsystemBase {
       }
 
       // Update gyro angle
-      if (gyroInputs.connected) {
+      if (gyroInputs.connected && i >= 0 && i < gyroInputs.odometryYawPositions.length) {
         // Use the real gyro angle
         rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
-        // Use the angle delta from the kinematics and module deltas
+        // Fallback to calculating the angle delta
         Twist2d twist = kinematics.toTwist2d(moduleDeltas);
         rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
@@ -270,25 +274,34 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          // Get linear velocity
-          Translation2d linearVelocity =
-              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+          double xSpeed = xSupplier.getAsDouble();
 
-          // Apply rotation deadband
-          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+          double ySpeed = ySupplier.getAsDouble();
 
-          // Square rotation value for more precise control
+          double omegaSpeed = omegaSupplier.getAsDouble();
+
+          Translation2d linearVelocity = getLinearVelocityFromJoysticks(xSpeed, ySpeed);
+
+          double omega = MathUtil.applyDeadband(omegaSpeed, DEADBAND);
+
           omega = Math.copySign(omega * omega, omega);
 
-          // Convert to field relative speeds & send command
+          Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
+
+          // var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
+
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
+                  xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
+                  yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
                   omega * getMaxAngularSpeedRadPerSec());
+
+          // Logger.recordOutput("Drive/OmegaLimited", limited);
+
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
+
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
