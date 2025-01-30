@@ -75,7 +75,7 @@ public final class Constants {
     // L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)), //TODO
     // TODO actually subtract
     L2(13.2 - 2.5, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)),
-    L3(35.2 - 2.5, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6));
+    L3(35.327, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6));
 
     private final double _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;

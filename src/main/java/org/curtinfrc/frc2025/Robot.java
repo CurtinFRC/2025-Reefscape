@@ -268,42 +268,33 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
-    ejector.setDefaultCommand(ejector.stop());
     // elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
     controller
         .rightBumper()
         .negate()
         .and(controller.leftBumper().negate())
         .onTrue(elevator.goToSetpoint(Setpoints.COLLECT));
+
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    ejector.setDefaultCommand(ejector.stop());
+
     intake
         .backSensor
-        .negate()
-        .or(elevator.isNotAtCollect)
-        .and(intake.frontSensor)
-        .whileTrue(intake.intake(intakeVolts));
-    intake
-        .backSensor
-        .or(elevator.isNotAtCollect)
-        .onTrue(
-            ejector
-                .eject(200)
-                .until(
-                    intake.frontSensor.negate().and(intake.backSensor.or(elevator.isNotAtCollect)))
-                .andThen(
-                    ejector
-                        .eject(-3)
-                        .until(intake.frontSensor)
-                        .andThen(ejector.eject(3).until(intake.frontSensor.negate()))));
-    intake
-        .backSensor
-        .or(elevator.isNotAtCollect)
         .and(intake.frontSensor.negate())
-        .whileTrue(intake.stop());
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+    intake
+        .backSensor
+        .and(intake.frontSensor)
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
+                .withName("front and back"));
+    intake
+        .backSensor
+        .and(intake.frontSensor.negate())
+        .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    // intake.backSensor.or(elevator.isNotAtCollect).and(intake.frontSensor).whileTrue(ejector.eject(50));
-
-    controller.x().whileTrue(ejector.eject(5000));
+    controller.x().whileTrue(ejector.eject(1000));
 
     // Lock to 0° when A button is held
     controller
