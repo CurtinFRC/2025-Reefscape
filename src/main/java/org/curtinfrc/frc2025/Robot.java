@@ -253,8 +253,6 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
-
-    controller.y().whileTrue(climber.run());
   }
 
   /** This function is called periodically during all modes. */

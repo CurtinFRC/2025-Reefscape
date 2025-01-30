@@ -24,11 +24,7 @@ public class ClimberIOSim implements ClimberIO {
 
   @Override
   public void updateInputs(ClimberIOInputs inputs) {
-    pivotMotorSim.update(0.02);
     grabberMotorSim.update(0.02);
-    inputs.pivotAppliedVoltage = pivotMotorSim.getInputVoltage();
-    inputs.pivotCurrent = pivotMotorSim.getCurrentDrawAmps();
-    inputs.pivotEncoderPosition = pivotMotorSim.getAngularPositionRad();
 
     inputs.grabberAppliedVoltage = grabberMotorSim.getInputVoltage();
     inputs.grabberCurrent = grabberMotorSim.getCurrentDrawAmps();
@@ -38,22 +34,9 @@ public class ClimberIOSim implements ClimberIO {
   }
 
   @Override
-  public void setPivotVoltage(double voltage) {
-    pivotAppliedVoltage = MathUtil.clamp(voltage, -12.0, 12.0);
-    pivotMotorSim.setInputVoltage(pivotAppliedVoltage);
-  }
-
-  @Override
   public void setGrabberVoltage(double voltage) {
     grabberAppliedVoltage = MathUtil.clamp(voltage, -12.0, 12.0);
     grabberMotorSim.setInputVoltage(grabberAppliedVoltage);
-  }
-
-  @Override
-  public void goToPivotSetpoint() {
-    pivotMotorSim.setAngle(
-        ClimberConstants.pivotMotorTargetPositionRotations
-            * (2 * Math.PI)); // convert rotations to radians
   }
 
   @Override
@@ -67,11 +50,6 @@ public class ClimberIOSim implements ClimberIO {
 
   @Override
   public boolean grabberIsStable() {
-    double position = grabberMotorSim.getAngularPositionRotations(); // rotations
-    return ClimberConstants.grabberMotorTargetPositionRotations - ClimberConstants.grabberTolerance
-            < position
-        && position
-            < ClimberConstants.grabberMotorTargetPositionRotations
-                + ClimberConstants.grabberTolerance;
+    return false; // TODO: Implement grabberIsStable
   }
 }

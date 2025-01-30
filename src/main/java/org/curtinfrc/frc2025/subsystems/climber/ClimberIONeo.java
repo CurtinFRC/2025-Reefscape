@@ -6,15 +6,11 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 public class ClimberIONeo implements ClimberIO {
-  protected final SparkMax pivotMotor =
-      new SparkMax(ClimberConstants.pivotMotorPort, MotorType.kBrushless);
-  protected final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
-
   protected final SparkMax grabberMotor =
       new SparkMax(ClimberConstants.grabberMotorPort, MotorType.kBrushless);
   protected final RelativeEncoder grabberEncoder = grabberMotor.getEncoder();
 
-  public ClimberIONeo() {}
+  public ClimberIONeo() {} // TODO: Work out what this does?
 
   @Override
   public void updateInputs(ClimberIOInputs inputs) {
@@ -22,16 +18,7 @@ public class ClimberIONeo implements ClimberIO {
     inputs.grabberCurrent = grabberMotor.getOutputCurrent();
     inputs.grabberEncoderPosition = grabberEncoder.getPosition();
 
-    inputs.pivotAppliedVoltage = pivotMotor.getBusVoltage() * pivotMotor.getAppliedOutput();
-    inputs.pivotCurrent = pivotMotor.getOutputCurrent();
-    inputs.pivotEncoderPosition = pivotEncoder.getPosition();
-
     inputs.grabberIsStable = grabberIsStable();
-  }
-
-  @Override
-  public void setPivotVoltage(double voltage) {
-    pivotMotor.set(voltage);
   }
 
   @Override

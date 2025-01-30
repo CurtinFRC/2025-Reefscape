@@ -1,30 +1,13 @@
 package org.curtinfrc.frc2025.subsystems.climber;
 
 public class ClimberConstants {
-  public static int pivotMotorPort = 99;
   public static int grabberMotorPort = 99;
 
-  public static final double pivotTargetVoltage = 4.0; // find actual values
-  public static final double grabberTargetVoltage = 4.0; // "               "
+  public static final double grabberTargetVoltage = 4.0;
 
-  private static double pivotGearRatio = 160.0;
-  private static double pivotTargetPositionRotations = 0.125; // 45 degrees
-  public static double pivotMotorTargetPositionRotations =
-      pivotTargetPositionRotations * pivotGearRatio;
-
-  public static double pivotkP = 1.0;
-  public static double pivotkI = 0.0;
-  public static double pivotkD = 0.0;
-  public static double pivotkMinOutput = -1.0;
-  public static double pivotkMaxOutput = 1.0;
-
-  public static double pivotkV = 1.0;
-  public static double pivotMaxVelocity = 1.0;
-  public static double pivotMaxAcceleration = 1.0;
-  public static double pivotAllowedError = 0.0;
-
-  private static double grabberGearRatio = 100.0;
-  private static double grabberTargetPositionRotations = 0.25; // 90 degrees
+  private static double grabberGearRatio = 100.0; // 100:1
+  private static double grabberTargetPositionRotations =
+      0.0625; // 1/16 of a rotation / 22.5 degrees
   public static double grabberMotorTargetPositionRotations =
       grabberTargetPositionRotations * grabberGearRatio;
 

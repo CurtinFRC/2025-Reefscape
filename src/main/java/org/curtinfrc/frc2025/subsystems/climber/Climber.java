@@ -21,33 +21,19 @@ public class Climber extends SubsystemBase {
     Logger.processInputs("Climber", inputs);
   }
 
-  public Command grabberRaw() {
-    return run(() -> io.setGrabberVoltage(grabberTargetVoltage));
+  public Command Raw() {
+    return run(() -> {});
   }
 
-  public Command pivotRaw() {
-    return run(() -> io.setPivotVoltage(pivotTargetVoltage));
-  }
-
-  public Command goToPivotSetpoint() {
-    return run(() -> io.goToPivotSetpoint());
-  }
-
-  public Command goToGrabberSetpoint() {
-    return run(() -> io.goToGrabberSetpoint()).until(() -> io.grabberIsStable());
+  public Command goToSetpoint() {
+    return run(() -> {});
   }
 
   public Command stop() {
-    return run(
-        () -> {
-          io.setGrabberVoltage(0);
-          io.setPivotVoltage(0);
-        });
+    return run(() -> {});
   }
 
   public Command run() {
-    return run(() -> io.goToGrabberSetpoint())
-        .until(() -> io.grabberIsStable())
-        .andThen(goToPivotSetpoint());
+    return run(() -> {});
   }
 }
