@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
@@ -269,17 +270,39 @@ public class Robot extends LoggedRobot {
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
-    intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
-    intake.backSensor.whileTrue(intake.intake(intakeVolts / 2));
-    intake.backSensor.onTrue(
-        ejector
-            .eject(300)
-            .until(intake.backSensor.negate())
-            .andThen(ejector.eject(-60).until(intake.backSensor)));
-    ejector.sensor.whileTrue(intake.stop());
+    // elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    controller
+        .rightBumper()
+        .negate()
+        .and(controller.leftBumper().negate())
+        .onTrue(elevator.goToSetpoint(Setpoints.COLLECT));
+    intake
+        .backSensor
+        .negate()
+        .or(elevator.isNotAtCollect)
+        .and(intake.frontSensor)
+        .whileTrue(intake.intake(intakeVolts));
+    intake
+        .backSensor
+        .or(elevator.isNotAtCollect)
+        .onTrue(
+            ejector
+                .eject(200)
+                .until(
+                    intake.frontSensor.negate().and(intake.backSensor.or(elevator.isNotAtCollect)))
+                .andThen(
+                    ejector
+                        .eject(-3)
+                        .until(intake.frontSensor)
+                        .andThen(ejector.eject(3).until(intake.frontSensor.negate()))));
+    intake
+        .backSensor
+        .or(elevator.isNotAtCollect)
+        .and(intake.frontSensor.negate())
+        .whileTrue(intake.stop());
 
-    // controller.x().whileTrue(ejector.eject(150).until(ejector.sensor.negate()));
+    // intake.backSensor.or(elevator.isNotAtCollect).and(intake.frontSensor).whileTrue(ejector.eject(50));
+
     controller.x().whileTrue(ejector.eject(5000));
 
     // Lock to 0° when A button is held
@@ -299,8 +322,12 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
-    controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
+    controller
+        .rightBumper()
+        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L3), Set.of(elevator)));
+    controller
+        .leftBumper()
+        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L2), Set.of(elevator)));
   }
 
   /** This function is called periodically during all modes. */
@@ -353,7 +380,19 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("IntakeCommand", "null");
+    }
+  }
 
   /** This function is called once when test mode is enabled. */
   @Override

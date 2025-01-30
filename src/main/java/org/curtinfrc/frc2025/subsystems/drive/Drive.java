@@ -80,10 +80,9 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
 
-  private final SlewRateLimiter xLimiter =
-      new SlewRateLimiter(5 * 0.02); // Limits acceleration to 3 mps
-  private final SlewRateLimiter yLimiter = new SlewRateLimiter(5 * 0.02);
-  private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(0 * 0.02);
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
+  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -289,15 +288,15 @@ public class Drive extends SubsystemBase {
 
           Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
 
-          var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
+          // var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
                   yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
-                  limited);
+                  omega * getMaxAngularSpeedRadPerSec());
 
-          Logger.recordOutput("Drive/OmegaLimited", limited);
+          // Logger.recordOutput("Drive/OmegaLimited", limited);
 
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()

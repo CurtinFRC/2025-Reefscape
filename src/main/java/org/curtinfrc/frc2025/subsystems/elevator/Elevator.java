@@ -13,6 +13,9 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
+  private Setpoints setpoint = Setpoints.COLLECT;
+
+  public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -22,11 +25,14 @@ public class Elevator extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
+    Logger.recordOutput("Elevator/setpoint", setpoint);
+    Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect);
   }
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   public Command goToSetpoint(Setpoints point) {
+    setpoint = point;
     return run(
         () -> {
           var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
