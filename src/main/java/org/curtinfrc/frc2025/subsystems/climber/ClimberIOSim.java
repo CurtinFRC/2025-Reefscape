@@ -18,8 +18,6 @@ public class ClimberIOSim implements ClimberIO {
     grabberMotorSim =
         new DCMotorSim(LinearSystemId.createDCMotorSystem(grabberMotor, 0.025, 4.0), grabberMotor);
   }
-
-  private double pivotAppliedVoltage = 0.0;
   private double grabberAppliedVoltage = 0.0;
 
   @Override
