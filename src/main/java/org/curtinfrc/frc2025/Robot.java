@@ -30,8 +30,8 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeo;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONeoMPC;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSimMPC;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
@@ -161,7 +161,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIONeo());
+          elevator = new Elevator(new ElevatorIONeoMPC());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
         }
@@ -184,7 +184,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIOSim());
+          elevator = new Elevator(new ElevatorIOSimMPC());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
         }
@@ -270,16 +270,22 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    intake.backSensor.and(intake.frontSensor).whileTrue(intake.intake(intakeVolts / 2).until(intake.frontSensor.negate().and(intake.backSensor)));
+    intake
+        .backSensor
+        .and(intake.frontSensor)
+        .whileTrue(
+            intake
+                .intake(intakeVolts / 2)
+                .until(intake.frontSensor.negate().and(intake.backSensor)));
     // intake.backSensor.whileTrue(intake.intake(intakeVolts).until(intake.backSensor.negate()));
     // intake.backSensor.whileTrue(intake.intake(intakeVolts / 2));
     // intake.backSensor.onTrue(
-      // ejector
-        // .eject(300)
-        // .until(intake.backSensor.negate())
-        // .andThen(ejector.eject(-60).until(intake.backSensor)));
+    // ejector
+    // .eject(300)
+    // .until(intake.backSensor.negate())
+    // .andThen(ejector.eject(-60).until(intake.backSensor)));
     // ejector.sensor.whileTrue(intake.stop());
-        
+
     controller.x().whileTrue(ejector.eject(1500)); // .until(ejector.sensor.negate()));
 
     // Lock to 0° when A button is held

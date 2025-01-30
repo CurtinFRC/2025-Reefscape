@@ -275,7 +275,6 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-
           double xSpeed = xSupplier.getAsDouble();
 
           double ySpeed = ySupplier.getAsDouble();
@@ -296,8 +295,7 @@ public class Drive extends SubsystemBase {
               new ChassisSpeeds(
                   xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
                   yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
-                  limited
-                  );
+                  limited);
 
           Logger.recordOutput("Drive/OmegaLimited", limited);
 
