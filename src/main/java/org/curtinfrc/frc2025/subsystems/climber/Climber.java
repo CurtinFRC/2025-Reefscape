@@ -22,15 +22,15 @@ public class Climber extends SubsystemBase {
   }
 
   public Command Raw() {
-    return run(() -> {});
+    return run(() -> io.setGrabberVoltage(4.0));
   }
 
   public Command goToSetpoint() {
-    return run(() -> {});
+    return run(() -> io.goToGrabberSetpoint());
   }
 
   public Command stop() {
-    return run(() -> {});
+    return run(() -> io.setGrabberVoltage(0.0));
   }
 
   public Command run() {

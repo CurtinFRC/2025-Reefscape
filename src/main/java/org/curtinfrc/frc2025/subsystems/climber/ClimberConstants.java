@@ -5,7 +5,7 @@ public class ClimberConstants {
 
   public static final double grabberTargetVoltage = 4.0;
 
-  private static double grabberGearRatio = 100.0; // 100:1
+  private static double grabberGearRatio = 1.0; // 1:1
   private static double grabberTargetPositionRotations =
       0.0625; // 1/16 of a rotation / 22.5 degrees
   public static double grabberMotorTargetPositionRotations =
@@ -17,7 +17,7 @@ public class ClimberConstants {
   public static double grabberkMinOutput = -1.0;
   public static double grabberkMaxOutput = 1.0;
 
-  public static double grabberkV = 1.0;
+  public static double grabberMotorkV = 1.0;
   public static double grabberMaxVelocity = 1.0;
   public static double grabberMaxAcceleration = 1.0;
   public static double grabberAllowedError = 0.0;

@@ -22,7 +22,7 @@ public class ClimberIONeoMaxMotion extends ClimberIONeo {
         .d(ClimberConstants.grabberkD)
         .outputRange(ClimberConstants.grabberkMinOutput, ClimberConstants.grabberkMaxOutput);
 
-    grabberConfig.closedLoop.velocityFF(1 / ClimberConstants.grabberkV);
+    grabberConfig.closedLoop.velocityFF(1 / ClimberConstants.grabberMotorkV);
 
     grabberConfig
         .closedLoop

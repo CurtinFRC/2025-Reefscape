@@ -6,18 +6,14 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class ClimberIOSim implements ClimberIO {
-  private DCMotorSim pivotMotorSim;
   private DCMotorSim grabberMotorSim;
-
-  private DCMotor pivotMotor = DCMotor.getNEO(1);
   private DCMotor grabberMotor = DCMotor.getNEO(1);
 
   public ClimberIOSim() {
-    pivotMotorSim =
-        new DCMotorSim(LinearSystemId.createDCMotorSystem(pivotMotor, 0.025, 4.0), pivotMotor);
     grabberMotorSim =
         new DCMotorSim(LinearSystemId.createDCMotorSystem(grabberMotor, 0.025, 4.0), grabberMotor);
   }
+
   private double grabberAppliedVoltage = 0.0;
 
   @Override
@@ -48,6 +44,6 @@ public class ClimberIOSim implements ClimberIO {
 
   @Override
   public boolean grabberIsStable() {
-    return false; // TODO: Implement grabberIsStable
+    return true;
   }
 }
