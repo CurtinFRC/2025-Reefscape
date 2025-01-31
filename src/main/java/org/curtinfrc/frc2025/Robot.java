@@ -40,6 +40,7 @@ import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -158,7 +159,7 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIO() {},
-                  new VisionIO() {},
+                  new VisionIOPhotonVision(camera1Name, robotToCamera1) {},
                   new VisionIO() {});
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
@@ -268,7 +269,7 @@ public class Robot extends LoggedRobot {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
     controller
         .rightBumper()
         .negate()
@@ -294,7 +295,16 @@ public class Robot extends LoggedRobot {
         .and(intake.frontSensor.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    controller.x().whileTrue(ejector.eject(1000));
+    elevator.toZero.whileTrue(
+        elevator
+            .zero()
+            .until(elevator.toZero.negate())
+            .ignoringDisable(true)
+            .withName("ElevatorZero"));
+    // elevator.isNotAtCollect.negate().whileTrue(new PrintCommand("pls pls work"));
+
+    controller.b().onTrue(elevator.zero());
+    controller.rightTrigger().whileTrue(ejector.eject(1000));
 
     // Lock to 0° when A button is held
     controller
@@ -319,6 +329,8 @@ public class Robot extends LoggedRobot {
     controller
         .leftBumper()
         .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L2), Set.of(elevator)));
+  
+    controller.pov(0).whileTrue(drive.autoAlign(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
@@ -344,6 +356,12 @@ public class Robot extends LoggedRobot {
     }
 
     autoChooser.periodic();
+
+    if (elevator.getCurrentCommand() != null) {
+      Logger.recordOutput("ElevatorCommand", elevator.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("ElevatorCommand", "null");
+    }
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
