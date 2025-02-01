@@ -40,6 +40,7 @@ import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -157,9 +158,9 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIO() {},
-                  new VisionIO() {},
-                  new VisionIO() {});
+                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
