@@ -16,5 +16,14 @@
     0
   ],
   "cameras": [],
-  "components": []
+  "components": [
+    {
+      "zeroedRotations": [],
+      "zeroedPosition": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
 }
