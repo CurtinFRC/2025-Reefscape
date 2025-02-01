@@ -75,7 +75,7 @@ public class VisionIOLimelight implements VisionIO {
     orientationPublisher.accept(
         new double[] {rotationSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
     // Set IMU mode
-    imuModeSet.set(1);
+    imuModeSet.set(2);
     NetworkTableInstance.getDefault()
         .flush(); // Increases network traffic but recommended by Limelight
 
