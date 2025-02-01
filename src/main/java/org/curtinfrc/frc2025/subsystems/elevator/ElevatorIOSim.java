@@ -19,7 +19,7 @@ public class ElevatorIOSim implements ElevatorIO {
     // ignore velocity cause we dont care
     inputs.currentAmps = elevatorSim.getCurrentDrawAmps();
     inputs.appliedVolts = volts;
-    inputs.positionRotations = elevatorSim.getPositionMeters() / pulleyRadiusMeters;
+    inputs.positionRotations = elevatorSim.getPositionMeters() / (pulleyRadiusMeters * 2 * Math.PI);
   }
 
   @Override
