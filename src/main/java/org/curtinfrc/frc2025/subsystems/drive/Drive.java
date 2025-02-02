@@ -89,7 +89,7 @@ public class Drive extends SubsystemBase {
   // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   private final SlewRateLimiter omegaAutoLimiter = new SlewRateLimiter(100);
-  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
+  private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -385,8 +385,8 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds.fromFieldRelativeSpeeds(
             // 0,
             // 0,
-            -(sample.vx + xController.calculate(pose.getX(), sample.x)),
-            -(sample.vy + yController.calculate(pose.getY(), sample.y)),
+            (sample.vx + xController.calculate(pose.getX(), sample.x)),
+            (sample.vy + yController.calculate(pose.getY(), sample.y)),
             omegaAutoLimiter.calculate(out),
             getRotation());
 
