@@ -144,7 +144,7 @@ public class Vision extends VirtualSubsystem {
           linearStdDev *= cameraStdDevFactors[cameraIndex];
           // angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
-        angularStdDev = 99999;
+        angularStdDev = 999999;
 
         // Send vision observation
         Logger.recordOutput(
