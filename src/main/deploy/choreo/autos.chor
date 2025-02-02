@@ -3,16 +3,37 @@
  "version":1,
  "type":"Swerve",
  "variables":{
-  "expressions":{
-   "CoralStation":{
-    "dimension":"Angle",
-    "var":{
-     "exp":"54 deg",
-     "val":0.942477796076938
+  "expressions":{},
+  "poses":{
+   "A":{
+    "x":{
+     "exp":"3.229661703109741 m",
+     "val":3.229661703109741
+    },
+    "y":{
+     "exp":"4.1764631271362305 m",
+     "val":4.1764631271362305
+    },
+    "heading":{
+     "exp":"0 deg",
+     "val":0.0
+    }
+   },
+   "LeftHP":{
+    "x":{
+     "exp":"1.6611976623535156 m",
+     "val":1.6611976623535156
+    },
+    "y":{
+     "exp":"7.514008522033691 m",
+     "val":7.514008522033691
+    },
+    "heading":{
+     "exp":"-0.9367736658520133 rad",
+     "val":-0.9367736658520132
     }
    }
-  },
-  "poses":{}
+  }
  },
  "config":{
   "frontLeft":{
@@ -48,20 +69,20 @@
    "val":5.9
   },
   "radius":{
-   "exp":"1.8 in",
-   "val":0.04572
+   "exp":"2 in",
+   "val":0.0508
   },
   "vmax":{
    "exp":"5800 rpm",
    "val":607.3745796940267
   },
   "tmax":{
-   "exp":"1.2 N * m",
-   "val":1.2
+   "exp":"1.5 N * m",
+   "val":1.5
   },
   "cof":{
-   "exp":"0.8",
-   "val":0.8
+   "exp":"1.8",
+   "val":1.8
   },
   "bumper":{
    "front":{
