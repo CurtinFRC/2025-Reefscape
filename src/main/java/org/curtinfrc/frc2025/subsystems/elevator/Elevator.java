@@ -33,6 +33,8 @@ public class Elevator extends SubsystemBase {
 
   // public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
+  public Trigger atSetpoint = new Trigger(pid::atSetpoint);
+
   public Command goToSetpoint(Setpoints point) {
     setpoint = point;
     return run(

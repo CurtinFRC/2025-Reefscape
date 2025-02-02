@@ -89,6 +89,7 @@ public class Drive extends SubsystemBase {
   // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   private final SlewRateLimiter omegaAutoLimiter = new SlewRateLimiter(100);
+  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -309,8 +310,8 @@ public class Drive extends SubsystemBase {
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
+                  xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
+                  yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
                   omega * getMaxAngularSpeedRadPerSec());
 
           // Logger.recordOutput("Drive/OmegaLimited", limited);

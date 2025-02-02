@@ -161,7 +161,6 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation));
-
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
@@ -266,8 +265,8 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
