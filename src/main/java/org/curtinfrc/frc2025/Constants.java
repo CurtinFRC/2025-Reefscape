@@ -75,8 +75,8 @@ public final class Constants {
     COLLECT(0, List.of(13, 12), List.of(1, 2), false),
     // L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)), //TODO
     // TODO actually subtract
-    L2(11, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6), true),
-    L3(32.8, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6), true);
+    L2(11, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true),
+    L3(32.8, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true);
 
     private final double _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;
@@ -105,7 +105,7 @@ public final class Constants {
     private Pose3d resolvePose(List<Integer> tagIds, Pose3d currentPose) {
       if (tagIds.isEmpty()) return new Pose3d();
 
-      double sideOffset = Math.max(ROBOT_X, ROBOT_Y) / 2000.0;
+      double sideOffset = 0.32 / 2;
 
       class ClosestPose {
         Pose3d pose = null;
