@@ -146,6 +146,9 @@ public class Vision extends VirtualSubsystem {
         }
 
         // Send vision observation
+        Logger.recordOutput(
+            "Vision/Camera" + Integer.toString(cameraIndex) + "/CurrentPose",
+            observation.pose().toPose2d());
         consumer.accept(
             observation.pose().toPose2d(),
             observation.timestamp(),
