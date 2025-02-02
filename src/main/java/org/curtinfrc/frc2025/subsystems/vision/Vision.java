@@ -138,12 +138,13 @@ public class Vision extends VirtualSubsystem {
         double angularStdDev = angularStdDevBaseline * stdDevFactor;
         if (observation.type() == PoseObservationType.MEGATAG_2) {
           linearStdDev *= linearStdDevMegatag2Factor;
-          angularStdDev *= angularStdDevMegatag2Factor;
+          // angularStdDev *= angularStdDevMegatag2Factor;
         }
         if (cameraIndex < cameraStdDevFactors.length) {
           linearStdDev *= cameraStdDevFactors[cameraIndex];
-          angularStdDev *= cameraStdDevFactors[cameraIndex];
+          // angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
+        angularStdDev = 999999;
 
         // Send vision observation
         consumer.accept(
