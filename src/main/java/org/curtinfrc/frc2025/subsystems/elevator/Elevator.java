@@ -62,7 +62,7 @@ public class Elevator extends SubsystemBase {
     return new Pose3d(
         0,
         0,
-        inputs.positionRotations * pulleyRadiusMeters * 2 * Math.PI,
+        inputs.positionRotations * pulleyRadiusMeters,
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }
