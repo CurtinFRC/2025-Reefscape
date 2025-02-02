@@ -60,7 +60,7 @@ public class Module {
     for (int i = 0; i < sampleCount; i++) {
       double positionMeters = inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
       Rotation2d angle = inputs.odometryTurnPositions[i];
-      odometryPositions[i] = new SwerveModulePosition(-positionMeters, angle);
+      odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
 
     // Update alerts

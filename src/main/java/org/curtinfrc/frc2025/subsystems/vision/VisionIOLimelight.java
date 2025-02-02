@@ -22,6 +22,7 @@ import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -71,11 +72,15 @@ public class VisionIOLimelight implements VisionIO {
         new TargetObservation(
             Rotation2d.fromDegrees(txSubscriber.get()), Rotation2d.fromDegrees(tySubscriber.get()));
 
-    // Update orientation for MegaTag 2
-    orientationPublisher.accept(
-        new double[] {rotationSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
-    // Set IMU mode
-    imuModeSet.set(2);
+    if (DriverStation.isDisabled()) {
+      // Set IMU mode
+      imuModeSet.set(1);
+      // Update orientation for MegaTag 2
+      orientationPublisher.accept(
+          new double[] {rotationSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
+    } else {
+      imuModeSet.set(2);
+    }
     NetworkTableInstance.getDefault()
         .flush(); // Increases network traffic but recommended by Limelight
 
