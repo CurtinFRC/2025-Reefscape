@@ -46,7 +46,7 @@ public class ElevatorIONEO implements ElevatorIO {
 
     inputs.point = this.setpoint;
 
-    inputs.touchSensor = !touch.get();
+    inputs.touchSensor = touch.get();
   }
 
   @Override

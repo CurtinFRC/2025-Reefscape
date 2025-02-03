@@ -245,8 +245,11 @@ public class RepulsorFieldPlanner {
       return new Force();
     }
     var direction = displacement.getAngle();
+    var distanceFactor = Math.min(1.0, displacement.getNorm() / 4.0); // Adjust scaling
     var mag =
-        GOAL_STRENGTH * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
+        GOAL_STRENGTH
+            * distanceFactor
+            * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
     return new Force(mag, direction);
   }
 

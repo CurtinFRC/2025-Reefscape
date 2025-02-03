@@ -310,8 +310,8 @@ public class Drive extends SubsystemBase {
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
-                  yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
+                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
                   omega * getMaxAngularSpeedRadPerSec());
 
           // Logger.recordOutput("Drive/OmegaLimited", limited);
@@ -325,7 +325,6 @@ public class Drive extends SubsystemBase {
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
         });
   }
-
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
