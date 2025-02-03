@@ -14,13 +14,14 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"G.x", "val":5.723884582519531}, "y":{"exp":"G.y", "val":3.819911241531372}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":16, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"5.909364223480225 m", "val":5.909364223480225}, "y":{"exp":"3.448951244354248 m", "val":3.448951244354248}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":33, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
+    {"x":{"exp":"G.x", "val":5.723884582519531}, "y":{"exp":"G.y", "val":3.819911241531372}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":19, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"5.909364223480225 m", "val":5.909364223480225}, "y":{"exp":"3.448951244354248 m", "val":3.448951244354248}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":41, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"CloseRightHP.x", "val":0.6148744225502014}, "y":{"exp":"CloseRightHP.y", "val":1.3505244255065918}, "heading":{"exp":"CloseRightHP.heading", "val":0.9475970557846024}, "intervals":73, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
-    {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false}],
+    {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false},
+    {"from":0, "to":2, "data":{"type":"MaxAcceleration", "props":{"max":{"exp":"MaxAcceleration", "val":8.0}}}, "enabled":true}],
   "targetDt":{
    "exp":"0.05 s",
    "val":0.05
