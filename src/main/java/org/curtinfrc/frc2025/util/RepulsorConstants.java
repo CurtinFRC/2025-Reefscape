@@ -8,7 +8,7 @@ import org.curtinfrc.frc2025.util.RepulsorFieldPlanner.SnowmanObstacle;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner.VerticalObstacle;
 
 public class RepulsorConstants {
-  public static final double GOAL_STRENGTH = 0.1;
+  public static final double GOAL_STRENGTH = 0.65;
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
