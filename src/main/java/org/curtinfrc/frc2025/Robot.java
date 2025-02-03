@@ -220,13 +220,11 @@ public class Robot extends LoggedRobot {
 
     autoChooser = new AutoChooser("Auto Chooser");
 
-    autos = new Autos(autoFactory);
+    autos = new Autos(autoFactory, elevator, ejector, intake);
 
-    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("New Path"));
-    autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
-    autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
-    autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
-    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addRoutine("Accuracy Test", () -> autos.followPath("AccuracyTest"));
+    autoChooser.addRoutine("jkab", () -> autos.jkab());
+    autoChooser.addRoutine("a", () -> autos.a());
 
     // Set up SysId routines
     autoChooser.addCmd(
