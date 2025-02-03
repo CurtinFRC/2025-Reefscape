@@ -3,23 +3,12 @@ package org.curtinfrc.frc2025;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import edu.wpi.first.wpilibj2.command.Commands;
-import org.curtinfrc.frc2025.Constants.Setpoints;
-import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
-import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.intake.Intake;
 
 public class Autos {
   private final AutoFactory factory;
-  private final Elevator elevator;
-  private final Ejector ejector;
-  private final Intake intake;
 
-  public Autos(AutoFactory factory, Elevator elevator, Ejector ejector, Intake intake) {
+  public Autos(AutoFactory factory) {
     this.factory = factory;
-    this.elevator = elevator;
-    this.ejector = ejector;
-    this.intake = intake;
   }
 
   public AutoRoutine followPath(String path) {
@@ -57,23 +46,6 @@ public class Autos {
 
   public AutoRoutine a() {
     AutoRoutine routine = factory.newRoutine("a");
-
-    AutoTrajectory CloseLeftHP_A = routine.trajectory("CloseLeftHP_A");
-    AutoTrajectory A_CloseLeftHP = routine.trajectory("A_CloseLeftHP");
-    AutoTrajectory CloseLeftHP_B = routine.trajectory("CloseLeftHP_B");
-
-    routine.active().onTrue(CloseLeftHP_A.cmd());
-    // TODO nicer
-    CloseLeftHP_A.done()
-        .onTrue(
-            elevator
-                .goToSetpoint(Setpoints.L2)
-                .until(elevator.atSetpoint)
-                .andThen(
-                    Commands.parallel(elevator.goToSetpoint(Setpoints.L2), ejector.eject(1000))
-                        .until(intake.backSensor.negate()))
-                .andThen(A_CloseLeftHP.cmd()));
-
     return routine;
   }
 }

@@ -9,11 +9,12 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ElevatorIONEO implements ElevatorIO {
   private final SparkMax neo = new SparkMax(motorPort, MotorType.kBrushless);
-  // private final DigitalInput sensor = new DigitalInput(sensorPort);
+  private final DigitalInput sensor = new DigitalInput(0);
 
   public ElevatorIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
@@ -31,10 +32,16 @@ public class ElevatorIONEO implements ElevatorIO {
     inputs.currentAmps = neo.getOutputCurrent();
     inputs.positionRotations = neo.getEncoder().getPosition();
     inputs.angularVelocityRotationsPerMinute = neo.getEncoder().getVelocity();
+    inputs.limitSwitch = !sensor.get();
   }
 
   @Override
   public void setVoltage(double volts) {
     neo.setVoltage(volts);
+  }
+
+  @Override
+  public void zero() {
+    neo.getEncoder().setPosition(0);
   }
 }

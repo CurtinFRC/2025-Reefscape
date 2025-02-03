@@ -147,7 +147,6 @@ public class Vision extends VirtualSubsystem {
         angularStdDev = 999999;
 
         // Send vision observation
-        Logger.recordOutput("Last2dEstimate", observation.pose().toPose2d());
         consumer.accept(
             observation.pose().toPose2d(),
             observation.timestamp(),

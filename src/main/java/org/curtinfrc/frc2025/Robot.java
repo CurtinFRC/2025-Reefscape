@@ -220,10 +220,11 @@ public class Robot extends LoggedRobot {
 
     autoChooser = new AutoChooser("Auto Chooser");
 
-    autos = new Autos(autoFactory);
+    autos = new Autos(autoFactory, elevator, ejector, intake);
 
     autoChooser.addRoutine("Accuracy Test", () -> autos.followPath("AccuracyTest"));
     autoChooser.addRoutine("jkab", () -> autos.jkab());
+    autoChooser.addRoutine("a", () -> autos.a());
 
     // Set up SysId routines
     autoChooser.addCmd(

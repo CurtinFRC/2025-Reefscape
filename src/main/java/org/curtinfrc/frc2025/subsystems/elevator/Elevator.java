@@ -27,6 +27,10 @@ public class Elevator extends SubsystemBase {
     Logger.processInputs("Elevator", inputs);
     Logger.recordOutput("Elevator/setpoint", setpoint);
     Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect);
+
+    if (inputs.limitSwitch) {
+      io.zero();
+    }
   }
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
