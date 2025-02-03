@@ -7,8 +7,8 @@
    "MaxAcceleration":{
     "dimension":"LinAcc",
     "var":{
-     "exp":"8 m / s ^ 2",
-     "val":8.0
+     "exp":"3.5 m / s ^ 2",
+     "val":3.5
     }
    }
   },
@@ -261,12 +261,12 @@
    }
   },
   "mass":{
-   "exp":"35 kg",
-   "val":35.0
+   "exp":"45 kg",
+   "val":45.0
   },
   "inertia":{
-   "exp":"6 kg m ^ 2",
-   "val":6.0
+   "exp":"1.5 kg m ^ 2",
+   "val":1.5
   },
   "gearing":{
    "exp":"5.9",
@@ -281,12 +281,12 @@
    "val":607.3745796940267
   },
   "tmax":{
-   "exp":"1.5 N * m",
-   "val":1.5
+   "exp":"1 N * m",
+   "val":1.0
   },
   "cof":{
-   "exp":"1.8",
-   "val":1.8
+   "exp":"1.5",
+   "val":1.5
   },
   "bumper":{
    "front":{
