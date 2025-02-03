@@ -5,16 +5,17 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import org.littletonrobotics.junction.AutoLogOutput;
 
 public class RepulsorFieldPlanner {
 
@@ -79,9 +80,10 @@ public class RepulsorFieldPlanner {
     Translation2d loc;
     double radius = 0.5;
 
-    public SnowmanObstacle(Translation2d loc, double strength, boolean positive) {
+    public SnowmanObstacle(Translation2d loc, double strength, double radius, boolean positive) {
       super(strength, positive);
       this.loc = loc;
+      this.radius = radius;
     }
 
     public Force getForceAtPosition(Translation2d position, Translation2d target) {
@@ -92,7 +94,7 @@ public class RepulsorFieldPlanner {
       var dist = loc.getDistance(position);
       var sidewaysDist = sidewaysCircle.getDistance(position);
       var sidewaysMag = distToForceMag(sidewaysCircle.getDistance(position));
-      var outwardsMag = distToForceMag(loc.getDistance(position));
+      var outwardsMag = distToForceMag(Math.max(0.01, loc.getDistance(position) - radius));
       var initial = new Force(outwardsMag, position.minus(loc).getAngle());
 
       // flip the sidewaysMag based on which side of the goal-sideways circle the robot is on
@@ -131,23 +133,38 @@ public class RepulsorFieldPlanner {
     }
   }
 
-  private List<Obstacle> fixedObstacles = new ArrayList<>();
+  public static final double GOAL_STRENGTH = 0.65;
 
+  public static final List<Obstacle> FIELD_OBSTACLES =
+      List.of(
+          new SnowmanObstacle(
+              new Translation2d(4.49, 4), 0.6, Units.inchesToMeters(65.5 / 2.0), true),
+          new SnowmanObstacle(
+              new Translation2d(13.08, 4), 0.6, Units.inchesToMeters(65.5 / 2.0), true));
+  static final double FIELD_LENGTH = 16.42;
+  static final double FIELD_WIDTH = 8.16;
+  public static final List<Obstacle> WALLS =
+      List.of(
+          new HorizontalObstacle(0.0, 0.5, true),
+          new HorizontalObstacle(FIELD_WIDTH, 0.5, false),
+          new VerticalObstacle(0.0, 0.5, true),
+          new VerticalObstacle(FIELD_LENGTH, 0.5, false));
+
+  private List<Obstacle> fixedObstacles = new ArrayList<>();
   private Optional<Translation2d> goalOpt = Optional.empty();
 
-  @AutoLogOutput(key = "RepulsorFieldPlanner/GoalPose")
   public Pose2d goal() {
     return new Pose2d(goalOpt.orElse(Translation2d.kZero), Rotation2d.kZero);
   }
 
-  private static final int ARROWS_X = 40;
-  private static final int ARROWS_Y = 20;
+  private static final int ARROWS_X = RobotBase.isSimulation() ? 40 : 0;
+  private static final int ARROWS_Y = RobotBase.isSimulation() ? 20 : 0;
   private static final int ARROWS_SIZE = (ARROWS_X + 1) * (ARROWS_Y + 1);
   private ArrayList<Pose2d> arrows = new ArrayList<>(ARROWS_SIZE);
 
   public RepulsorFieldPlanner() {
-    fixedObstacles.addAll(RepulsorConstants.FIELD_OBSTACLES);
-    fixedObstacles.addAll(RepulsorConstants.WALLS);
+    fixedObstacles.addAll(FIELD_OBSTACLES);
+    fixedObstacles.addAll(WALLS);
     for (int i = 0; i < ARROWS_SIZE; i++) {
       arrows.add(new Pose2d());
     }
@@ -202,9 +219,7 @@ public class RepulsorFieldPlanner {
     for (int x = 0; x <= ARROWS_X; x++) {
       for (int y = 0; y <= ARROWS_Y; y++) {
         var translation =
-            new Translation2d(
-                x * RepulsorConstants.FIELD_LENGTH / ARROWS_X,
-                y * RepulsorConstants.FIELD_WIDTH / ARROWS_Y);
+            new Translation2d(x * FIELD_LENGTH / ARROWS_X, y * FIELD_WIDTH / ARROWS_Y);
         var force = Force.kZero;
         if (useObstaclesInArrows)
           force = force.plus(getObstacleForce(translation, goal().getTranslation()));
@@ -224,40 +239,33 @@ public class RepulsorFieldPlanner {
     }
   }
 
-  @AutoLogOutput(key = "RepulsorFieldPlanner/GoalForce")
   Force getGoalForce(Translation2d curLocation, Translation2d goal) {
     var displacement = goal.minus(curLocation);
     if (displacement.getNorm() == 0) {
       return new Force();
     }
     var direction = displacement.getAngle();
-    var distanceFactor = Math.min(1.0, displacement.getNorm() / 8.0);
     var mag =
-        RepulsorConstants.GOAL_STRENGTH
-            * distanceFactor
-            * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
+        GOAL_STRENGTH * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
     return new Force(mag, direction);
   }
 
-  @AutoLogOutput(key = "RepulsorFieldPlanner/WallForce")
   Force getWallForce(Translation2d curLocation, Translation2d target) {
     var force = Force.kZero;
-    for (Obstacle obs : RepulsorConstants.WALLS) {
+    for (Obstacle obs : WALLS) {
       force = force.plus(obs.getForceAtPosition(curLocation, target));
     }
     return force;
   }
 
-  @AutoLogOutput(key = "RepulsorFieldPlanner/ObstacleForce")
   Force getObstacleForce(Translation2d curLocation, Translation2d target) {
     var force = Force.kZero;
-    for (Obstacle obs : RepulsorConstants.FIELD_OBSTACLES) {
+    for (Obstacle obs : FIELD_OBSTACLES) {
       force = force.plus(obs.getForceAtPosition(curLocation, target));
     }
     return force;
   }
 
-  @AutoLogOutput(key = "RepulsorFieldPlanner/Force")
   Force getForce(Translation2d curLocation, Translation2d target) {
     var goalForce =
         getGoalForce(curLocation, target)
@@ -266,7 +274,7 @@ public class RepulsorFieldPlanner {
     return goalForce;
   }
 
-  private SwerveSample sample(
+  public static SwerveSample sample(
       Translation2d trans, Rotation2d rot, double vx, double vy, double omega) {
     return new SwerveSample(
         0,

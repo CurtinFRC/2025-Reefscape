@@ -383,14 +383,12 @@ public class Drive extends SubsystemBase {
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            // 0,
-            // 0,
-            (sample.vx + xController.calculate(pose.getX(), sample.x)),
-            (sample.vy + yController.calculate(pose.getY(), sample.y)),
-            omegaAutoLimiter.calculate(out),
-            getRotation());
+            sample.vx + xController.calculate(pose.getX(), sample.x),
+            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.omega
+                + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+            getRotation()); // Apply the generated speeds
 
-    // Apply the generated speeds
     runVelocity(speeds);
   }
 
