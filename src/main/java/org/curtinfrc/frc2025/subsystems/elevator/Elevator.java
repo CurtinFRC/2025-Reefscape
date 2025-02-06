@@ -16,6 +16,7 @@ public class Elevator extends SubsystemBase {
   private Setpoints setpoint = Setpoints.COLLECT;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
+  public final Trigger toZero = new Trigger(() -> inputs.touchSensor);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -25,9 +26,12 @@ public class Elevator extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
+    Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect.getAsBoolean());
     Logger.recordOutput("Elevator/setpoint", setpoint);
-    Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect);
+    // Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect);
   }
+
+  // public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
@@ -41,6 +45,14 @@ public class Elevator extends SubsystemBase {
           io.setVoltage(out);
         });
   }
+
+  public Command zero() {
+    return runOnce(() -> io.zero());
+  }
+
+  // public Command goToSetpoint(Setpoints point) {
+  //   return run(() -> io.goToSetpoint(point));
+  // }
 
   public Command stop() {
     return runOnce(() -> io.setVoltage(0));

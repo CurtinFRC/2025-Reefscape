@@ -23,6 +23,6 @@ public class Superstructure {
             Commands.parallel(
                 drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))),
                 elevator.goToSetpoint(setpoint)),
-        Set.of(drive, elevator));
+        Set.of(elevator, drive));
   }
 }

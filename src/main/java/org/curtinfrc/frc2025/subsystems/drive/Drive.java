@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -76,13 +77,26 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
+  private double p = 6;
+  private double d = 0.2;
+  private double i = 0.03;
+
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController headingController = new PIDController(p, i, d);
+
+  private final PIDController xSetpointController = new PIDController(25.0, 0.0, 0.1);
+  private final PIDController ySetpointController = new PIDController(25.0, 0.0, 0.1);
+
+  public Trigger atSetpointPose =
+      new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
   // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
+
+  private final SlewRateLimiter omegaAutoLimiter = new SlewRateLimiter(100);
+  private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -127,6 +141,10 @@ public class Drive extends SubsystemBase {
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    // SmartDashboard.putNumber("P", 0.9);
+    // SmartDashboard.putNumber("D", 0.02);
+    // SmartDashboard.putNumber("I", 0.01);
   }
 
   @Override
@@ -138,6 +156,10 @@ public class Drive extends SubsystemBase {
       module.periodic();
     }
     odometryLock.unlock();
+
+    // headingController.setP(SmartDashboard.getNumber("P", 2));
+    // headingController.setD(SmartDashboard.getNumber("D", 0.01));
+    // headingController.setI(SmartDashboard.getNumber("I", 0));
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -184,6 +206,14 @@ public class Drive extends SubsystemBase {
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
 
+    Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
+    Logger.recordOutput("Drive/xPID/error", xController.getError());
+    Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
+
+    Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
+    Logger.recordOutput("Drive/yPID/error", yController.getError());
+    Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());
+
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
   }
@@ -194,6 +224,9 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   private void runVelocity(ChassisSpeeds speeds) {
+    speeds.vxMetersPerSecond = xLimiter.calculate(speeds.vxMetersPerSecond);
+    speeds.vyMetersPerSecond = yLimiter.calculate(speeds.vyMetersPerSecond);
+
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
@@ -292,8 +325,8 @@ public class Drive extends SubsystemBase {
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  xLimiter.calculate(linearVelocity.getX() * getMaxLinearSpeedMetersPerSec()),
-                  yLimiter.calculate(linearVelocity.getY() * getMaxLinearSpeedMetersPerSec()),
+                  linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
                   omega * getMaxAngularSpeedRadPerSec());
 
           // Logger.recordOutput("Drive/OmegaLimited", limited);
@@ -307,7 +340,6 @@ public class Drive extends SubsystemBase {
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
         });
   }
-
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
@@ -358,17 +390,23 @@ public class Drive extends SubsystemBase {
     // Get the current pose of the robot
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+    Logger.recordOutput("Drive/PID/error", headingController.getError());
+    var out = headingController.calculate(pose.getRotation().getRadians(), sample.heading);
+    Logger.recordOutput("Drive/PID/out", out);
 
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + xController.calculate(pose.getX(), sample.x),
-            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.vx + sample.vx != 0
+                ? xSetpointController.calculate(pose.getX(), sample.x)
+                : xController.calculate(pose.getX(), sample.x),
+            sample.vy + sample.vy != 0
+                ? ySetpointController.calculate(pose.getY(), sample.y)
+                : yController.calculate(pose.getY(), sample.y),
             sample.omega
                 + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
-            getRotation());
+            getRotation()); // Apply the generated speeds
 
-    // Apply the generated speeds
     runVelocity(speeds);
   }
 
@@ -624,10 +662,10 @@ public class Drive extends SubsystemBase {
                   true);
 
           // Include rotational alignment using the existing heading controller
-          double adjustedOmega =
-              headingController.calculate(
-                  robotPose.getRotation().getRadians(),
-                  _setpoint.toPose2d().getRotation().getRadians());
+          // double adjustedOmega =
+          //     headingController.calculate(
+          //         robotPose.getRotation().getRadians(),
+          //         _setpoint.toPose2d().getRotation().getRadians());
 
           // Apply the trajectory with rotation adjustment
           SwerveSample adjustedSample =
@@ -638,7 +676,8 @@ public class Drive extends SubsystemBase {
                   _setpoint.toPose2d().getRotation().getRadians(),
                   cmd.vx,
                   cmd.vy,
-                  adjustedOmega,
+                  // adjustedOmega,
+                  0,
                   cmd.ax,
                   cmd.ay,
                   cmd.alpha,

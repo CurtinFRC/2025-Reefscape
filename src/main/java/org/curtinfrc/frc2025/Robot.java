@@ -269,33 +269,52 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    // elevator.setDefaultCommand(
+    //     Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+
     controller
         .rightBumper()
         .negate()
         .and(controller.leftBumper().negate())
-        .onTrue(elevator.goToSetpoint(Setpoints.COLLECT));
+        .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
 
+    drive.atSetpointPose.and(elevator.isNotAtCollect).whileTrue(ejector.eject(1000));
+
+    // elevator.toZero.whileTrue(intake.intake(intakeVolts));
+    // elevator.toZero.().whileTrue(intake.stop());
+
     intake
         .backSensor
         .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
     intake
         .backSensor
         .and(intake.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
                 .withName("front and back"));
     intake
         .backSensor
         .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    controller.x().whileTrue(ejector.eject(1000));
+    // elevator.toZero.whileTrue(
+    //     elevator
+    //         .zero()
+    //         .until(elevator.toZero.negate())
+    //         .ignoringDisable(true)
+    //         .withName("ElevatorZero"));
+    // elevator.isNotAtCollect.negate().whileTrue(new PrintCommand("pls pls work"));
+
+    controller.b().onTrue(elevator.zero());
+    controller.rightTrigger().whileTrue(ejector.eject(1000));
 
     // Lock to 0° when A button is held
     controller
@@ -315,12 +334,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller
-        .rightBumper()
-        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L3), Set.of(elevator)));
-    controller
-        .leftBumper()
-        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L2), Set.of(elevator)));
+    // controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
+    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
+    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
+    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
@@ -346,6 +363,12 @@ public class Robot extends LoggedRobot {
     }
 
     autoChooser.periodic();
+
+    if (elevator.getCurrentCommand() != null) {
+      Logger.recordOutput("ElevatorCommand", elevator.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("ElevatorCommand", "null");
+    }
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
@@ -384,6 +407,12 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
     } else {
       Logger.recordOutput("IntakeCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("DriveCommand", "null");
     }
   }
 
