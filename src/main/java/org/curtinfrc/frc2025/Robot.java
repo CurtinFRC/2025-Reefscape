@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
@@ -327,13 +326,6 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller
-        .rightBumper()
-        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L3), Set.of(elevator)));
-    controller
-        .leftBumper()
-        .whileTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.L2), Set.of(elevator)));
-
     // controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
@@ -407,6 +399,12 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
     } else {
       Logger.recordOutput("IntakeCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("DriveCommand", "null");
     }
   }
 

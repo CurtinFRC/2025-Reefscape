@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 
 public class RepulsorFieldPlanner {
 
@@ -245,11 +246,8 @@ public class RepulsorFieldPlanner {
       return new Force();
     }
     var direction = displacement.getAngle();
-    var distanceFactor = Math.min(1.0, displacement.getNorm() / 4.0); // Adjust scaling
     var mag =
-        GOAL_STRENGTH
-            * distanceFactor
-            * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
+        GOAL_STRENGTH * (1 + 1.0 / (0.0001 + displacement.getNorm() * displacement.getNorm()));
     return new Force(mag, direction);
   }
 
@@ -273,7 +271,8 @@ public class RepulsorFieldPlanner {
     var goalForce =
         getGoalForce(curLocation, target)
             .plus(getObstacleForce(curLocation, target))
-            .plus(getWallForce(curLocation, target));
+            .plus(getWallForce(curLocation, target))
+            .times(Math.min(1.0, curLocation.getDistance(target))); // Adjust scaling
     return goalForce;
   }
 
@@ -322,6 +321,9 @@ public class RepulsorFieldPlanner {
       var goal = goalOpt.get();
       var curTrans = pose.getTranslation();
       var err = curTrans.minus(goal);
+
+      Logger.recordOutput("Repulsor/err", err.getNorm());
+      Logger.recordOutput("Repulsor/step", stepSize_m * 1.5);
       if (useGoal && err.getNorm() < stepSize_m * 1.5) {
         return sample(goal, goalRotation, 0, 0, 0);
       } else {
@@ -335,6 +337,11 @@ public class RepulsorFieldPlanner {
 
           stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
         }
+
+        netForce = netForce.times(Math.min(1.0, curTrans.getDistance(goal))); // Adjust scaling
+
+        Logger.recordOutput("Repulsor/net", netForce);
+
         var step = new Translation2d(stepSize_m, netForce.getAngle());
         var intermediateGoal = curTrans.plus(step);
         var endTime = System.nanoTime();

@@ -80,9 +80,12 @@ public class Drive extends SubsystemBase {
   private double d = 0.2;
   private double i = 0.03;
 
-  private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.0);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(p, i, d);
+
+  private final PIDController xSetpointController = new PIDController(6.0, 0.0, 0.1);
+  private final PIDController ySetpointController = new PIDController(6.0, 0.0, 0.1);
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
@@ -382,8 +385,8 @@ public class Drive extends SubsystemBase {
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + xController.calculate(pose.getX(), sample.x),
-            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.vx + xSetpointController.calculate(pose.getX(), sample.x),
+            sample.vy + ySetpointController.calculate(pose.getY(), sample.y),
             sample.omega
                 + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
             getRotation()); // Apply the generated speeds
