@@ -10,9 +10,12 @@ public interface ElevatorIO {
     public double currentAmps;
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
+    public boolean atBase;
   }
 
   public default void updateInputs(ElevatorIOInputs inputs) {}
 
   public default void setVoltage(double volts) {}
+
+  public default void zero() {}
 }
