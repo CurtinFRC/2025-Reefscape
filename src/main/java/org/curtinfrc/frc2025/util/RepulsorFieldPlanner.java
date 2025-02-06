@@ -322,7 +322,7 @@ public class RepulsorFieldPlanner {
       var curTrans = pose.getTranslation();
       var err = curTrans.minus(goal);
 
-      Logger.recordOutput("Repulsor/err", err.getNorm());
+      Logger.recordOutput("Repulsor/err", curTrans.getDistance(goal));
       Logger.recordOutput("Repulsor/step", stepSize_m * 1.5);
       if (useGoal && err.getNorm() < stepSize_m * 1.5) {
         return sample(goal, goalRotation, 0, 0, 0);
@@ -338,15 +338,18 @@ public class RepulsorFieldPlanner {
           stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
         }
 
-        netForce = netForce.times(Math.min(1.0, curTrans.getDistance(goal))); // Adjust scaling
-
         Logger.recordOutput("Repulsor/net", netForce);
 
         var step = new Translation2d(stepSize_m, netForce.getAngle());
         var intermediateGoal = curTrans.plus(step);
         var endTime = System.nanoTime();
         SmartDashboard.putNumber("repulsorTimeS", (endTime - startTime) / 1e9);
-        return sample(intermediateGoal, goalRotation, step.getX() / 0.02, step.getY() / 0.02, 0);
+        return sample(
+            intermediateGoal,
+            goalRotation,
+            (step.getX() / 0.02) * Math.min(1.0, curTrans.getDistance(goal) / 3),
+            (step.getY() / 0.02) * Math.min(1.0, curTrans.getDistance(goal) / 3),
+            0);
       }
     }
   }

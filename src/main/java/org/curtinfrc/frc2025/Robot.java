@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
@@ -268,41 +269,48 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    // elevator.setDefaultCommand(
+    //     Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+
     controller
         .rightBumper()
         .negate()
         .and(controller.leftBumper().negate())
-        .onTrue(elevator.goToSetpoint(Setpoints.COLLECT));
+        .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
 
+    drive.atSetpointPose.and(elevator.isNotAtCollect).whileTrue(ejector.eject(1000));
+
     // elevator.toZero.whileTrue(intake.intake(intakeVolts));
-    elevator.toZero.negate().whileTrue(intake.stop());
+    // elevator.toZero.().whileTrue(intake.stop());
 
     intake
         .backSensor
         .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
     intake
         .backSensor
         .and(intake.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
                 .withName("front and back"));
     intake
         .backSensor
         .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    elevator.toZero.whileTrue(
-        elevator
-            .zero()
-            .until(elevator.toZero.negate())
-            .ignoringDisable(true)
-            .withName("ElevatorZero"));
+    // elevator.toZero.whileTrue(
+    //     elevator
+    //         .zero()
+    //         .until(elevator.toZero.negate())
+    //         .ignoringDisable(true)
+    //         .withName("ElevatorZero"));
     // elevator.isNotAtCollect.negate().whileTrue(new PrintCommand("pls pls work"));
 
     controller.b().onTrue(elevator.zero());

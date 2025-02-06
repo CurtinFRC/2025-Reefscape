@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -80,12 +81,15 @@ public class Drive extends SubsystemBase {
   private double d = 0.2;
   private double i = 0.03;
 
-  private final PIDController xController = new PIDController(5.0, 0.0, 0.0);
-  private final PIDController yController = new PIDController(5.0, 0.0, 0.0);
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.1);
   private final PIDController headingController = new PIDController(p, i, d);
 
-  private final PIDController xSetpointController = new PIDController(6.0, 0.0, 0.1);
-  private final PIDController ySetpointController = new PIDController(6.0, 0.0, 0.1);
+  private final PIDController xSetpointController = new PIDController(25.0, 0.0, 0.1);
+  private final PIDController ySetpointController = new PIDController(25.0, 0.0, 0.1);
+
+  public Trigger atSetpointPose =
+      new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
@@ -201,6 +205,14 @@ public class Drive extends SubsystemBase {
       // Apply update
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
+
+    Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
+    Logger.recordOutput("Drive/xPID/error", xController.getError());
+    Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
+
+    Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
+    Logger.recordOutput("Drive/yPID/error", yController.getError());
+    Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
@@ -385,8 +397,12 @@ public class Drive extends SubsystemBase {
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + xSetpointController.calculate(pose.getX(), sample.x),
-            sample.vy + ySetpointController.calculate(pose.getY(), sample.y),
+            sample.vx + sample.vx != 0
+                ? xSetpointController.calculate(pose.getX(), sample.x)
+                : xController.calculate(pose.getX(), sample.x),
+            sample.vy + sample.vy != 0
+                ? ySetpointController.calculate(pose.getY(), sample.y)
+                : yController.calculate(pose.getY(), sample.y),
             sample.omega
                 + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
             getRotation()); // Apply the generated speeds
