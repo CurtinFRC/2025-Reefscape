@@ -60,20 +60,14 @@ public class RepulsorFieldPlanner {
       }
       var outwardsMag = distToForceMag(loc.getDistance(position) - radius);
       var initial = new Force(outwardsMag, position.minus(loc).getAngle());
-      // theta = angle between position->target vector and obstacle->position vector
       var theta = target.minus(position).getAngle().minus(position.minus(loc).getAngle());
       double mag = outwardsMag * Math.signum(Math.sin(theta.getRadians() / 2)) / 2;
 
-      // if (theta.getRadians() > 0) {
       return initial
           .rotateBy(Rotation2d.kCCW_90deg)
           .div(initial.getNorm())
           .times(mag)
           .plus(initial);
-      // } else {
-      //     return
-      // initial.rotateBy(Rotation2d.kCW_90deg).div(initial.getNorm()).times(mag).plus(initial);
-      // }
     }
   }
 
@@ -92,8 +86,6 @@ public class RepulsorFieldPlanner {
       var targetToLocAngle = targetToLoc.getAngle();
       // 1 meter away from loc, opposite target.
       var sidewaysCircle = new Translation2d(1, targetToLoc.getAngle()).plus(loc);
-      var dist = loc.getDistance(position);
-      var sidewaysDist = sidewaysCircle.getDistance(position);
       var sidewaysMag = distToForceMag(sidewaysCircle.getDistance(position));
       var outwardsMag = distToForceMag(Math.max(0.01, loc.getDistance(position) - radius));
       var initial = new Force(outwardsMag, position.minus(loc).getAngle());
@@ -309,10 +301,6 @@ public class RepulsorFieldPlanner {
       double maxSpeed,
       boolean useGoal,
       Rotation2d goalRotation) {
-    Translation2d speedPerSec =
-        new Translation2d(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-    double currentSpeed =
-        Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
     double stepSize_m = maxSpeed * 0.02; // TODO
     if (goalOpt.isEmpty()) {
       return sample(pose.getTranslation(), pose.getRotation(), 0, 0, 0);
@@ -359,7 +347,6 @@ public class RepulsorFieldPlanner {
   public ArrayList<Translation2d> getTrajectory(
       Translation2d current, Translation2d goalTranslation, double stepSize_m) {
     pathLength = 0;
-    // goalTranslation = goalOpt.orElse(goalTranslation);
     ArrayList<Translation2d> traj = new ArrayList<>();
     Translation2d robot = current;
     for (int i = 0; i < 400; i++) {

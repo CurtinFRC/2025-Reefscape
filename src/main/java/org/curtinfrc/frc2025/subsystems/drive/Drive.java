@@ -99,12 +99,8 @@ public class Drive extends SubsystemBase {
               Math.abs(getPose().getX() - setpoint.getX()) < 0.1
                   && Math.abs(getPose().getY() - setpoint.getY()) < 0.1);
 
-  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
-  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
-
-  private final SlewRateLimiter omegaAutoLimiter = new SlewRateLimiter(100);
-  private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -149,10 +145,6 @@ public class Drive extends SubsystemBase {
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
-
-    // SmartDashboard.putNumber("P", 0.9);
-    // SmartDashboard.putNumber("D", 0.02);
-    // SmartDashboard.putNumber("I", 0.01);
   }
 
   @Override
@@ -164,10 +156,6 @@ public class Drive extends SubsystemBase {
       module.periodic();
     }
     odometryLock.unlock();
-
-    // headingController.setP(SmartDashboard.getNumber("P", 2));
-    // headingController.setD(SmartDashboard.getNumber("D", 0.01));
-    // headingController.setI(SmartDashboard.getNumber("I", 0));
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -329,15 +317,11 @@ public class Drive extends SubsystemBase {
 
           Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
 
-          // var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
-
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
                   linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
                   omega * getMaxAngularSpeedRadPerSec());
-
-          // Logger.recordOutput("Drive/OmegaLimited", limited);
 
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
@@ -669,12 +653,6 @@ public class Drive extends SubsystemBase {
                   TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
                   true);
 
-          // Include rotational alignment using the existing heading controller
-          // double adjustedOmega =
-          //     headingController.calculate(
-          //         robotPose.getRotation().getRadians(),
-          //         _setpoint.toPose2d().getRotation().getRadians());
-
           // Apply the trajectory with rotation adjustment
           SwerveSample adjustedSample =
               new SwerveSample(
@@ -684,7 +662,6 @@ public class Drive extends SubsystemBase {
                   _setpoint.toPose2d().getRotation().getRadians(),
                   cmd.vx,
                   cmd.vy,
-                  // adjustedOmega,
                   0,
                   cmd.ax,
                   cmd.ay,
@@ -696,29 +673,6 @@ public class Drive extends SubsystemBase {
           followTrajectory(adjustedSample);
         });
   }
-
-  // public Command autoAlign(Pose3d pose) {
-  //   Logger.recordOutput("Odometry/DesiredPose", pose);
-  //   // PIDController xController = new PIDController(10, 0, 0);
-  //   // xController.setSetpoint(pose.getX());
-  //   // PIDController yController = new PIDController(10, 0, 0);
-  //   // yController.setSetpoint(pose.getY());
-  //   // PIDController rotController = new PIDController(7.5, 0, 0);
-  //   // rotController.setSetpoint(pose.getRotation().getAngle());
-  //   // rotController.enableContinuousInput(-Math.PI, Math.PI);
-  //   repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
-
-  //   return run(
-  //       () -> {
-  //         var robotPose = getPose();
-  //         followTrajectory(
-  //             repulsorFieldPlanner.getCmd(
-  //                 robotPose,
-  //                 getChassisSpeeds(),
-  //                 TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-  //                 true));
-  //       });
-  // }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {
     Transform2d lowestTransform = null;
