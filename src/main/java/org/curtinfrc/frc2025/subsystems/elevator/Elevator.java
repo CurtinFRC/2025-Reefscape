@@ -20,7 +20,7 @@ public class Elevator extends SubsystemBase {
 
   public Elevator(ElevatorIO io) {
     this.io = io;
-    pid.setTolerance(1);
+    pid.setTolerance(tolerance);
   }
 
   @Override
@@ -31,7 +31,6 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/setpoint", setpoint);
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
-    // Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect);
   }
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
@@ -50,10 +49,6 @@ public class Elevator extends SubsystemBase {
   public Command zero() {
     return runOnce(() -> io.zero());
   }
-
-  // public Command goToSetpoint(Setpoints point) {
-  //   return run(() -> io.goToSetpoint(point));
-  // }
 
   public Command stop() {
     return runOnce(() -> io.setVoltage(0));

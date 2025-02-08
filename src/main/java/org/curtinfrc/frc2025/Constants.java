@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
@@ -74,7 +61,6 @@ public final class Constants {
     /* in mm */
     COLLECT(0, List.of(13, 12), List.of(1, 2), false),
     // L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)), //TODO
-    // TODO actually subtract
     L2(11, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true),
     L3(32.8, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true);
 
@@ -120,7 +106,6 @@ public final class Constants {
             .ifPresent(
                 tagPose -> {
                   Pose3d mappedPose = PoseUtil.mapPose(tagPose);
-                  // mappedPose = mappedPose.rotateBy(new Rotation3d(0, 0, Math.PI));
                   Rotation3d rotation = mappedPose.getRotation();
                   double baseAngle = rotation.getAngle(),
                       cos = Math.cos(baseAngle),

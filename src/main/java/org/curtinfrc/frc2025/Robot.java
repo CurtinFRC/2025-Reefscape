@@ -274,7 +274,7 @@ public class Robot extends LoggedRobot {
         .and(drive.atSetpoint)
         .onTrue(ejector.eject(1000));
 
-    // intake.setDefaultCommand(intake.intake(intakeVolts));
+    intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
 
@@ -317,7 +317,6 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
