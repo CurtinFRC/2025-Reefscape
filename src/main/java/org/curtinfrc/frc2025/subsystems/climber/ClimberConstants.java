@@ -5,6 +5,8 @@ public class ClimberConstants {
 
   public static final double grabberTargetVoltage = 4.0;
 
+  public static double grabberTimeout = 5.0;
+
   private static double grabberGearRatio = 1.0; // 1:1
   private static double grabberTargetPositionRotations =
       0.0625; // 1/16 of a rotation / 22.5 degrees

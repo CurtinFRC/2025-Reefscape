@@ -38,8 +38,6 @@ public class ClimberIOSim implements ClimberIO {
     grabberMotorSim.setAngle(
         ClimberConstants.grabberMotorTargetPositionRotations
             * (2 * Math.PI)); // convert rotations to radians
-    System.out.println(
-        "Grabber setpoint: " + ClimberConstants.grabberMotorTargetPositionRotations * 2 * Math.PI);
   }
 
   @Override

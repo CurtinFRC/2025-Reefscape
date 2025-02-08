@@ -33,7 +33,7 @@ public class Climber extends SubsystemBase {
     return run(() -> io.setGrabberVoltage(0.0));
   }
 
-  public Command run() {
-    return run(() -> {});
+  public Command runGrabber() {
+    return run(() -> io.goToGrabberSetpoint()).withTimeout(ClimberConstants.grabberTimeout);
   }
 }
