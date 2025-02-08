@@ -10,17 +10,17 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class EjectorIOSim implements EjectorIO {
-  private DCMotor intakeMotor = DCMotor.getNEO(1);
-  private DCMotorSim intakeMotorSim;
+  private DCMotor ejectorMotor = DCMotor.getNEO(1);
+  private DCMotorSim ejectorMotorSim;
   private SimDevice sensorImpl;
   private SimBoolean sensor;
   private double volts = 0;
 
   public EjectorIOSim() {
-    intakeMotorSim =
+    ejectorMotorSim =
         new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(intakeMotor, ejectorMoi, ejectorReduction),
-            intakeMotor);
+            LinearSystemId.createDCMotorSystem(ejectorMotor, ejectorMoi, ejectorReduction),
+            ejectorMotor);
 
     sensorImpl = SimDevice.create("EjectorSensor", sensorPort);
     sensor = sensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
@@ -28,18 +28,18 @@ public class EjectorIOSim implements EjectorIO {
 
   @Override
   public void updateInputs(EjectorIOInputs inputs) {
-    intakeMotorSim.setInputVoltage(volts);
-    intakeMotorSim.update(0.02);
-    inputs.appliedVolts = intakeMotorSim.getInputVoltage();
-    inputs.currentAmps = intakeMotorSim.getCurrentDrawAmps();
-    inputs.positionRotations = intakeMotorSim.getAngularPositionRotations();
-    inputs.angularVelocityRotationsPerMinute = intakeMotorSim.getAngularVelocityRPM();
+    ejectorMotorSim.setInputVoltage(volts);
+    ejectorMotorSim.update(0.02);
+    inputs.appliedVolts = ejectorMotorSim.getInputVoltage();
+    inputs.currentAmps = ejectorMotorSim.getCurrentDrawAmps();
+    inputs.positionRotations = ejectorMotorSim.getAngularPositionRotations();
+    inputs.angularVelocityRotationsPerMinute = ejectorMotorSim.getAngularVelocityRPM();
     inputs.sensor = sensor.get();
   }
 
   @Override
   public void setVoltage(double volts) {
     this.volts = volts;
-    intakeMotorSim.setInputVoltage(volts);
+    ejectorMotorSim.setInputVoltage(volts);
   }
 }

@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.curtinfrc.frc2025.Constants.Setpoints;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
@@ -52,5 +53,10 @@ public class Elevator extends SubsystemBase {
 
   public Command stop() {
     return runOnce(() -> io.setVoltage(0));
+  }
+
+  @AutoLogOutput(key = "Elevator/Height")
+  public double getHeight() {
+    return rotationsToHeightMeters(inputs.positionRotations);
   }
 }
