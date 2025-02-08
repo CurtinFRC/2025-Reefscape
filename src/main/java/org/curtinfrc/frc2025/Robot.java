@@ -9,16 +9,16 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
+import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
@@ -30,6 +30,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
@@ -68,11 +69,11 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-  private final ButtonBoard buttonBoard = new ButtonBoard(1);
+  private final ButtonBoard board = new ButtonBoard(1);
+
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory autoFactory;
@@ -209,8 +210,6 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
     }
 
-    superstructure = new Superstructure(drive, elevator);
-
     autoFactory =
         new AutoFactory(
             drive::getPose,
@@ -272,11 +271,12 @@ public class Robot extends LoggedRobot {
         .isNotAtCollect
         .and(elevator.atSetpoint)
         .and(drive.atSetpoint)
-        .onTrue(ejector.eject(1000));
+        .whileTrue(ejector.eject(500));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
-    ejector.setDefaultCommand(ejector.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    ejector.setDefaultCommand(
+        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
     intake
         .backSensor
@@ -291,11 +291,14 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
                 .withName("front and back"));
+
     intake
         .backSensor
         .and(intake.frontSensor.negate())
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
+
+    intake.frontSensor.whileTrue(elevator.stop());
 
     controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
@@ -310,11 +313,91 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.a().whileTrue(elevator.goToSetpoint(Setpoints.L3));
-    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
-    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
-    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
-    SmartDashboard.putData(CommandScheduler.getInstance());
+    controller
+        .rightBumper()
+        .whileTrue(
+            Commands.parallel(
+                elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.A)));
+
+    controller
+        .leftBumper()
+        .whileTrue(
+            Commands.parallel(
+                elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.B)));
+
+    controller
+        .rightTrigger()
+        .whileTrue(
+            Commands.parallel(
+                elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.A)));
+
+    controller
+        .leftTrigger()
+        .whileTrue(
+            Commands.parallel(
+                elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.B)));
+
+    controller.rightStick().whileTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
+    controller.leftStick().whileTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
+
+    // board.leftHp().onTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
+    // board.rightHp().onTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
+    // board.processor().onTrue(drive.autoAlign(DriveSetpoints.PROCESSOR));
+    //
+    // board
+    //     .ab()
+    //     .and(controller.rightBumper())
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 elevator.goToSetpoint(ElevatorSetpoints.L2),
+    // drive.autoAlign(DriveSetpoints.A))
+    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    //
+    // board
+    //     .ab()
+    //     .and(controller.rightTrigger())
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 elevator.goToSetpoint(ElevatorSetpoints.L3),
+    // drive.autoAlign(DriveSetpoints.A))
+    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    //
+    // board
+    //     .ab()
+    //     .and(controller.leftBumper())
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 elevator.goToSetpoint(ElevatorSetpoints.L2),
+    // drive.autoAlign(DriveSetpoints.B))
+    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    //
+    // board
+    //     .ab()
+    //     .and(controller.leftTrigger())
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 elevator.goToSetpoint(ElevatorSetpoints.L3),
+    // drive.autoAlign(DriveSetpoints.B))
+    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    //
+    // // TODO invert the rest of them
+    // board.cd().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.C));
+    // board.cd().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.D));
+    //
+    // board.ef().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.E));
+    // board.ef().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.F));
+    //
+    // board.gh().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.G));
+    // board.gh().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.H));
+    //
+    // board.ij().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.I));
+    // board.ij().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.J));
+    //
+    // board.kl().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.K));
+    // board.kl().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.L));
+
+    // controller.leftTrigger().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
+    // controller.rightTrigger().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
   }
 
   /** This function is called periodically during all modes. */

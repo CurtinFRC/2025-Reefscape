@@ -23,4 +23,18 @@ public class ElevatorConstants {
   public static double positionMetresToRotations(double metres) {
     return metres / (Math.PI * 2 * pulleyRadiusMeters);
   }
+
+  // TODO
+  public static enum ElevatorSetpoints {
+    L1(0),
+    L2(0.2),
+    L3(0.59735),
+    BASE(0);
+
+    public final double setpoint;
+
+    ElevatorSetpoints(double setpoint) {
+      this.setpoint = setpoint;
+    }
+  }
 }
