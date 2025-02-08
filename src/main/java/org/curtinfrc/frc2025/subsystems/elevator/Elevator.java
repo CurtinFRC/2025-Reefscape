@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -16,9 +15,11 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
-  private Setpoints setpoint = Setpoints.COLLECT;
+  private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
-  public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
+  public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
+  public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
+  public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -30,7 +31,7 @@ public class Elevator extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
     Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect.getAsBoolean());
-    Logger.recordOutput("Elevator/setpoint", setpoint);
+    Logger.recordOutput("Elevator/setpoint", ElevatorSetpoints.struct, setpoint);
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
 
@@ -39,15 +40,12 @@ public class Elevator extends SubsystemBase {
     }
   }
 
-  public Trigger atSetpoint = new Trigger(pid::atSetpoint);
-
-  public Command goToSetpoint(Setpoints point) {
+  public Command goToSetpoint(ElevatorSetpoints point) {
     return run(
         () -> {
           setpoint = point;
           var out =
-              pid.calculate(
-                  positionRotationsToMetres(inputs.positionRotations), setpoint.elevatorSetpoint());
+              pid.calculate(positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
           io.setVoltage(out);

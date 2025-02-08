@@ -1,5 +1,9 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
+import edu.wpi.first.util.struct.Struct;
+import edu.wpi.first.util.struct.StructGenerator;
+import edu.wpi.first.util.struct.StructSerializable;
+
 public class ElevatorConstants {
   public static int resetPort = 5;
   public static int leaderPort = 31;
@@ -25,5 +29,22 @@ public class ElevatorConstants {
 
   public static double positionMetresToRotations(double metres) {
     return metres / (Math.PI * 2 * pulleyRadiusMeters) * gearing;
+  }
+
+  // TODO
+  public static enum ElevatorSetpoints implements StructSerializable {
+    L1(0),
+    L2(0.2),
+    L3(0.59735),
+    BASE(0);
+
+    public final double setpoint;
+
+    ElevatorSetpoints(double setpoint) {
+      this.setpoint = setpoint;
+    }
+
+    public static final Struct<ElevatorSetpoints> struct =
+        StructGenerator.genEnum(ElevatorSetpoints.class);
   }
 }
