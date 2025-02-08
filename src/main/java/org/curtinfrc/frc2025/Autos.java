@@ -3,7 +3,6 @@ package org.curtinfrc.frc2025;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import edu.wpi.first.wpilibj2.command.Commands;
 
 public class Autos {
   private final AutoFactory factory;
@@ -17,7 +16,7 @@ public class Autos {
 
     AutoTrajectory trajectory = routine.trajectory(path);
 
-    routine.active().onTrue(Commands.sequence(trajectory.resetOdometry(), trajectory.cmd()));
+    routine.active().onTrue(trajectory.cmd());
 
     return routine;
   }
