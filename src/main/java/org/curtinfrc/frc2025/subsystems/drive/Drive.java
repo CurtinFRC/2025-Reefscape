@@ -91,6 +91,14 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpointPose =
       new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
 
+  public Pose3d setpoint = Pose3d.kZero;
+
+  public Trigger atSetpoint =
+      new Trigger(
+          () ->
+              Math.abs(getPose().getX() - setpoint.getX()) < 0.1
+                  && Math.abs(getPose().getY() - setpoint.getY()) < 0.1);
+
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
   // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
@@ -645,7 +653,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlign(Pose3d _setpoint) {
-    // this.setpoint = _setpoint;
+    this.setpoint = _setpoint;
 
     return run(
         () -> {
