@@ -20,9 +20,16 @@ public class Superstructure {
   public Command align(Setpoints setpoint) {
     return Commands.defer(
         () ->
-            Commands.parallel(
-                drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))),
-                elevator.goToSetpoint(setpoint)),
+            drive
+                .autoAlign(setpoint.toPose(new Pose3d(drive.getPose())))
+                .until(
+                    () ->
+                        Math.abs(drive.xController.getError()) < 0.2
+                            && Math.abs(drive.yController.getError()) < 0.2)
+                .andThen(
+                    elevator
+                        .goToSetpoint(setpoint)
+                        .alongWith(drive.autoAlign(setpoint.toPose(new Pose3d(drive.getPose()))))),
         Set.of(elevator, drive));
   }
 }

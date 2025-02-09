@@ -39,11 +39,13 @@ public class ElevatorConstants {
   public static double allowedErr = 0.002; // Allowable position error for stability
 
   // Model Predictive Control Gains
-  public static double kP = 0.5; // Proportional gain TODO
+  public static double kP = 1; // Proportional gain TODO
   public static double kI = 0; // Integral gain TODO
   public static double kD = 0; // Derivative gain TODO
   public static double kA = 0;
   public static double kMinOutput = -12.0; // Minimum voltage output
   public static double kMaxOutput = 12.0; // Maximum voltage output
   public static double kV = 0; // Voltage constant (i for it from the datasheet)
+
+  public static int currentLimit = 60;
 }

@@ -20,6 +20,7 @@ public class Elevator extends SubsystemBase {
 
   public Elevator(ElevatorIO io) {
     this.io = io;
+    this.pid.setTolerance(0.5);
   }
 
   @Override
@@ -39,7 +40,12 @@ public class Elevator extends SubsystemBase {
     setpoint = point;
     return run(
         () -> {
-          var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
+          // if (setpoint == Setpoints.COLLECT) {
+          // pid.setP(0.1);
+          // } else {
+          // pid.setP(ElevatorConstants.kP);
+          // }
+          var out = pid.calculate(inputs.encoderReading, point.elevatorSetpoint());
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
           io.setVoltage(out);
@@ -53,6 +59,10 @@ public class Elevator extends SubsystemBase {
   // public Command goToSetpoint(Setpoints point) {
   //   return run(() -> io.goToSetpoint(point));
   // }
+
+  public Command setVoltage(double volts) {
+    return run(() -> io.setVoltage(volts));
+  }
 
   public Command stop() {
     return runOnce(() -> io.setVoltage(0));

@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.currentLimit;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
 import com.revrobotics.RelativeEncoder;
@@ -23,7 +22,10 @@ public class ElevatorIONEO implements ElevatorIO {
 
   public ElevatorIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
-    config.smartCurrentLimit(0, currentLimit).idleMode(IdleMode.kCoast).inverted(true);
+    config
+        .smartCurrentLimit(0, ElevatorConstants.currentLimit)
+        .idleMode(IdleMode.kCoast)
+        .inverted(true);
 
     SparkUtil.tryUntilOk(
         5,

@@ -81,15 +81,19 @@ public class Drive extends SubsystemBase {
   private double d = 0.2;
   private double i = 0.03;
 
-  private final PIDController xController = new PIDController(5.0, 0.0, 0.1);
-  private final PIDController yController = new PIDController(5.0, 0.0, 0.1);
+  public final PIDController xController = new PIDController(3.0, 0, 0.1);
+  public final PIDController yController = new PIDController(3.0, 0, 0.1);
   private final PIDController headingController = new PIDController(p, i, d);
 
-  private final PIDController xSetpointController = new PIDController(25.0, 0.0, 0.1);
-  private final PIDController ySetpointController = new PIDController(25.0, 0.0, 0.1);
+  private final PIDController xSetpointController = new PIDController(0.0, 0.0, 0);
+  private final PIDController ySetpointController = new PIDController(0.0, 0.0, 0);
 
   public Trigger atSetpointPose =
-      new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
+      new Trigger(
+          () ->
+              xController.atSetpoint()
+                  && yController.atSetpoint()
+                  && headingController.atSetpoint());
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
@@ -112,6 +116,7 @@ public class Drive extends SubsystemBase {
     modules[2] = new Module(blModuleIO, 2, TunerConstants.BackLeft);
     modules[3] = new Module(brModuleIO, 3, TunerConstants.BackRight);
 
+    // this.xController.setTolerance(0.05);
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
 
@@ -234,6 +239,9 @@ public class Drive extends SubsystemBase {
     // Log unoptimized setpoints and setpoint speeds
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveChassisSpeeds/Setpoints", speeds);
+    Logger.recordOutput(
+        "SwerveChassisSpeeds/SetpointMag",
+        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
@@ -391,22 +399,41 @@ public class Drive extends SubsystemBase {
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
     Logger.recordOutput("Drive/PID/error", headingController.getError());
-    var out = headingController.calculate(pose.getRotation().getRadians(), sample.heading);
-    Logger.recordOutput("Drive/PID/out", out);
+    // Logger.recordOutput("Drive/PID/out", out);
+    Logger.recordOutput("Drive/sample", sample);
 
+    var err = new Transform2d(sample.x - pose.getX(), sample.y - pose.getY(), new Rotation2d());
+    var dist = Math.hypot(err.getX(), err.getY());
+    Logger.recordOutput("Drive/dist", dist);
+
+    var target_pose =
+        (DriverStation.getAlliance().get() == Alliance.Blue
+            ? new Pose2d(4.476, 4.026, new Rotation2d())
+            : new Pose2d(13.071, 4.026, new Rotation2d()));
+    var transform = target_pose.relativeTo(pose).rotateBy(pose.getRotation());
+    Logger.recordOutput("Drive/targetpose", target_pose);
+    Logger.recordOutput("Drive/transform", transform);
+    Logger.recordOutput("Drive/theta", Math.atan2(transform.getY(), transform.getX()));
+    Logger.recordOutput(
+        "Drive/projected",
+        new Pose2d(
+            pose.getX(),
+            pose.getY(),
+            new Rotation2d(Math.atan2(transform.getY(), transform.getX()))));
     // Generate the next speeds for the robot
+    xController.setSetpoint(sample.x);
+    yController.setSetpoint(sample.y);
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + sample.vx != 0
-                ? xSetpointController.calculate(pose.getX(), sample.x)
-                : xController.calculate(pose.getX(), sample.x),
-            sample.vy + sample.vy != 0
-                ? ySetpointController.calculate(pose.getY(), sample.y)
-                : yController.calculate(pose.getY(), sample.y),
-            sample.omega
-                + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+            sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
+            sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
+            dist < 1
+                ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+                : headingController.calculate(
+                    pose.getRotation().getRadians(),
+                    Math.atan2(transform.getY(), transform.getX())),
             getRotation()); // Apply the generated speeds
-
+    Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);
   }
 
@@ -579,6 +606,12 @@ public class Drive extends SubsystemBase {
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
   private ChassisSpeeds getChassisSpeeds() {
     return kinematics.toChassisSpeeds(getModuleStates());
+  }
+
+  @AutoLogOutput(key = "SwerveChassisSpeeds/MeasuredMag")
+  private double getMeasuredChassisSpeedMag() {
+    var speeds = kinematics.toChassisSpeeds(getModuleStates());
+    return Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
   }
 
   /** Returns the position of each module in radians. */

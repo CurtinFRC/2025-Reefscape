@@ -139,9 +139,9 @@ public class RepulsorFieldPlanner {
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
           new SnowmanObstacle(
-              new Translation2d(4.49, 4), 0.6, Units.inchesToMeters(65.5 / 2.0), true),
+              new Translation2d(4.49, 4), 1.5, Units.inchesToMeters(65.5 / 2.0), true),
           new SnowmanObstacle(
-              new Translation2d(13.08, 4), 0.6, Units.inchesToMeters(65.5 / 2.0), true));
+              new Translation2d(13.08, 4), 1.5, Units.inchesToMeters(65.5 / 2.0), true));
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
   public static final List<Obstacle> WALLS =
@@ -313,7 +313,7 @@ public class RepulsorFieldPlanner {
         new Translation2d(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
     double currentSpeed =
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-    double stepSize_m = maxSpeed * 0.02; // TODO
+    double stepSize_m = 10 * 0.02; // TODO
     if (goalOpt.isEmpty()) {
       return sample(pose.getTranslation(), pose.getRotation(), 0, 0, 0);
     } else {
@@ -323,8 +323,9 @@ public class RepulsorFieldPlanner {
       var err = curTrans.minus(goal);
 
       Logger.recordOutput("Repulsor/err", curTrans.getDistance(goal));
-      Logger.recordOutput("Repulsor/step", stepSize_m * 1.5);
-      if (useGoal && err.getNorm() < stepSize_m * 1.5) {
+      Logger.recordOutput("Repulsor/toggle_dist", stepSize_m * 1.5);
+
+      if (useGoal && err.getNorm() < stepSize_m * 5) {
         return sample(goal, goalRotation, 0, 0, 0);
       } else {
         var obstacleForce = getObstacleForce(curTrans, goal).plus(getWallForce(curTrans, goal));
@@ -334,21 +335,31 @@ public class RepulsorFieldPlanner {
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           // Calculate how quickly to move in this direction
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
-
-          stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
+          var dist = err.getNorm();
+          // var tts = 5/7;
+          // u = sqrt(2(7)(err))
+          // stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
+          stepSize_m = Math.min(5.14, Math.sqrt(6 /* 14 */ * dist)) * 0.02;
         }
 
-        Logger.recordOutput("Repulsor/net", netForce);
+        Logger.recordOutput("Repulsor/step", stepSize_m);
 
+        Logger.recordOutput("Repulsor/net", netForce);
+        Logger.recordOutput("Repulsor/targetMag", stepSize_m);
         var step = new Translation2d(stepSize_m, netForce.getAngle());
         var intermediateGoal = curTrans.plus(step);
+
         var endTime = System.nanoTime();
         SmartDashboard.putNumber("repulsorTimeS", (endTime - startTime) / 1e9);
         return sample(
-            intermediateGoal,
+            goal,
             goalRotation,
-            (step.getX() / 0.02) * Math.min(1.0, curTrans.getDistance(goal) / 3),
-            (step.getY() / 0.02) * Math.min(1.0, curTrans.getDistance(goal) / 3),
+            (step.getX() / 0.02)
+            /** Math.min(1.0, curTrans.getDistance(goal) / 10) */
+            ,
+            (step.getY() / 0.02)
+            /** Math.min(1.0, curTrans.getDistance(goal) / 10) */
+            ,
             0);
       }
     }

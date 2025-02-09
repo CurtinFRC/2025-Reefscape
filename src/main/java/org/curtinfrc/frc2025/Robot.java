@@ -269,19 +269,26 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // elevator.setDefaultCommand(
-    //     Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+    elevator.setDefaultCommand(
+        Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
 
-    controller
-        .rightBumper()
-        .negate()
-        .and(controller.leftBumper().negate())
-        .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+    // controller
+    // .rightBumper()
+    // .negate()
+    // .and(controller.leftBumper().negate())
+    // .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+
+    // controller.a().whileTrue(elevator.zero());
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
 
-    drive.atSetpointPose.and(elevator.isNotAtCollect).whileTrue(ejector.eject(1000));
+    drive
+        .atSetpointPose
+        .and(elevator.isNotAtCollect)
+        .and(elevator.atSetpoint)
+        .onTrue(
+            ejector.eject(1000).until(elevator.isNotAtCollect.negate()).andThen(ejector.stop()));
 
     // elevator.toZero.whileTrue(intake.intake(intakeVolts));
     // elevator.toZero.().whileTrue(intake.stop());
@@ -306,14 +313,14 @@ public class Robot extends LoggedRobot {
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
     // elevator.toZero.whileTrue(
-    //     elevator
-    //         .zero()
-    //         .until(elevator.toZero.negate())
-    //         .ignoringDisable(true)
-    //         .withName("ElevatorZero"));
+    // elevator
+    // .zero()
+    // .until(elevator.toZero.negate())
+    // .ignoringDisable(true)
+    // .withName("ElevatorZero"));
     // elevator.isNotAtCollect.negate().whileTrue(new PrintCommand("pls pls work"));
 
-    controller.b().onTrue(elevator.zero());
+    controller.b().whileTrue(elevator.zero());
     controller.rightTrigger().whileTrue(ejector.eject(1000));
 
     // Lock to 0° when A button is held
@@ -338,6 +345,8 @@ public class Robot extends LoggedRobot {
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
+
+    // controller.rightBumper().whileTrue(elevator.setVoltage(2));
   }
 
   /** This function is called periodically during all modes. */
