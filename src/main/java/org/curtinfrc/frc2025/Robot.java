@@ -279,9 +279,15 @@ public class Robot extends LoggedRobot {
     // .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
 
     // controller.a().whileTrue(elevator.zero());
+    elevator
+        .isNotAtCollect
+        .and(elevator.atSetpoint)
+        .and(drive.atSetpoint)
+        .onTrue(ejector.eject(1000));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
 
     drive
         .atSetpointPose
@@ -312,16 +318,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    // elevator.toZero.whileTrue(
-    // elevator
-    // .zero()
-    // .until(elevator.toZero.negate())
-    // .ignoringDisable(true)
-    // .withName("ElevatorZero"));
-    // elevator.isNotAtCollect.negate().whileTrue(new PrintCommand("pls pls work"));
-
-    controller.b().whileTrue(elevator.zero());
-    controller.rightTrigger().whileTrue(ejector.eject(1000));
+    controller.b().onTrue(elevator.zero());
 
     // Lock to 0° when A button is held
     controller
@@ -341,12 +338,9 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // controller.pov(0).whileTrue(superstructure.align(Setpoints.L1));
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
-
-    // controller.rightBumper().whileTrue(elevator.setVoltage(2));
   }
 
   /** This function is called periodically during all modes. */

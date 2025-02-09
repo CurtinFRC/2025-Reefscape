@@ -95,9 +95,16 @@ public class Drive extends SubsystemBase {
                   && yController.atSetpoint()
                   && headingController.atSetpoint());
 
-  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7); // Limits acceleration to 3 mps
+  public Pose3d setpoint = Pose3d.kZero;
+
+  public Trigger atSetpoint =
+      new Trigger(
+          () ->
+              Math.abs(getPose().getX() - setpoint.getX()) < 0.1
+                  && Math.abs(getPose().getY() - setpoint.getY()) < 0.1);
+
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
-  // private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
 
   private final SlewRateLimiter omegaAutoLimiter = new SlewRateLimiter(100);
   private final SlewRateLimiter omegaLimiter = new SlewRateLimiter(1);
@@ -329,15 +336,11 @@ public class Drive extends SubsystemBase {
 
           Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
 
-          // var limited = omegaLimiter.calculate(omega * getMaxAngularSpeedRadPerSec());
-
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
                   linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
                   omega * getMaxAngularSpeedRadPerSec());
-
-          // Logger.recordOutput("Drive/OmegaLimited", limited);
 
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
@@ -678,7 +681,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlign(Pose3d _setpoint) {
-    // this.setpoint = _setpoint;
+    this.setpoint = _setpoint;
 
     return run(
         () -> {
@@ -721,29 +724,6 @@ public class Drive extends SubsystemBase {
           followTrajectory(adjustedSample);
         });
   }
-
-  // public Command autoAlign(Pose3d pose) {
-  //   Logger.recordOutput("Odometry/DesiredPose", pose);
-  //   // PIDController xController = new PIDController(10, 0, 0);
-  //   // xController.setSetpoint(pose.getX());
-  //   // PIDController yController = new PIDController(10, 0, 0);
-  //   // yController.setSetpoint(pose.getY());
-  //   // PIDController rotController = new PIDController(7.5, 0, 0);
-  //   // rotController.setSetpoint(pose.getRotation().getAngle());
-  //   // rotController.enableContinuousInput(-Math.PI, Math.PI);
-  //   repulsorFieldPlanner.setGoal(pose.toPose2d().getTranslation());
-
-  //   return run(
-  //       () -> {
-  //         var robotPose = getPose();
-  //         followTrajectory(
-  //             repulsorFieldPlanner.getCmd(
-  //                 robotPose,
-  //                 getChassisSpeeds(),
-  //                 TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-  //                 true));
-  //       });
-  // }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {
     Transform2d lowestTransform = null;
