@@ -1,25 +1,13 @@
-// Copyright 2021-2024 FRC 6328Robot
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025;
 
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import choreo.auto.AutoFactory;
-import choreo.auto.AutoFactory.AutoBindings;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -27,18 +15,32 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.*;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
+import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.Intake;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
@@ -62,6 +64,10 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Climber climber;
+  private Intake intake;
+  private Elevator elevator;
+  private Ejector ejector;
+  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -90,7 +96,6 @@ public class Robot extends LoggedRobot {
         break;
     }
 
-    // Set up data receivers & replay source
     switch (Constants.getMode()) {
       case REAL:
         // Running on a real robot, log to a USB stick ("/U/logs")
@@ -118,8 +123,10 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
+    DriverStation.waitForDsConnection(60);
+
     if (Constants.getMode() != Mode.REPLAY) {
-      switch (Constants.getRobot()) {
+      switch (Constants.robotType) {
         case COMPBOT -> {
           // Real robot, instantiate hardware IO implementationsRobot
           drive =
@@ -135,6 +142,9 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelightGamepiece(camera0Name),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOQuestNav());
+          elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
           climber = new Climber(new ClimberIONeo() {});
         }
 
@@ -150,8 +160,12 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
+                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
+          elevator = new Elevator(new ElevatorIONEO());
+          intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
                   new VisionIOQuestNav());
           climber = new Climber(new ClimberIONeo() {});
         }
@@ -160,7 +174,9 @@ public class Robot extends LoggedRobot {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIO() {},
+                  new GyroIOSim(
+                      () -> drive.getKinematics(),
+                      () -> drive.getModuleStates()) {}, // work around crash
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
@@ -171,6 +187,10 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
+
+          elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIOSim());
+          ejector = new Ejector(new EjectorIOSim());
           climber = new Climber(new ClimberIOSim() {});
         }
       }
@@ -187,8 +207,14 @@ public class Robot extends LoggedRobot {
           new Vision(
               drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
 
+      elevator = new Elevator(new ElevatorIO() {});
+      intake = new Intake(new IntakeIO() {});
+      ejector = new Ejector(new EjectorIO() {});
+
       climber = new Climber(new ClimberIOSim() {});
     }
+
+    superstructure = new Superstructure(drive, elevator);
 
     autoFactory =
         new AutoFactory(
@@ -197,7 +223,6 @@ public class Robot extends LoggedRobot {
             drive::followTrajectory,
             true,
             drive,
-            new AutoBindings(),
             drive::logTrajectory);
 
     autoChooser = new AutoChooser("Auto Chooser");
@@ -208,22 +233,40 @@ public class Robot extends LoggedRobot {
     autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
     autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
     autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
+    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
 
     // Set up SysId routines
     autoChooser.addCmd(
         "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
     autoChooser.addCmd(
         "Drive Simple FF Characterization", () -> drive.feedforwardCharacterization());
+
     autoChooser.addCmd(
-        "Drive SysId (Quasistatic Forward)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        "Drive Translation SysId (Quasistatic Forward)",
+        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kForward));
     autoChooser.addCmd(
-        "Drive SysId (Quasistatic Reverse)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        "Drive Translation SysId (Quasistatic Reverse)",
+        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kReverse));
     autoChooser.addCmd(
-        "Drive SysId (Dynamic Forward)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Drive Translation SysId (Dynamic Forward)",
+        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addCmd(
-        "Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        "Drive Translation SysId (Dynamic Reverse)",
+        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kReverse));
+
+    autoChooser.addCmd(
+        "Drive Steer SysId (Quasistatic Forward)",
+        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Quasistatic Reverse)",
+        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Dynamic Forward)",
+        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addCmd(
+        "Drive Steer SysId (Dynamic Reverse)",
+        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
+
     RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
     // Default command, normal field-relative drive
@@ -233,19 +276,48 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
+    elevator
+        .isNotAtCollect
+        .and(elevator.atSetpoint)
+        .and(drive.atSetpoint)
+        .onTrue(ejector.eject(1000));
+
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    ejector.setDefaultCommand(ejector.stop());
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
     climber.setDefaultCommand(climber.stop());
+
+    intake
+        .backSensor
+        .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+    intake
+        .backSensor
+        .and(intake.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(
+            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
+                .withName("front and back"));
+    intake
+        .backSensor
+        .and(intake.frontSensor.negate())
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
+
+    controller.b().onTrue(elevator.zero());
+
     // Lock to 0° when A button is held
     controller
         .a()
         .whileTrue(
             drive.joystickDriveAtAngle(
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> Rotation2d.kZero));
+                () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
 
     // Reset gyro to 0° when B button is pressed
     controller
-        .b()
+        .y()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -253,6 +325,10 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+
+    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
+    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
+    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
 
     controller.y().whileTrue(climber.goToSetpoint());
   }
@@ -272,6 +348,20 @@ public class Robot extends LoggedRobot {
 
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
+
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
+    autoChooser.periodic();
+
+    if (elevator.getCurrentCommand() != null) {
+      Logger.recordOutput("ElevatorCommand", elevator.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("ElevatorCommand", "null");
+    }
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
@@ -299,7 +389,25 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("IntakeCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("DriveCommand", "null");
+    }
+  }
 
   /** This function is called once when test mode is enabled. */
   @Override

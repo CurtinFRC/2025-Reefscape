@@ -184,7 +184,7 @@ ctre_sim/
 compile_commands.json
 
 # Version file
-src/main/java/frc/robot/BuildConstants.java
+src/main/java/org/curtinfrc/frc2025/BuildConstants.java
 
 # Eclipse generated annotation processor file
 /.factorypath

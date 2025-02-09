@@ -1,23 +1,12 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -28,6 +17,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -48,6 +38,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -60,6 +51,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -68,7 +60,8 @@ public class Drive extends SubsystemBase {
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-  private final SysIdRoutine sysId;
+  private final SysIdRoutine sysIdTranslation;
+  private final SysIdRoutine sysIdSteer;
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
@@ -84,9 +77,32 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
+  private double p = 6;
+  private double d = 0.2;
+  private double i = 0.03;
+
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController headingController = new PIDController(p, i, d);
+
+  private final PIDController xSetpointController = new PIDController(25.0, 0.0, 0.1);
+  private final PIDController ySetpointController = new PIDController(25.0, 0.0, 0.1);
+
+  public Trigger atSetpointPose =
+      new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
+
+  public Pose3d setpoint = Pose3d.kZero;
+
+  public Trigger atSetpoint =
+      new Trigger(
+          () ->
+              Math.abs(getPose().getX() - setpoint.getX()) < 0.1
+                  && Math.abs(getPose().getY() - setpoint.getY()) < 0.1);
+
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
+
+  RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
       GyroIO gyroIO,
@@ -107,7 +123,18 @@ public class Drive extends SubsystemBase {
     PhoenixOdometryThread.getInstance().start();
 
     // Configure SysId
-    sysId =
+    sysIdTranslation =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(0.5).per(Second),
+                Volts.of(2.5),
+                Seconds.of(7.5),
+                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runTranslationCharacterization(voltage.in(Volts)), null, this));
+
+    // Configure SysId
+    sysIdSteer =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
@@ -115,7 +142,7 @@ public class Drive extends SubsystemBase {
                 null,
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+                (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -162,11 +189,11 @@ public class Drive extends SubsystemBase {
       }
 
       // Update gyro angle
-      if (gyroInputs.connected) {
+      if (gyroInputs.connected && i >= 0 && i < gyroInputs.odometryYawPositions.length) {
         // Use the real gyro angle
         rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
-        // Use the angle delta from the kinematics and module deltas
+        // Fallback to calculating the angle delta
         Twist2d twist = kinematics.toTwist2d(moduleDeltas);
         rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
@@ -174,6 +201,14 @@ public class Drive extends SubsystemBase {
       // Apply update
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
+
+    Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
+    Logger.recordOutput("Drive/xPID/error", xController.getError());
+    Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
+
+    Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
+    Logger.recordOutput("Drive/yPID/error", yController.getError());
+    Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
@@ -185,6 +220,9 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   private void runVelocity(ChassisSpeeds speeds) {
+    speeds.vxMetersPerSecond = xLimiter.calculate(speeds.vxMetersPerSecond);
+    speeds.vyMetersPerSecond = yLimiter.calculate(speeds.vyMetersPerSecond);
+
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
@@ -203,22 +241,45 @@ public class Drive extends SubsystemBase {
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
-  private void runCharacterization(double output) {
+  private void runSteerCharacterization(double output) {
     for (int i = 0; i < 4; i++) {
-      modules[i].runCharacterization(output);
+      modules[i].runSteerCharacterization(output);
     }
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0))
+  public Command sysIdSteerQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
         .withTimeout(1.0)
-        .andThen(sysId.quasistatic(direction));
+        .andThen(sysIdSteer.quasistatic(direction));
   }
 
   /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
+  public Command sysIdSteerDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdSteer.dynamic(direction));
+  }
+
+  /** Runs the drive in a straight line with the specified drive output. */
+  private void runTranslationCharacterization(double output) {
+    for (int i = 0; i < 4; i++) {
+      modules[i].runTranslationCharacterization(output);
+    }
+  }
+
+  /** Returns a command to run a quasistatic test in the specified direction. */
+  public Command sysIdTranslationQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runTranslationCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdTranslation.quasistatic(direction));
+  }
+
+  /** Returns a command to run a dynamic test in the specified direction. */
+  public Command sysIdTranslationDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runTranslationCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdTranslation.dynamic(direction));
   }
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -242,31 +303,35 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          // Get linear velocity
-          Translation2d linearVelocity =
-              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+          double xSpeed = xSupplier.getAsDouble();
 
-          // Apply rotation deadband
-          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+          double ySpeed = ySupplier.getAsDouble();
 
-          // Square rotation value for more precise control
+          double omegaSpeed = omegaSupplier.getAsDouble();
+
+          Translation2d linearVelocity = getLinearVelocityFromJoysticks(xSpeed, ySpeed);
+
+          double omega = MathUtil.applyDeadband(omegaSpeed, DEADBAND);
+
           omega = Math.copySign(omega * omega, omega);
 
-          // Convert to field relative speeds & send command
+          Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
+
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   linearVelocity.getX() * getMaxLinearSpeedMetersPerSec(),
                   linearVelocity.getY() * getMaxLinearSpeedMetersPerSec(),
                   omega * getMaxAngularSpeedRadPerSec());
+
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
+
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
         });
   }
-
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
@@ -317,25 +382,34 @@ public class Drive extends SubsystemBase {
     // Get the current pose of the robot
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+    Logger.recordOutput("Drive/PID/error", headingController.getError());
+    var out = headingController.calculate(pose.getRotation().getRadians(), sample.heading);
+    Logger.recordOutput("Drive/PID/out", out);
 
     // Generate the next speeds for the robot
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + xController.calculate(pose.getX(), sample.x),
-            sample.vy + yController.calculate(pose.getY(), sample.y),
+            sample.vx + sample.vx != 0
+                ? xSetpointController.calculate(pose.getX(), sample.x)
+                : xController.calculate(pose.getX(), sample.x),
+            sample.vy + sample.vy != 0
+                ? ySetpointController.calculate(pose.getY(), sample.y)
+                : yController.calculate(pose.getY(), sample.y),
             sample.omega
                 + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
-            getRotation());
+            getRotation()); // Apply the generated speeds
 
-    // Apply the generated speeds
     runVelocity(speeds);
   }
 
-  public void logTrajectory(Trajectory<SwerveSample> traj, boolean flipped) {
+  public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {
     SwerveSample[] trajarray = new SwerveSample[0];
+    boolean flip =
+        DriverStation.isDSAttached() && DriverStation.getAlliance().get() != Alliance.Blue;
     Logger.recordOutput(
         "Odometry/Trajectory",
-        flipped ? traj.flipped().samples().toArray(trajarray) : traj.samples().toArray(trajarray));
+        flip ? traj.flipped().samples().toArray(trajarray) : traj.samples().toArray(trajarray));
+    Logger.recordOutput("Odometry/TrajectoryFinished", isFinished);
   }
 
   /**
@@ -358,7 +432,7 @@ public class Drive extends SubsystemBase {
 
         // Allow modules to orient
         run(() -> {
-              runCharacterization(0.0);
+              runTranslationCharacterization(0.0);
             })
             .withTimeout(FF_START_DELAY),
 
@@ -368,7 +442,7 @@ public class Drive extends SubsystemBase {
         // Accelerate and gather data
         run(() -> {
               double voltage = timer.get() * FF_RAMP_RATE;
-              runCharacterization(voltage);
+              runTranslationCharacterization(voltage);
               velocitySamples.add(getFFCharacterizationVelocity());
               voltageSamples.add(voltage);
             })
@@ -472,12 +546,16 @@ public class Drive extends SubsystemBase {
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
-  private SwerveModuleState[] getModuleStates() {
+  public SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
       states[i] = modules[i].getState();
     }
     return states;
+  }
+
+  public SwerveDriveKinematics getKinematics() {
+    return kinematics;
   }
 
   /** Returns the module positions (turn angles and drive positions) for all of the modules. */
@@ -556,5 +634,61 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
+  }
+
+  public Command autoAlign(Pose3d _setpoint) {
+    this.setpoint = _setpoint;
+
+    return run(
+        () -> {
+          Logger.recordOutput("Drive/Setpoint", _setpoint);
+
+          repulsorFieldPlanner.setGoal(_setpoint.toPose2d().getTranslation());
+
+          var robotPose = getPose();
+          SwerveSample cmd =
+              repulsorFieldPlanner.getCmd(
+                  robotPose,
+                  getChassisSpeeds(),
+                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  true);
+
+          // Apply the trajectory with rotation adjustment
+          SwerveSample adjustedSample =
+              new SwerveSample(
+                  cmd.t,
+                  cmd.x,
+                  cmd.y,
+                  _setpoint.toPose2d().getRotation().getRadians(),
+                  cmd.vx,
+                  cmd.vy,
+                  0,
+                  cmd.ax,
+                  cmd.ay,
+                  cmd.alpha,
+                  cmd.moduleForcesX(),
+                  cmd.moduleForcesY());
+
+          // Apply the adjusted sample
+          followTrajectory(adjustedSample);
+        });
+  }
+
+  public Pose3d findClosestTag(List<AprilTag> tags) {
+    Transform2d lowestTransform = null;
+    int closestTagId = 99;
+    for (var tag : tags) {
+      var transform = getPose().minus(tag.pose.toPose2d());
+      if (lowestTransform == null) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+        break;
+      }
+      if (lowestTransform.getTranslation().getNorm() > transform.getTranslation().getNorm()) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+      }
+    }
+    return aprilTagLayout.getTagPose(closestTagId).get();
   }
 }
