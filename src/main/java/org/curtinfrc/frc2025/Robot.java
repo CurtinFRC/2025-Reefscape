@@ -43,6 +43,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
+import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -69,7 +70,7 @@ public class Robot extends LoggedRobot {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-
+  private final ButtonBoard buttonBoard = new ButtonBoard(1);
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory autoFactory;
