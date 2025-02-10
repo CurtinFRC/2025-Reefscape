@@ -37,13 +37,13 @@ public class Elevator extends SubsystemBase {
 
   public Command goToSetpoint(Setpoints point) {
     setpoint = point;
-    return run(
-        () -> {
+    return run(() -> {
           var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
           io.setVoltage(out);
-        });
+        })
+        .finallyDo(() -> setpoint = Setpoints.COLLECT);
   }
 
   public Command zero() {
