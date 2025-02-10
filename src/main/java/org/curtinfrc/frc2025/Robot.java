@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.units.Units.Inches;
 import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
@@ -7,14 +8,19 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
+import org.curtinfrc.frc2025.Constants.RobotType;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
@@ -44,6 +50,10 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -74,6 +84,10 @@ public class Robot extends LoggedRobot {
   private final AutoChooser autoChooser;
   private final AutoFactory autoFactory;
   private final Autos autos;
+
+  private Joystick simJoystick; // Joystick for simulation input
+  private final Trigger Z = new Trigger(() -> simJoystick.getRawAxis(0) == 1);
+  private final Trigger X = new Trigger(() -> simJoystick.getRawAxis(1) == 1);
 
   public Robot() {
     // Record metadata
@@ -167,15 +181,39 @@ public class Robot extends LoggedRobot {
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
+          // Create and configure a drivetrain simulation configuration
+          final DriveTrainSimulationConfig driveTrainSimulationConfig =
+              DriveTrainSimulationConfig.Default()
+                  // Specify gyro type (for realistic gyro drifting and error simulation)
+                  .withGyro(COTS.ofPigeon2())
+                  // Specify swerve module (for realistic swerve dynamics)
+                  .withSwerveModule(
+                      COTS.ofMark4(
+                          DCMotor.getKrakenX60Foc(1), // Drive motor is a Kraken X60
+                          DCMotor.getFalcon500(1), // Steer motor is a Falcon 500
+                          COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
+                          3)) // L3 Gear ratio
+                  // Configures the track length and track width (spacing between swerve modules)
+                  .withTrackLengthTrackWidth(Inches.of(24), Inches.of(24))
+                  // Configures the bumper size (dimensions of the robot bumper)
+                  .withBumperSize(Inches.of(30), Inches.of(30));
+
+          final SwerveDriveSimulation swerveDriveSimulation =
+              new SwerveDriveSimulation(
+                  // Specify Configuration
+                  driveTrainSimulationConfig,
+                  // Specify starting pose
+                  new Pose2d(3, 3, new Rotation2d()));
+
+          SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
+
           drive =
               new Drive(
-                  new GyroIOSim(
-                      () -> drive.getKinematics(),
-                      () -> drive.getModuleStates()) {}, // work around crash
-                  new ModuleIOSim(TunerConstants.FrontLeft),
-                  new ModuleIOSim(TunerConstants.FrontRight),
-                  new ModuleIOSim(TunerConstants.BackLeft),
-                  new ModuleIOSim(TunerConstants.BackRight));
+                  new GyroIOSim(swerveDriveSimulation.getGyroSimulation()) {}, // work around crash
+                  new ModuleIOSim(swerveDriveSimulation.getModules()[0]),
+                  new ModuleIOSim(swerveDriveSimulation.getModules()[1]),
+                  new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
+                  new ModuleIOSim(swerveDriveSimulation.getModules()[3]));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
@@ -186,6 +224,8 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
+
+          simJoystick = new Joystick(0); // Assuming keyboard/joystick is ID 0
         }
       }
     } else {
@@ -262,12 +302,35 @@ public class Robot extends LoggedRobot {
     RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
     // Default command, normal field-relative drive
-    drive.setDefaultCommand(
-        drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+    if (Constants.robotType == RobotType.SIMBOT) {
+      // drive.setDefaultCommand(
+      // drive.joystickDrive(
+      // () -> -simJoystick.getRawAxis(0), () -> -simJoystick.getRawAxis(1), () -> 0));
+      drive.setDefaultCommand(drive.joystickDrive(() -> 0, () -> 0, () -> 0));
+      Z.whileTrue(superstructure.align(Setpoints.L2));
+      X.whileTrue(superstructure.align(Setpoints.COLLECT));
+    } else {
+      drive.setDefaultCommand(
+          drive.joystickDrive(
+              () -> -controller.getLeftY(),
+              () -> -controller.getLeftX(),
+              () -> -controller.getRightX()));
 
+      controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
+      controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
+      controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
+    }
+
+    elevator.setDefaultCommand(
+        Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+
+    // controller
+    // .rightBumper()
+    // .negate()
+    // .and(controller.leftBumper().negate())
+    // .onTrue(Commands.defer(() -> elevator.goToSetpoint(Setpoints.COLLECT), Set.of(elevator)));
+
+    // controller.a().whileTrue(elevator.zero());
     elevator
         .isNotAtCollect
         .and(elevator.atSetpoint)
@@ -277,6 +340,16 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+
+    drive
+        .atSetpointPose
+        .and(elevator.isNotAtCollect)
+        .and(elevator.atSetpoint)
+        .onTrue(
+            ejector.eject(1000).until(elevator.isNotAtCollect.negate()).andThen(ejector.stop()));
+
+    // elevator.toZero.whileTrue(intake.intake(intakeVolts));
+    // elevator.toZero.().whileTrue(intake.stop());
 
     intake
         .backSensor
@@ -316,10 +389,6 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
-
-    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
-    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
-    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
   }
 
   /** This function is called periodically during all modes. */
@@ -391,7 +460,7 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("IntakeCommand", "null");
     }
 
-    if (intake.getCurrentCommand() != null) {
+    if (drive.getCurrentCommand() != null) {
       Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
     } else {
       Logger.recordOutput("DriveCommand", "null");
@@ -415,5 +484,7 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SimulatedArena.getInstance().simulationPeriodic();
+  }
 }
