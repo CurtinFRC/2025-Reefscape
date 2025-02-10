@@ -325,12 +325,8 @@ public class RepulsorFieldPlanner {
         if (useGoal) {
           netForce = getGoalForce(curTrans, goal).plus(netForce);
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
-          // Calculate how quickly to move in this direction
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
           var dist = err.getNorm();
-          // var tts = 5/7;
-          // u = sqrt(2(7)(err))
-          // stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
           stepSize_m = Math.min(5.14, Math.sqrt(6 /* 14 */ * dist)) * 0.02;
         }
 
@@ -343,16 +339,7 @@ public class RepulsorFieldPlanner {
 
         var endTime = System.nanoTime();
         SmartDashboard.putNumber("repulsorTimeS", (endTime - startTime) / 1e9);
-        return sample(
-            goal,
-            goalRotation,
-            (step.getX() / 0.02)
-            /** Math.min(1.0, curTrans.getDistance(goal) / 10) */
-            ,
-            (step.getY() / 0.02)
-            /** Math.min(1.0, curTrans.getDistance(goal) / 10) */
-            ,
-            0);
+        return sample(goal, goalRotation, (step.getX() / 0.02), (step.getY() / 0.02), 0);
       }
     }
   }
