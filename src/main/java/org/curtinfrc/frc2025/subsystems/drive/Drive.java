@@ -81,8 +81,8 @@ public class Drive extends SubsystemBase {
   private double d = 0.2;
   private double i = 0.03;
 
-  public final PIDController xController = new PIDController(3.0, 0, 0.1);
-  public final PIDController yController = new PIDController(3.0, 0, 0.1);
+  public final PIDController xController = new PIDController(2.0, 0, 0);
+  public final PIDController yController = new PIDController(2.0, 0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0.0, 0.0, 0);
