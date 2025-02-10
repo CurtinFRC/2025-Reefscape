@@ -89,7 +89,6 @@ public class Robot extends LoggedRobot {
   private final Autos autos;
 
   private Joystick simJoystick; // Joystick for simulation input
-  private final Map<String, Command> simBindings = new HashMap<>();
   private final Trigger Z = new Trigger(() -> simJoystick.getRawAxis(0) == 1);
   private final Trigger X = new Trigger(() -> simJoystick.getRawAxis(1) == 1);
 
@@ -231,15 +230,6 @@ public class Robot extends LoggedRobot {
 
           simJoystick = new Joystick(0); // Assuming keyboard/joystick is ID 0
 
-          // Example keybindings (customize as needed)
-          simBindings.put("W", drive.joystickDrive(() -> 1.0, () -> 0.0, () -> 0.0)); // Forward
-          simBindings.put("S", drive.joystickDrive(() -> -1.0, () -> 0.0, () -> 0.0)); // Backward
-          simBindings.put("A", drive.joystickDrive(() -> 0.0, () -> 1.0, () -> 0.0)); // Left
-          simBindings.put("D", drive.joystickDrive(() -> 0.0, () -> -1.0, () -> 0.0)); // Right
-          simBindings.put("Q", drive.joystickDrive(() -> 0.0, () -> 0.0, () -> 0.5)); // Rotate CCW
-          simBindings.put("E", drive.joystickDrive(() -> 0.0, () -> 0.0, () -> -0.5)); // Rotate CW
-          // simBindings.put("Space", new InstantCommand(elevator::zero)); // Example elevator zero
-          // simBindings.put("R", new InstantCommand(ejector::eject)); // Example eject
         }
       }
     } else {
