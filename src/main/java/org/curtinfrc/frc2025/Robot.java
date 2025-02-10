@@ -12,15 +12,12 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.RobotType;
@@ -192,7 +189,7 @@ public class Robot extends LoggedRobot {
                   // Specify swerve module (for realistic swerve dynamics)
                   .withSwerveModule(
                       COTS.ofMark4(
-                          DCMotor.getKrakenX60(1), // Drive motor is a Kraken X60
+                          DCMotor.getKrakenX60Foc(1), // Drive motor is a Kraken X60
                           DCMotor.getFalcon500(1), // Steer motor is a Falcon 500
                           COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
                           3)) // L3 Gear ratio
@@ -229,7 +226,6 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOSim());
 
           simJoystick = new Joystick(0); // Assuming keyboard/joystick is ID 0
-
         }
       }
     } else {
