@@ -3,10 +3,13 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.curtinfrc.frc2025.Constants.Setpoints;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
@@ -52,5 +55,14 @@ public class Elevator extends SubsystemBase {
 
   public Command stop() {
     return runOnce(() -> io.setVoltage(0));
+  }
+
+  @AutoLogOutput(key = "Elevator/Height")
+  public Pose3d getHeight() {
+    return new Pose3d(
+        0,
+        0,
+        inputs.positionRotations * Math.PI * 2 * pulleyRadiusMeters,
+        new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }
