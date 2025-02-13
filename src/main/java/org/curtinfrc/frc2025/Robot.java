@@ -277,7 +277,7 @@ public class Robot extends LoggedRobot {
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.L3));
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
 
     intake
         .backSensor
@@ -306,14 +306,6 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             drive.joystickDriveAtAngle(
                 () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
-
-    controller
-        .b()
-        .whileTrue(
-            drive.joystickDriveAtAngle(
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> vision.getTargetX(1)));
 
     // Reset gyro to 0° when B button is pressed
     controller
