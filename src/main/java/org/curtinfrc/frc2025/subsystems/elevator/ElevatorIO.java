@@ -10,7 +10,6 @@ public interface ElevatorIO {
     public double currentAmps;
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
-    public double positionMeters;
     public boolean touchSensor;
   }
 

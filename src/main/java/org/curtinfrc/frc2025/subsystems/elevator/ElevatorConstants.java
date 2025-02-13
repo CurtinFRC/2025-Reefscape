@@ -12,7 +12,7 @@ public class ElevatorConstants {
   public static double kA = 0.01;
   public static double kG = 0;
 
-  public static final double pulleyRadiusMeters = 0.02927789; // TODO get this
-  public static final double maxHeightMeters = 1.441;
+  public static final double pulleyRadiusMeters = 0.002927789;
+  public static final double maxHeightMeters = 0.8;
   public static final double carriageToGround = 0.06229734;
 }
