@@ -15,4 +15,12 @@ public class ElevatorConstants {
   public static final double pulleyRadiusMeters = 0.002927789;
   public static final double maxHeightMeters = 0.8;
   public static final double carriageToGround = 0.06229734;
+
+  public static double positionRotationsToMetres(double rotations) {
+    return rotations * Math.PI * 2 * pulleyRadiusMeters;
+  }
+
+  public static double positionMetresToRotations(double metres) {
+    return metres / (Math.PI * 2 * pulleyRadiusMeters);
+  }
 }
