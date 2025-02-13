@@ -23,5 +23,5 @@ public final class DriveConstants {
           Math.max(
               Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
               Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
-  public static final double kT = 0.1;
+  public static final double kT = 1; // TODO figure this out
 }
