@@ -71,6 +71,7 @@ public class ModuleIOTalonFX implements ModuleIO {
       new PositionTorqueCurrentFOC(0.0);
   private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
       new VelocityTorqueCurrentFOC(0.0);
+  private final TorqueCurrentFOC currentTorqueCurrentRequest = new TorqueCurrentFOC(0);
 
   // Timestamp inputs from Phoenix thread
   private final Queue<Double> timestampQueue;
@@ -254,6 +255,11 @@ public class ModuleIOTalonFX implements ModuleIO {
           case Voltage -> velocityVoltageRequest.withVelocity(velocityRotPerSec);
           case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
         });
+  }
+
+  @Override
+  public void setDriveCurrent(double currentAmps) {
+    driveTalon.setControl(currentTorqueCurrentRequest.withOutput(currentAmps));
   }
 
   @Override

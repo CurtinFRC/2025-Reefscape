@@ -12,6 +12,8 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -240,6 +242,19 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
   }
 
+  private void runCurrentStates(SwerveModuleState[] states) {
+    // Log unoptimized setpoints and setpoint speeds
+    Logger.recordOutput("SwerveStates/TorqueSetpoints", states);
+
+    // Send setpoints to modules
+    for (int i = 0; i < 4; i++) {
+      modules[i].runSetpointTorque(states[i]);
+    }
+
+    // Log optimized setpoints (runSetpoint mutates each state)
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", states);
+  }
+
   /** Runs the drive in a straight line with the specified drive output. */
   private void runSteerCharacterization(double output) {
     for (int i = 0; i < 4; i++) {
@@ -400,6 +415,28 @@ public class Drive extends SubsystemBase {
             getRotation()); // Apply the generated speeds
 
     runVelocity(speeds);
+  }
+
+  public void followTrajectoryTorque(SwerveSample sample) {
+
+    // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius vector,
+    // and F be the module force vector.
+    // τ=Kti
+    // τ=r×F
+    // Kti=r×F
+    // i=(r×F)/Kt
+    var states = new SwerveModuleState[4];
+    for (var i = 0; i < 4; i++) {
+      states[i] = new SwerveModuleState();
+      var state = states[i];
+      Vector<N3> F = VecBuilder.fill(sample.moduleForcesX()[i], sample.moduleForcesY()[i], 0);
+      Vector<N3> radius = VecBuilder.fill(0, 0, -2);
+      var current = Vector.cross(radius, F).div(kT);
+      state.speedMetersPerSecond = Math.hypot(current.get(0), current.get(1));
+      state.angle = Rotation2d.fromRadians(Math.atan2(current.get(1), current.get(0)));
+    }
+
+    runCurrentStates(states);
   }
 
   public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {

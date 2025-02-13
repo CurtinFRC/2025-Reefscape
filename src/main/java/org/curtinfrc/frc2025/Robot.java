@@ -213,7 +213,7 @@ public class Robot extends LoggedRobot {
         new AutoFactory(
             drive::getPose,
             drive::setPose,
-            drive::followTrajectory,
+            drive::followTrajectoryTorque,
             true,
             drive,
             drive::logTrajectory);
