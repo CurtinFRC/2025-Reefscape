@@ -15,7 +15,36 @@
     0,
     0
   ],
-  "cameras": [],
+  "cameras": [
+    {
+      "name": "limelight-right",
+      "rotations": {},
+      "position": [
+        0.16,
+        -0.215,
+        0.305
+      ],
+      "resolution": [
+        1280,
+        800
+      ],
+      "fov": 82
+    },
+    {
+      "name": "limelight-left",
+      "rotations": {},
+      "position": [
+        0.16,
+        0.215,
+        0.305
+      ],
+      "resolution": [
+        1280,
+        800
+      ],
+      "fov": 82
+    }
+  ],
   "components": [
     {
       "zeroedRotations": [],

@@ -277,7 +277,7 @@ public class Robot extends LoggedRobot {
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.L3));
 
     intake
         .backSensor

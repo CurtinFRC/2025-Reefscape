@@ -5,6 +5,7 @@ import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -41,10 +42,19 @@ public class Elevator extends SubsystemBase {
   public Command goToSetpoint(Setpoints point) {
     setpoint = point;
     return run(() -> {
-          var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
-          Logger.recordOutput("Elevator/Output", out);
-          Logger.recordOutput("Elevator/Error", pid.getError());
-          io.setVoltage(out);
+          if (!RobotBase.isSimulation()) {
+            var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
+            Logger.recordOutput("Elevator/Output", out);
+            Logger.recordOutput("Elevator/Error", pid.getError());
+            io.setVoltage(out);
+          } else {
+            pid.setP(1);
+            pid.setTolerance(0.1);
+            var out = pid.calculate(inputs.positionMeters, 1.3);
+            Logger.recordOutput("Elevator/Output", out);
+            Logger.recordOutput("Elevator/Error", pid.getError());
+            io.setVoltage(out);
+          }
         })
         .finallyDo(() -> setpoint = Setpoints.COLLECT);
   }
@@ -59,10 +69,6 @@ public class Elevator extends SubsystemBase {
 
   @AutoLogOutput(key = "Elevator/Height")
   public Pose3d getHeight() {
-    return new Pose3d(
-        0,
-        0,
-        inputs.positionRotations * pulleyRadiusMeters,
-        new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
+    return new Pose3d(0, 0, inputs.positionMeters, new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }

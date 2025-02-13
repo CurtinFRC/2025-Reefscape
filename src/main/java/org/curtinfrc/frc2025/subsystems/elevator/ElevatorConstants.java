@@ -9,6 +9,7 @@ public class ElevatorConstants {
   public static double kP = 0.5;
   public static double kD = 0;
   public static double kV = 0;
+  public static double kA = 0.01;
   public static double kG = 0;
 
   public static final double pulleyRadiusMeters = 0.02927789; // TODO get this
