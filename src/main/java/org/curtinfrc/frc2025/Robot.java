@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -213,7 +214,7 @@ public class Robot extends LoggedRobot {
         new AutoFactory(
             drive::getPose,
             drive::setPose,
-            drive::followTrajectoryTorque,
+            drive::followTrajectoryVelocity,
             true,
             drive,
             drive::logTrajectory);
@@ -222,11 +223,7 @@ public class Robot extends LoggedRobot {
 
     autos = new Autos(autoFactory);
 
-    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("New Path"));
-    autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
-    autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
-    autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
-    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("Test Path"));
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -260,7 +257,8 @@ public class Robot extends LoggedRobot {
         "Drive Steer SysId (Dynamic Reverse)",
         () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
 
-    RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+    RobotModeTriggers.autonomous()
+        .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
@@ -315,6 +313,7 @@ public class Robot extends LoggedRobot {
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
+    SmartDashboard.putData(CommandScheduler.getInstance());
   }
 
   /** This function is called periodically during all modes. */

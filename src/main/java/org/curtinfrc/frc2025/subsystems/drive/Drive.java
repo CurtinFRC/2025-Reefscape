@@ -417,20 +417,50 @@ public class Drive extends SubsystemBase {
     runVelocity(speeds);
   }
 
-  public void followTrajectoryTorque(SwerveSample sample) {
+  public void followTrajectoryVelocity(SwerveSample sample) {
+    var rotationController = new PIDController(7.5, 0, 0);
+    Logger.recordOutput("Odometry/Sample", sample);
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
 
-    // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius vector,
-    // and F be the module force vector.
-    // τ=Kti
-    // τ=r×F
-    // Kti=r×F
-    // i=(r×F)/Kt
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            sample.vx,
+            sample.vy,
+            sample.omega + rotationController.calculate(getRotation().getRadians(), sample.heading),
+            rotation); // Apply the generated speeds
+
+    runVelocity(speeds);
+  }
+
+  public void followTrajectoryTorque(SwerveSample sample) {
+    Logger.recordOutput("Odometry/Sample", sample);
     var states = new SwerveModuleState[4];
+
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
+    Logger.recordOutput("Drive/Kt", kT);
+
     for (var i = 0; i < 4; i++) {
       states[i] = new SwerveModuleState();
       var state = states[i];
-      Vector<N3> F = VecBuilder.fill(sample.moduleForcesX()[i], sample.moduleForcesY()[i], 0);
-      Vector<N3> radius = VecBuilder.fill(0, 0, -2);
+      Translation2d f = new Translation2d(sample.moduleForcesX()[i], sample.moduleForcesY()[i]);
+      Translation2d f_fieldRelative = f.rotateBy(rotation);
+
+      // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius
+      // vector,
+      // and F be the module force vector.
+      // τ=Kti
+      // τ=r×F
+      // Kti=r×F
+      // i=(r×F)/Kt
+      Vector<N3> F = VecBuilder.fill(f_fieldRelative.getX(), f_fieldRelative.getY(), 0);
+      Vector<N3> radius = VecBuilder.fill(0, 0, Units.inchesToMeters(-2));
       var current = Vector.cross(radius, F).div(kT);
       state.speedMetersPerSecond = Math.hypot(current.get(0), current.get(1));
       state.angle = Rotation2d.fromRadians(Math.atan2(current.get(1), current.get(0)));
