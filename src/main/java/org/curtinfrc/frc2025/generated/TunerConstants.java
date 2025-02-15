@@ -31,7 +31,7 @@ public class TunerConstants {
           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
-  private static final double kDriveGearRatio = 5.902777777777778;
+  public static final double kDriveGearRatio = 5.902777777777778;
   private static final Slot0Configs driveGains =
       new Slot0Configs()
           .withKP(0.15969 * kDriveGearRatio)
