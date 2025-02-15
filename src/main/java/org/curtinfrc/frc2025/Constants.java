@@ -16,7 +16,7 @@ import org.littletonrobotics.junction.Logger;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final RobotType robotType = RobotType.SIMBOT;
+  public static final RobotType robotType = RobotType.DEVBOT;
   public static final double ROBOT_X = 660; // mm
   public static final double ROBOT_Y = 680;
 
@@ -61,8 +61,8 @@ public final class Constants {
     /* in mm */
     COLLECT(0, List.of(13, 12), List.of(1, 2), false),
     // L1(460, List.of(17, 18, 19, 20, 21, 22), List.of(9, 8, 10, 8, 11, 6)), //TODO
-    L2(11, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true),
-    L3(32.8, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true);
+    L2(0.2, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true),
+    L3(0.59735, List.of(18 /*17, 18, 19, 20, 21, 22*/), List.of(9, 8, 10, 8, 11, 6), true);
 
     private final double _elevatorSetpoint;
     private final List<Integer> _tagIdsBlue;

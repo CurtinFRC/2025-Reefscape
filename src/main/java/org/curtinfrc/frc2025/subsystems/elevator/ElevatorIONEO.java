@@ -1,7 +1,6 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
 import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.currentLimit;
-import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.PersistMode;

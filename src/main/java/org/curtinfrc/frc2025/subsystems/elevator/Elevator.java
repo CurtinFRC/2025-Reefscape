@@ -39,14 +39,16 @@ public class Elevator extends SubsystemBase {
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   public Command goToSetpoint(Setpoints point) {
-    setpoint = point;
-    return run(() -> {
-          var out = pid.calculate(inputs.positionRotations, point.elevatorSetpoint());
+    return run(
+        () -> {
+          setpoint = point;
+          var out =
+              pid.calculate(
+                  positionRotationsToMetres(inputs.positionRotations), setpoint.elevatorSetpoint());
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
           io.setVoltage(out);
-        })
-        .finallyDo(() -> setpoint = Setpoints.COLLECT);
+        });
   }
 
   public Command zero() {
@@ -62,7 +64,7 @@ public class Elevator extends SubsystemBase {
     return new Pose3d(
         0,
         0,
-        inputs.positionRotations * Math.PI * 2 * pulleyRadiusMeters,
+        positionRotationsToMetres(inputs.positionRotations),
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }

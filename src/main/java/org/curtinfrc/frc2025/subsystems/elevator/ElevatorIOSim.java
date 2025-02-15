@@ -3,7 +3,7 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.kA;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.kV;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.maxHeightMeters;
-import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.pulleyRadiusMeters;
+import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.positionMetresToRotations;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -19,7 +19,7 @@ public class ElevatorIOSim implements ElevatorIO {
     // ignore velocity cause we dont care
     inputs.currentAmps = elevatorSim.getCurrentDrawAmps();
     inputs.appliedVolts = volts;
-    inputs.positionRotations = elevatorSim.getPositionMeters() / (Math.PI * 2 * pulleyRadiusMeters);
+    inputs.positionRotations = positionMetresToRotations(elevatorSim.getPositionMeters());
   }
 
   @Override

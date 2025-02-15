@@ -298,14 +298,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    controller.b().onTrue(elevator.zero());
-
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            drive.joystickDriveAtAngle(
-                () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
+    controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -318,6 +311,7 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
+    controller.a().whileTrue(elevator.goToSetpoint(Setpoints.L3));
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
