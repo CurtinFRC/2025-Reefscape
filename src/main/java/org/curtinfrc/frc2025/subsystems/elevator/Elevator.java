@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -15,9 +16,9 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
-  private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
+  private Setpoints setpoint = Setpoints.COLLECT;
 
-  public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
+  public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
   public final Trigger toZero = new Trigger(() -> inputs.touchSensor);
 
   public Elevator(ElevatorIO io) {
@@ -37,11 +38,13 @@ public class Elevator extends SubsystemBase {
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
-  public Command goToSetpoint(ElevatorSetpoints point) {
+  public Command goToSetpoint(Setpoints point) {
     return run(
         () -> {
           setpoint = point;
-          var out = pid.calculate(inputs.positionRotations, setpoint.setpoint);
+          var out =
+              pid.calculate(
+                  positionRotationsToMetres(inputs.positionRotations), setpoint.elevatorSetpoint());
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
           io.setVoltage(out);
@@ -61,7 +64,7 @@ public class Elevator extends SubsystemBase {
     return new Pose3d(
         0,
         0,
-        inputs.positionRotations * Math.PI * 2 * pulleyRadiusMeters,
+        positionRotationsToMetres(inputs.positionRotations),
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }
