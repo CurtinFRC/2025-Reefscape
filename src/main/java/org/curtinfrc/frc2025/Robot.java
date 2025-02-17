@@ -14,7 +14,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Map;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
@@ -26,15 +28,18 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
@@ -79,6 +84,23 @@ public class Robot extends LoggedRobot {
   private final AutoFactory autoFactory;
   private final Autos autos;
 
+  // Setpoints
+  public static record Setpoint(ElevatorSetpoints elevatorSetpoint, DriveSetpoints driveSetpoint) {
+    public static Setpoint NULL() {
+      return new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
+    }
+  }
+
+  private Setpoint currentSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
+  private Setpoint nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
+
+  // Triggers
+  public final Trigger atSetpoint = elevator.atSetpoint.and(drive.atSetpoint);
+  // TODO end sensor triggered
+  public final Trigger setpointDone =
+      atSetpoint.or(new Trigger(() -> currentSetpoint.equals(Setpoint.NULL())));
+  public final Trigger hasSetpoint = new Trigger(() -> !currentSetpoint.equals(Setpoint.NULL()));
+
   public Robot() {
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
@@ -121,7 +143,15 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
-    Logger.registerURCL(URCL.startExternal());
+    Logger.registerURCL(
+        URCL.startExternal(
+            Map.of(
+                ElevatorConstants.motorPort,
+                "Elevator",
+                EjectorConstants.motorId,
+                "Ejector",
+                IntakeConstants.intakeMotorId,
+                "Intake")));
     // Start AdvantageKit logger
     Logger.start();
 
@@ -267,11 +297,7 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    elevator
-        .isNotAtCollect
-        .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .whileTrue(ejector.eject(500));
+    elevator.isNotAtCollect.and(atSetpoint).whileTrue(ejector.eject(500));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
@@ -339,6 +365,15 @@ public class Robot extends LoggedRobot {
 
     controller.rightStick().whileTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
     controller.leftStick().whileTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
+
+    setpointDone.onTrue(
+        Commands.runOnce(
+            () -> {
+              currentSetpoint = nextSetpoint;
+              nextSetpoint = Setpoint.NULL();
+            }));
+
+    hasSetpoint.whileTrue(drive.autoAlign(currentSetpoint.driveSetpoint()));
 
     // board.leftHp().onTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
     // board.rightHp().onTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
