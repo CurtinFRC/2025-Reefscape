@@ -7,15 +7,15 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class ButtonBoard extends CommandGenericHID implements Sendable {
   public enum Button {
-    kAB(5),
-    kCD(8),
-    kEF(9),
-    kGH(6),
-    kIJ(10),
-    kKL(12),
-    kProcessor(7),
-    kPlayerLeft(11),
-    kPlayerRight(13);
+    kAB(7),
+    kCD(6),
+    kEF(2),
+    kGH(3),
+    kIJ(1),
+    kKL(13),
+    kProcessor(8),
+    kPlayerLeft(5),
+    kPlayerRight(4);
 
     public final int value;
 
@@ -70,3 +70,4 @@ public class ButtonBoard extends CommandGenericHID implements Sendable {
     builder.publishConstString("ControllerType", "ButtonBoard");
   }
 }
+ 
