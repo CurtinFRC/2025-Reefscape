@@ -70,4 +70,3 @@ public class ButtonBoard extends CommandGenericHID implements Sendable {
     builder.publishConstString("ControllerType", "ButtonBoard");
   }
 }
- 
