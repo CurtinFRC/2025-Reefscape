@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -31,6 +32,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
@@ -184,7 +186,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIO() {});
+          elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
         }
@@ -213,7 +215,7 @@ public class Robot extends LoggedRobot {
         new AutoFactory(
             drive::getPose,
             drive::setPose,
-            drive::followTrajectory,
+            drive::followTrajectoryVelocity,
             true,
             drive,
             drive::logTrajectory);
@@ -222,11 +224,7 @@ public class Robot extends LoggedRobot {
 
     autos = new Autos(autoFactory);
 
-    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("New Path"));
-    autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
-    autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
-    autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
-    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("Test Path"));
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -260,7 +258,8 @@ public class Robot extends LoggedRobot {
         "Drive Steer SysId (Dynamic Reverse)",
         () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
 
-    RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+    RobotModeTriggers.autonomous()
+        .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
@@ -298,14 +297,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
-    controller.b().onTrue(elevator.zero());
-
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            drive.joystickDriveAtAngle(
-                () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
+    controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -318,9 +310,11 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
+    controller.a().whileTrue(elevator.goToSetpoint(Setpoints.L3));
     controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
     controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
     controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
+    SmartDashboard.putData(CommandScheduler.getInstance());
   }
 
   /** This function is called periodically during all modes. */

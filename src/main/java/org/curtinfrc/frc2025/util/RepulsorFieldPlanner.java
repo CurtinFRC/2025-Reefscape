@@ -321,7 +321,7 @@ public class RepulsorFieldPlanner {
           netForce = getGoalForce(curTrans, goal).plus(netForce);
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           // Calculate how quickly to move in this direction
-          var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
+          var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 1.5, 1);
 
           stepSize_m = Math.min(maxSpeed, closeToGoalMax) * 0.02;
         }

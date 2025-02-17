@@ -1,16 +1,3 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.ODOMETRY_FREQUENCY;
@@ -71,6 +58,7 @@ public class ModuleIOTalonFX implements ModuleIO {
       new PositionTorqueCurrentFOC(0.0);
   private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
       new VelocityTorqueCurrentFOC(0.0);
+  private final TorqueCurrentFOC currentTorqueCurrentRequest = new TorqueCurrentFOC(0);
 
   // Timestamp inputs from Phoenix thread
   private final Queue<Double> timestampQueue;
@@ -254,6 +242,11 @@ public class ModuleIOTalonFX implements ModuleIO {
           case Voltage -> velocityVoltageRequest.withVelocity(velocityRotPerSec);
           case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
         });
+  }
+
+  @Override
+  public void setDriveCurrent(double currentAmps) {
+    driveTalon.setControl(currentTorqueCurrentRequest.withOutput(currentAmps));
   }
 
   @Override

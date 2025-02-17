@@ -80,6 +80,19 @@ public class Module {
     io.setTurnPosition(state.angle);
   }
 
+  /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
+  public void runSetpointTorque(SwerveModuleState state) {
+    // Optimize velocity setpoint
+    state.optimize(getAngle());
+    state.cosineScale(inputs.turnPosition);
+
+    var currentAmps = state.speedMetersPerSecond; // lies
+
+    // Apply setpoints
+    io.setDriveCurrent(currentAmps);
+    io.setTurnPosition(state.angle);
+  }
+
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runSteerCharacterization(double output) {
     io.setDriveVelocity(0);

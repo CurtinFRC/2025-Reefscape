@@ -1,6 +1,7 @@
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import com.ctre.phoenix6.CANBus;
+import edu.wpi.first.math.system.plant.DCMotor;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 
 public final class DriveConstants {
@@ -23,4 +24,7 @@ public final class DriveConstants {
           Math.max(
               Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
               Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
+  public static final double kT =
+      -DCMotor.getKrakenX60Foc(1).KtNMPerAmp
+          * TunerConstants.kDriveGearRatio; // TODO figure this out
 }
