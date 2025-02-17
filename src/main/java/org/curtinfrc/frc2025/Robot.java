@@ -64,7 +64,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
-  private Elevator elevator;s
+  private Elevator elevator;
   private Ejector ejector;
   private Superstructure superstructure;
 
