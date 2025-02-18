@@ -339,33 +339,6 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // controller
-    //     .rightBumper()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //             elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.A)));
-    //
-    // controller
-    //     .leftBumper()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //             elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.B)));
-    //
-    // controller
-    //     .rightTrigger()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //             elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.A)));
-    //
-    // controller
-    //     .leftTrigger()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //             elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.B)));
-    //
-    // controller.rightStick().whileTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
-    // controller.leftStick().whileTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
-
     setpointDone.onTrue(
         Commands.runOnce(
             () -> {
