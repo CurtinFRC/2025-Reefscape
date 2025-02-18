@@ -367,8 +367,17 @@ public class Robot extends LoggedRobot {
                     nextSetpoint =
                         new Setpoint(ElevatorSetpoints.L2, nextSetpoint.driveSetpoint())));
 
-    board.left().onTrue(Commands.runOnce(() -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
-    board.right().onTrue(Commands.runOnce(() -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
+    board
+        .left()
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
+    board
+        .right()
+        .onTrue(
+            Commands.runOnce(
+                () ->
+                    nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
 
     board
         .coralAB()
