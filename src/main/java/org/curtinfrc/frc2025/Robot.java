@@ -292,10 +292,12 @@ public class Robot extends LoggedRobot {
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+        drive
+            .joystickDrive(
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> -controller.getRightX())
+            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     elevator.isNotAtCollect.and(atSetpoint).whileTrue(ejector.eject(500));
 
