@@ -339,32 +339,32 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller
-        .rightBumper()
-        .whileTrue(
-            Commands.parallel(
-                elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.A)));
-
-    controller
-        .leftBumper()
-        .whileTrue(
-            Commands.parallel(
-                elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.B)));
-
-    controller
-        .rightTrigger()
-        .whileTrue(
-            Commands.parallel(
-                elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.A)));
-
-    controller
-        .leftTrigger()
-        .whileTrue(
-            Commands.parallel(
-                elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.B)));
-
-    controller.rightStick().whileTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
-    controller.leftStick().whileTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
+    // controller
+    //     .rightBumper()
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.A)));
+    //
+    // controller
+    //     .leftBumper()
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             elevator.goToSetpoint(ElevatorSetpoints.L2), drive.autoAlign(DriveSetpoints.B)));
+    //
+    // controller
+    //     .rightTrigger()
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.A)));
+    //
+    // controller
+    //     .leftTrigger()
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             elevator.goToSetpoint(ElevatorSetpoints.L3), drive.autoAlign(DriveSetpoints.B)));
+    //
+    // controller.rightStick().whileTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
+    // controller.leftStick().whileTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
 
     setpointDone.onTrue(
         Commands.runOnce(
@@ -373,66 +373,113 @@ public class Robot extends LoggedRobot {
               nextSetpoint = Setpoint.NULL();
             }));
 
-    hasSetpoint.whileTrue(drive.autoAlign(currentSetpoint.driveSetpoint()));
+    hasSetpoint.whileTrue(
+        drive
+            .autoAlign(currentSetpoint.driveSetpoint())
+            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
-    // board.leftHp().onTrue(drive.autoAlign(DriveSetpoints.LEFT_HP));
-    // board.rightHp().onTrue(drive.autoAlign(DriveSetpoints.RIGHT_HP));
-    // board.processor().onTrue(drive.autoAlign(DriveSetpoints.PROCESSOR));
-    //
-    // board
-    //     .ab()
-    //     .and(controller.rightBumper())
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 elevator.goToSetpoint(ElevatorSetpoints.L2),
-    // drive.autoAlign(DriveSetpoints.A))
-    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    //
-    // board
-    //     .ab()
-    //     .and(controller.rightTrigger())
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 elevator.goToSetpoint(ElevatorSetpoints.L3),
-    // drive.autoAlign(DriveSetpoints.A))
-    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    //
-    // board
-    //     .ab()
-    //     .and(controller.leftBumper())
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 elevator.goToSetpoint(ElevatorSetpoints.L2),
-    // drive.autoAlign(DriveSetpoints.B))
-    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    //
-    // board
-    //     .ab()
-    //     .and(controller.leftTrigger())
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 elevator.goToSetpoint(ElevatorSetpoints.L3),
-    // drive.autoAlign(DriveSetpoints.B))
-    //             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    //
-    // // TODO invert the rest of them
-    // board.cd().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.C));
-    // board.cd().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.D));
-    //
-    // board.ef().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.E));
-    // board.ef().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.F));
-    //
-    // board.gh().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.G));
-    // board.gh().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.H));
-    //
-    // board.ij().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.I));
-    // board.ij().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.J));
-    //
-    // board.kl().and(controller.leftBumper()).onTrue(drive.autoAlign(DriveSetpoints.K));
-    // board.kl().and(controller.rightBumper()).onTrue(drive.autoAlign(DriveSetpoints.L));
+    controller
+        .rightTrigger()
+        .onTrue(
+            Commands.runOnce(
+                () ->
+                    nextSetpoint =
+                        new Setpoint(ElevatorSetpoints.L3, nextSetpoint.driveSetpoint())));
 
-    // controller.leftTrigger().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
-    // controller.rightTrigger().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
+    controller
+        .leftTrigger()
+        .onTrue(
+            Commands.runOnce(
+                () ->
+                    nextSetpoint =
+                        new Setpoint(ElevatorSetpoints.L2, nextSetpoint.driveSetpoint())));
+
+    board.left().onTrue(Commands.runOnce(() -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
+    board.right().onTrue(Commands.runOnce(() -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
+
+    board
+        .coralAB()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A)));
+
+    board
+        .coralAB()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.B)));
+
+    board
+        .coralCD()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.C)));
+
+    board
+        .coralCD()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.D)));
+
+    board
+        .coralEF()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E)));
+
+    board
+        .coralEF()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.F)));
+
+    board
+        .coralGH()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.G)));
+
+    board
+        .coralGH()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.H)));
+
+    board
+        .coralIJ()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.I)));
+
+    board
+        .coralIJ()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.J)));
+
+    board
+        .coralKL()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.K)));
+
+    board
+        .coralKL()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.L)));
   }
 
   /** This function is called periodically during all modes. */

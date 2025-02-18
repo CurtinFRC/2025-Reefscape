@@ -52,7 +52,7 @@ public class ButtonBoard extends CommandGenericHID implements Sendable {
     return button(Button.kKL.value);
   }
 
-  public Trigger proccessor() {
+  public Trigger processor() {
     return button(Button.kProcessor.value);
   }
 
