@@ -312,6 +312,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+
     intake
         .backSensor
         .and(intake.frontSensor)
@@ -327,6 +328,10 @@ public class Robot extends LoggedRobot {
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
     intake.frontSensor.whileTrue(elevator.stop());
+
+    hasSetpoint
+        .and(intake.backSensor.and(intake.frontSensor.negate()))
+        .onTrue(elevator.goToSetpoint(currentSetpoint.elevatorSetpoint()));
 
     controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
