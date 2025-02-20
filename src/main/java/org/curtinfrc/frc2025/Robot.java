@@ -39,6 +39,7 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOConstrainedSolvePnp;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -160,7 +161,7 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIOConstrainedSolvePnp(camera0Name, robotToCamera0, drive::getRotation),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation));
           elevator = new Elevator(new ElevatorIONEO());

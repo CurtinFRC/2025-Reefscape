@@ -43,6 +43,7 @@ public interface VisionIO {
     MEGATAG_1,
     MEGATAG_2,
     PHOTONVISION,
+    CONSTRAINED_SOLVEPNP,
     QUEST
   }
 
