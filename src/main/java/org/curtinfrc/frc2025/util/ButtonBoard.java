@@ -8,11 +8,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class ButtonBoard extends CommandGenericHID implements Sendable {
   public enum Button {
     kAB(7),
-    kCD(6),
-    kEF(2),
+    kCD(13),
+    kEF(1),
     kGH(3),
-    kIJ(1),
-    kKL(13),
+    kIJ(2),
+    kKL(6),
     kProcessor(8),
     kPlayerLeft(5),
     kPlayerRight(4);
