@@ -83,8 +83,8 @@ public class Drive extends SubsystemBase {
   private double d = 0.2;
   private double i = 0.03;
 
-  private final PIDController xController = new PIDController(3, 0.0, 0.1);
-  private final PIDController yController = new PIDController(3, 0.0, 0.1);
+  private final PIDController xController = new PIDController(2, 0.0, 0);
+  private final PIDController yController = new PIDController(2, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -93,14 +93,14 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpointPose =
       new Trigger(() -> xSetpointController.atSetpoint() && ySetpointController.atSetpoint());
 
-  public DriveSetpoints setpoint = DriveSetpoints.NULL;
+  public DriveSetpoints setpoint = DriveSetpoints.A;
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
   public Trigger atSetpoint =
       new Trigger(
           () ->
-              Math.abs(getPose().getX() - setpoint.pose.getX()) <= 0.015
-                  && Math.abs(getPose().getY() - setpoint.pose.getY()) <= 0.015);
+              Math.abs(getPose().getX() - setpoint.getPose().getX()) <= 0.015
+                  && Math.abs(getPose().getY() - setpoint.getPose().getY()) <= 0.015);
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
@@ -399,22 +399,41 @@ public class Drive extends SubsystemBase {
     Pose2d pose = getPose();
     Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
     Logger.recordOutput("Drive/PID/error", headingController.getError());
-    var out = headingController.calculate(pose.getRotation().getRadians(), sample.heading);
-    Logger.recordOutput("Drive/PID/out", out);
+    // Logger.recordOutput("Drive/PID/out", out);
+    Logger.recordOutput("Drive/sample", sample);
 
+    var err = new Transform2d(sample.x - pose.getX(), sample.y - pose.getY(), new Rotation2d());
+    var dist = Math.hypot(err.getX(), err.getY());
+    Logger.recordOutput("Drive/dist", dist);
+
+    var target_pose =
+        (DriverStation.getAlliance().get() == Alliance.Blue
+            ? new Pose2d(4.476, 4.026, new Rotation2d())
+            : new Pose2d(13.071, 4.026, new Rotation2d()));
+    var transform = target_pose.relativeTo(pose).rotateBy(pose.getRotation());
+    Logger.recordOutput("Drive/targetpose", target_pose);
+    Logger.recordOutput("Drive/transform", transform);
+    Logger.recordOutput("Drive/theta", Math.atan2(transform.getY(), transform.getX()));
+    Logger.recordOutput(
+        "Drive/projected",
+        new Pose2d(
+            pose.getX(),
+            pose.getY(),
+            new Rotation2d(Math.atan2(transform.getY(), transform.getX()))));
     // Generate the next speeds for the robot
+    xController.setSetpoint(sample.x);
+    yController.setSetpoint(sample.y);
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + sample.vx != 0
-                ? xSetpointController.calculate(pose.getX(), sample.x)
-                : xController.calculate(pose.getX(), sample.x),
-            sample.vy + sample.vy != 0
-                ? ySetpointController.calculate(pose.getY(), sample.y)
-                : yController.calculate(pose.getY(), sample.y),
-            sample.omega
-                + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+            sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
+            sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
+            dist < 1
+                ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+                : headingController.calculate(
+                    pose.getRotation().getRadians(),
+                    Math.atan2(transform.getY(), transform.getX())),
             getRotation()); // Apply the generated speeds
-
+    Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);
   }
 
@@ -714,12 +733,11 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlign(DriveSetpoints _setpoint) {
-    return run(
-        () -> {
+    return run(() -> {
           this.setpoint = _setpoint;
-          Logger.recordOutput("Drive/Setpoint", _setpoint);
+          Logger.recordOutput("Drive/Setpoint", _setpoint.getPose());
 
-          repulsorFieldPlanner.setGoal(_setpoint.pose.getTranslation());
+          repulsorFieldPlanner.setGoal(_setpoint.getPose().getTranslation());
 
           var robotPose = getPose();
           SwerveSample cmd =
@@ -735,7 +753,7 @@ public class Drive extends SubsystemBase {
                   cmd.t,
                   cmd.x,
                   cmd.y,
-                  _setpoint.pose.getRotation().getRadians(),
+                  _setpoint.getPose().getRotation().getRadians(),
                   cmd.vx,
                   cmd.vy,
                   0,
@@ -747,7 +765,8 @@ public class Drive extends SubsystemBase {
 
           // Apply the adjusted sample
           followTrajectory(adjustedSample);
-        });
+        })
+        .withName("AutoAlign");
   }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {

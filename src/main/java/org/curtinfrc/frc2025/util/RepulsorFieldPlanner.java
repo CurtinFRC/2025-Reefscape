@@ -327,7 +327,7 @@ public class RepulsorFieldPlanner {
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
           var dist = err.getNorm();
-          stepSize_m = Math.min(5.14, Math.sqrt(6 /* 14 */ * dist)) * 0.02;
+          stepSize_m = Math.min(3.14, Math.sqrt(3 /* 14 */ * dist)) * 0.02;
         }
 
         Logger.recordOutput("Repulsor/step", stepSize_m);

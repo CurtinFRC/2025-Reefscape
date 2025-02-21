@@ -17,13 +17,13 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
-import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
@@ -53,6 +53,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -85,21 +86,20 @@ public class Robot extends LoggedRobot {
   private final Autos autos;
 
   // Setpoints
-  public static record Setpoint(ElevatorSetpoints elevatorSetpoint, DriveSetpoints driveSetpoint) {
-    public static Setpoint NULL() {
-      return new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
-    }
-  }
+  public static record Setpoint(ElevatorSetpoints elevatorSetpoint, DriveSetpoints driveSetpoint) {}
 
-  private Setpoint currentSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
-  private Setpoint nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.NULL);
+  @AutoLogOutput(key = "Robot/ReefSetpoint")
+  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E);
+
+  @AutoLogOutput(key = "Robot/HPSetpoint")
+  private Setpoint hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP);
 
   // Triggers
-  public final Trigger atSetpoint = elevator.atSetpoint.and(drive.atSetpoint);
-  // TODO end sensor triggered
-  public final Trigger setpointDone =
-      atSetpoint.or(new Trigger(() -> currentSetpoint.equals(Setpoint.NULL())));
-  public final Trigger hasSetpoint = new Trigger(() -> !currentSetpoint.equals(Setpoint.NULL()));
+  @AutoLogOutput(key = "Robot/AtReefSetpoint")
+  public final Trigger atReefSetpoint;
+
+  @AutoLogOutput(key = "Robot/AtHPSetpoint")
+  public final Trigger atHpSetpoint;
 
   public Robot() {
     // Record metadata
@@ -203,9 +203,7 @@ public class Robot extends LoggedRobot {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIOSim(
-                      () -> drive.getKinematics(),
-                      () -> drive.getModuleStates()) {}, // work around crash
+                  new GyroIO() {},
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
@@ -239,6 +237,14 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
     }
+
+    atReefSetpoint =
+        elevator
+            .atSetpoint
+            .and(drive.atSetpoint)
+            .and(new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
+    atHpSetpoint =
+        drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
 
     autoFactory =
         new AutoFactory(
@@ -299,7 +305,7 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getRightX())
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
-    elevator.isNotAtCollect.and(atSetpoint).whileTrue(ejector.eject(500));
+    elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
@@ -329,10 +335,6 @@ public class Robot extends LoggedRobot {
 
     intake.frontSensor.whileTrue(elevator.stop());
 
-    hasSetpoint
-        .and(intake.backSensor.and(intake.frontSensor.negate()))
-        .onTrue(elevator.goToSetpoint(currentSetpoint.elevatorSetpoint()));
-
     controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
     // Reset gyro to 0° when B button is pressed
@@ -346,129 +348,190 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    setpointDone.onTrue(
-        Commands.runOnce(
-            () -> {
-              currentSetpoint = nextSetpoint;
-              nextSetpoint = Setpoint.NULL();
-            }));
+    atReefSetpoint.onTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
+    intake.frontSensor.onTrue(
+        Commands.defer(() -> drive.autoAlign(reefSetpoint.driveSetpoint()), Set.of(drive)));
 
-    hasSetpoint.whileTrue(
-        drive
-            .autoAlign(currentSetpoint.driveSetpoint())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-
-    controller
-        .rightTrigger()
-        .onTrue(
-            Commands.runOnce(
-                () ->
-                    nextSetpoint =
-                        new Setpoint(ElevatorSetpoints.L3, nextSetpoint.driveSetpoint())));
-
-    controller
-        .leftTrigger()
-        .onTrue(
-            Commands.runOnce(
-                () ->
-                    nextSetpoint =
-                        new Setpoint(ElevatorSetpoints.L2, nextSetpoint.driveSetpoint())));
+    RobotModeTriggers.teleop().whileTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
 
     board
         .left()
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
+                () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
     board
         .right()
         .onTrue(
             Commands.runOnce(
-                () ->
-                    nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
+                () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
 
     board
         .coralAB()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A)));
 
     board
         .coralAB()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.B)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B)));
+
+    board
+        .coralAB()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)));
+
+    board
+        .coralAB()
+        .and(controller.leftTrigger())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)));
 
     board
         .coralCD()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.C)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C)));
 
     board
         .coralCD()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.D)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D)));
+
+    board
+        .coralCD()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C)));
+
+    board
+        .coralCD()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D)));
 
     board
         .coralEF()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E)));
 
     board
         .coralEF()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.F)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F)));
+
+    board
+        .coralEF()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E)));
+
+    board
+        .coralEF()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)));
 
     board
         .coralGH()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.G)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G)));
 
     board
         .coralGH()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.H)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H)));
+
+    board
+        .coralGH()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G)));
+
+    board
+        .coralGH()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H)));
 
     board
         .coralIJ()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.I)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I)));
 
     board
         .coralIJ()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.J)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J)));
+
+    board
+        .coralIJ()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I)));
+
+    board
+        .coralIJ()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)));
 
     board
         .coralKL()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.K)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K)));
 
     board
         .coralKL()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> nextSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.L)));
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L)));
+
+    board
+        .coralKL()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K)));
+
+    board
+        .coralKL()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L)));
   }
 
   /** This function is called periodically during all modes. */

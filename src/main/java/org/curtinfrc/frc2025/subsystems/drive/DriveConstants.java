@@ -1,9 +1,17 @@
 package org.curtinfrc.frc2025.subsystems.drive;
 
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
+
+import choreo.util.ChoreoAllianceFlipUtil;
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 
 public final class DriveConstants {
@@ -32,24 +40,67 @@ public final class DriveConstants {
 
   // TODO
   public static enum DriveSetpoints {
-    A(new Pose2d(3.75, 5.00, Rotation2d.fromDegrees(300))),
-    B(new Pose2d(4.03, 5.15, Rotation2d.fromDegrees(300))),
-    C(Pose2d.kZero),
-    D(Pose2d.kZero),
-    E(Pose2d.kZero),
-    F(Pose2d.kZero),
-    G(Pose2d.kZero),
-    H(Pose2d.kZero),
-    I(new Pose2d(4.00, 2.86, Rotation2d.fromDegrees(60))),
-    J(new Pose2d(3.72, 3.02, Rotation2d.fromDegrees(60))),
-    K(new Pose2d(3.27, 3.85, Rotation2d.kZero)),
-    L(new Pose2d(3.27, 4.18, Rotation2d.kZero)),
-    PROCESSOR(Pose2d.kZero),
+    A(aprilTagLayout.getTagPose(18).get(), true),
+    B(aprilTagLayout.getTagPose(18).get(), false),
+    C(aprilTagLayout.getTagPose(17).get(), true),
+    D(aprilTagLayout.getTagPose(17).get(), false),
+    E(aprilTagLayout.getTagPose(22).get(), true),
+    F(aprilTagLayout.getTagPose(22).get(), false),
+    G(aprilTagLayout.getTagPose(21).get(), true),
+    H(aprilTagLayout.getTagPose(21).get(), false),
+    I(aprilTagLayout.getTagPose(20).get(), true),
+    J(aprilTagLayout.getTagPose(20).get(), false),
+    K(aprilTagLayout.getTagPose(19).get(), true),
+    L(aprilTagLayout.getTagPose(19).get(), false),
+    // PROCESSOR(Pose2d.kZero),
     LEFT_HP(new Pose2d(1.18, 7.24, Rotation2d.fromDegrees(125.989 + 180))),
-    RIGHT_HP(new Pose2d(1.10, 0.89, Rotation2d.fromDegrees(125.989 + 180).unaryMinus())),
-    NULL(Pose2d.kZero);
+    RIGHT_HP(new Pose2d(1.10, 0.89, Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
 
-    public final Pose2d pose;
+    private final Pose2d pose;
+
+    public Pose2d getPose() {
+      boolean isFlipped =
+          DriverStation.getAlliance().isPresent()
+              && DriverStation.getAlliance().get() == Alliance.Red;
+      if (isFlipped) {
+        return ChoreoAllianceFlipUtil.flip(pose);
+      }
+      return pose;
+    }
+
+    static Pose3d mapPose(Pose3d pose) {
+      double angle = pose.getRotation().getAngle();
+      return new Pose3d(
+          pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2000.0,
+          pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2000.0,
+          0.0,
+          pose.getRotation());
+    }
+
+    DriveSetpoints(Pose3d tag, boolean side) {
+      double sideOffset = 0.32 / 2;
+
+      Pose3d mappedPose = mapPose(tag);
+      Rotation3d rotation = mappedPose.getRotation();
+      double baseAngle = rotation.getAngle();
+      double cos = Math.cos(baseAngle);
+      double sin = Math.sin(baseAngle);
+      double xOffset = sideOffset * sin;
+      double yOffset = sideOffset * cos;
+      if (side) {
+        this.pose =
+            new Pose2d(
+                mappedPose.getX() + xOffset,
+                mappedPose.getY() - yOffset,
+                rotation.toRotation2d().plus(Rotation2d.kPi));
+      } else {
+        this.pose =
+            new Pose2d(
+                mappedPose.getX() - xOffset,
+                mappedPose.getY() + yOffset,
+                rotation.toRotation2d().plus(Rotation2d.kPi));
+      }
+    }
 
     DriveSetpoints(Pose2d pose) {
       this.pose = pose;
