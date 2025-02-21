@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final RobotType robotType = RobotType.SIMBOT;
+  public static final RobotType robotType = RobotType.DEVBOT;
   public static final double ROBOT_X = 660; // mm
   public static final double ROBOT_Y = 680;
 
