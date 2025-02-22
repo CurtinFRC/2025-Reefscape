@@ -303,7 +303,7 @@ public class Robot extends LoggedRobot {
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
                 () -> -controller.getRightX())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
 
@@ -348,190 +348,240 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    atReefSetpoint.onTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
-    intake.frontSensor.onTrue(
-        Commands.defer(() -> drive.autoAlign(reefSetpoint.driveSetpoint()), Set.of(drive)));
+    atReefSetpoint
+        .and(
+            new Trigger(
+                () ->
+                    Math.abs(controller.getLeftX()) < 0.05
+                        || Math.abs(controller.getLeftY()) < 0.05))
+        .onTrue(
+            drive
+                .autoAlign(hpSetpoint.driveSetpoint())
+                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    intake
+        .frontSensor
+        .and(
+            new Trigger(
+                () ->
+                    Math.abs(controller.getLeftX()) < 0.05
+                        || Math.abs(controller.getLeftY()) < 0.05))
+        .onTrue(
+            Commands.defer(() -> drive.autoAlign(reefSetpoint.driveSetpoint()), Set.of(drive))
+                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
-    RobotModeTriggers.teleop().whileTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
+    RobotModeTriggers.teleop()
+        .and(
+            new Trigger(
+                () ->
+                    Math.abs(controller.getLeftX()) < 0.05
+                        || Math.abs(controller.getLeftY()) < 0.05))
+        .whileTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
 
     board
         .left()
         .onTrue(
             Commands.runOnce(
-                () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP)));
+                    () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP))
+                .ignoringDisable(true));
     board
         .right()
         .onTrue(
             Commands.runOnce(
-                () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP)));
+                    () ->
+                        hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP))
+                .ignoringDisable(true));
 
     board
         .coralAB()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A))
+                .ignoringDisable(true));
 
     board
         .coralAB()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B))
+                .ignoringDisable(true));
 
     board
         .coralAB()
         .and(controller.rightTrigger())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A))
+                .ignoringDisable(true));
 
     board
         .coralAB()
         .and(controller.leftTrigger())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B))
+                .ignoringDisable(true));
 
     board
         .coralCD()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C))
+                .ignoringDisable(true));
 
     board
         .coralCD()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D)));
-
-    board
-        .coralCD()
-        .and(controller.rightTrigger())
-        .onTrue(
-            Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D))
+                .ignoringDisable(true));
 
     board
         .coralCD()
         .and(controller.rightTrigger())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C))
+                .ignoringDisable(true));
+
+    board
+        .coralCD()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D))
+                .ignoringDisable(true));
 
     board
         .coralEF()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E))
+                .ignoringDisable(true));
 
     board
         .coralEF()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F))
+                .ignoringDisable(true));
 
     board
         .coralEF()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
+                .ignoringDisable(true));
 
     board
         .coralEF()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F))
+                .ignoringDisable(true));
 
     board
         .coralGH()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G))
+                .ignoringDisable(true));
 
     board
         .coralGH()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H))
+                .ignoringDisable(true));
 
     board
         .coralGH()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G))
+                .ignoringDisable(true));
 
     board
         .coralGH()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H))
+                .ignoringDisable(true));
 
     board
         .coralIJ()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I))
+                .ignoringDisable(true));
 
     board
         .coralIJ()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J))
+                .ignoringDisable(true));
 
     board
         .coralIJ()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
+                .ignoringDisable(true));
 
     board
         .coralIJ()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J))
+                .ignoringDisable(true));
 
     board
         .coralKL()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K))
+                .ignoringDisable(true));
 
     board
         .coralKL()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L))
+                .ignoringDisable(true));
 
     board
         .coralKL()
         .and(controller.rightBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K))
+                .ignoringDisable(true));
 
     board
         .coralKL()
         .and(controller.leftBumper())
         .onTrue(
             Commands.runOnce(
-                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L)));
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
+                .ignoringDisable(true));
   }
 
   /** This function is called periodically during all modes. */
