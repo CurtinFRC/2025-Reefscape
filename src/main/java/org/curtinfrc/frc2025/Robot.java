@@ -89,7 +89,7 @@ public class Robot extends LoggedRobot {
   public static record Setpoint(ElevatorSetpoints elevatorSetpoint, DriveSetpoints driveSetpoint) {}
 
   @AutoLogOutput(key = "Robot/ReefSetpoint")
-  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E);
+  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A);
 
   @AutoLogOutput(key = "Robot/HPSetpoint")
   private Setpoint hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP);
@@ -348,26 +348,26 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    atReefSetpoint
-        .and(
-            new Trigger(
+    atReefSetpoint.onTrue(
+        Commands.defer(
                 () ->
-                    Math.abs(controller.getLeftX()) < 0.05
-                        || Math.abs(controller.getLeftY()) < 0.05))
-        .onTrue(
-            drive
-                .autoAlign(hpSetpoint.driveSetpoint())
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    intake
-        .frontSensor
-        .and(
-            new Trigger(
+                    drive.autoAlignWithOverride(
+                        hpSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive))
+            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    intake.frontSensor.onTrue(
+        Commands.defer(
                 () ->
-                    Math.abs(controller.getLeftX()) < 0.05
-                        || Math.abs(controller.getLeftY()) < 0.05))
-        .onTrue(
-            Commands.defer(() -> drive.autoAlign(reefSetpoint.driveSetpoint()), Set.of(drive))
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+                    drive.autoAlignWithOverride(
+                        reefSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive))
+            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     RobotModeTriggers.teleop()
         .and(

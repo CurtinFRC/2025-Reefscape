@@ -732,6 +732,20 @@ public class Drive extends SubsystemBase {
     };
   }
 
+  public Command autoAlignWithOverride(
+      DriveSetpoints _setpoint,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return Commands.either(
+        autoAlign(_setpoint),
+        joystickDrive(xSupplier, ySupplier, omegaSupplier),
+        () ->
+            Math.abs(xSupplier.getAsDouble()) < 0.05
+                || Math.abs(ySupplier.getAsDouble()) < 0.05
+                || Math.abs(omegaSupplier.getAsDouble()) < 0.05);
+  }
+
   public Command autoAlign(DriveSetpoints _setpoint) {
     return run(() -> {
           this.setpoint = _setpoint;
