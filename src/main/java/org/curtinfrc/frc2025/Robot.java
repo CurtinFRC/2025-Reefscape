@@ -298,11 +298,10 @@ public class Robot extends LoggedRobot {
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        drive
-            .joystickDrive(
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> -controller.getRightX()));
+        drive.joystickDrive(
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> -controller.getRightX()));
 
     elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
 
@@ -349,22 +348,22 @@ public class Robot extends LoggedRobot {
 
     atReefSetpoint.onTrue(
         Commands.defer(
-                () ->
-                    drive.autoAlignWithOverride(
-                        hpSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                Set.of(drive)));
+            () ->
+                drive.autoAlignWithOverride(
+                    hpSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
     intake.frontSensor.onTrue(
         Commands.defer(
-                () ->
-                    drive.autoAlignWithOverride(
-                        reefSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                Set.of(drive)));
+            () ->
+                drive.autoAlignWithOverride(
+                    reefSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
 
     RobotModeTriggers.teleop()
         .and(
