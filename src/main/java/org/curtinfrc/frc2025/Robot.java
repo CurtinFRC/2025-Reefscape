@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -77,7 +77,7 @@ public class Robot extends LoggedRobot {
   private Ejector ejector;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandPS4Controller controller = new CommandPS4Controller(0);
   private final ButtonBoard board = new ButtonBoard(1);
 
   // Auto stuff
@@ -298,11 +298,10 @@ public class Robot extends LoggedRobot {
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        drive
-            .joystickDrive(
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> -controller.getRightX()));
+        drive.joystickDrive(
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> -controller.getRightX()));
 
     elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
 
@@ -334,11 +333,11 @@ public class Robot extends LoggedRobot {
 
     intake.frontSensor.whileTrue(elevator.stop());
 
-    controller.b().onTrue(elevator.zero().ignoringDisable(true));
+    // controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
     // Reset gyro to 0° when B button is pressed
     controller
-        .y()
+        .triangle()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -349,22 +348,22 @@ public class Robot extends LoggedRobot {
 
     atReefSetpoint.onTrue(
         Commands.defer(
-                () ->
-                    drive.autoAlignWithOverride(
-                        hpSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                Set.of(drive)));
+            () ->
+                drive.autoAlignWithOverride(
+                    hpSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
     intake.frontSensor.onTrue(
         Commands.defer(
-                () ->
-                    drive.autoAlignWithOverride(
-                        reefSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                Set.of(drive)));
+            () ->
+                drive.autoAlignWithOverride(
+                    reefSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
 
     RobotModeTriggers.teleop()
         .and(
@@ -390,7 +389,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A))
@@ -398,7 +397,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B))
@@ -406,7 +405,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.rightTrigger())
+        .and(controller.R2())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A))
@@ -414,7 +413,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.leftTrigger())
+        .and(controller.L2())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B))
@@ -422,7 +421,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C))
@@ -430,7 +429,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D))
@@ -438,7 +437,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.rightTrigger())
+        .and(controller.R2())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C))
@@ -446,7 +445,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.rightTrigger())
+        .and(controller.R2())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D))
@@ -454,7 +453,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E))
@@ -462,7 +461,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F))
@@ -470,7 +469,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
@@ -478,7 +477,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F))
@@ -486,7 +485,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G))
@@ -494,7 +493,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H))
@@ -502,7 +501,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G))
@@ -510,7 +509,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H))
@@ -518,7 +517,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I))
@@ -526,7 +525,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J))
@@ -534,7 +533,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
@@ -542,7 +541,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J))
@@ -550,7 +549,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K))
@@ -558,7 +557,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L))
@@ -566,7 +565,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.rightBumper())
+        .and(controller.R1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K))
@@ -574,7 +573,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.leftBumper())
+        .and(controller.L1())
         .onTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
