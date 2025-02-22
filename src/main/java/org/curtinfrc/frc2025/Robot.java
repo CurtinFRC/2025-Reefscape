@@ -302,8 +302,7 @@ public class Robot extends LoggedRobot {
             .joystickDrive(
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
-                () -> -controller.getRightX())
-            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+                () -> -controller.getRightX()));
 
     elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
 
@@ -356,8 +355,7 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
                         () -> -controller.getRightX()),
-                Set.of(drive))
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+                Set.of(drive)));
     intake.frontSensor.onTrue(
         Commands.defer(
                 () ->
@@ -366,8 +364,7 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
                         () -> -controller.getRightX()),
-                Set.of(drive))
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+                Set.of(drive)));
 
     RobotModeTriggers.teleop()
         .and(

@@ -317,8 +317,7 @@ public class Drive extends SubsystemBase {
    */
   public Command joystickDrive(
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
-    return run(
-        () -> {
+    return run(() -> {
           double xSpeed = xSupplier.getAsDouble();
 
           double ySpeed = ySupplier.getAsDouble();
@@ -346,7 +345,8 @@ public class Drive extends SubsystemBase {
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
-        });
+        })
+        .withName("JoystickDrive");
   }
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
@@ -737,13 +737,18 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
-    return Commands.either(
-        autoAlign(_setpoint),
-        joystickDrive(xSupplier, ySupplier, omegaSupplier),
-        () ->
-            Math.abs(xSupplier.getAsDouble()) < 0.05
-                || Math.abs(ySupplier.getAsDouble()) < 0.05
-                || Math.abs(omegaSupplier.getAsDouble()) < 0.05);
+    return run(
+        () -> {
+          if (Math.abs(xSupplier.getAsDouble()) < 0.05
+              || Math.abs(ySupplier.getAsDouble()) < 0.05
+              || Math.abs(omegaSupplier.getAsDouble()) < 0.05) {
+            autoAlign(_setpoint).execute();
+            Logger.recordOutput("yay", true);
+          } else {
+            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
+            Logger.recordOutput("yay", false);
+          }
+        });
   }
 
   public Command autoAlign(DriveSetpoints _setpoint) {
