@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.units.Units.Inches;
 import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
@@ -7,6 +8,7 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -24,6 +26,7 @@ import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
+import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
@@ -53,6 +56,11 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnField;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -201,9 +209,36 @@ public class Robot extends LoggedRobot {
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
+          final DriveTrainSimulationConfig driveTrainSimulationConfig =
+              DriveTrainSimulationConfig.Default()
+                  // Specify gyro type (for realistic gyro drifting and error simulation)
+                  .withGyro(COTS.ofPigeon2())
+                  // Specify swerve module (for realistic swerve dynamics)
+                  .withSwerveModule(
+                      COTS.ofMark4(
+                          DCMotor.getKrakenX60Foc(1), // Drive motor is a Kraken X60
+                          DCMotor.getFalcon500(1), // Steer motor is a Falcon 500
+                          COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
+                          3)) // L3 Gear ratio
+                  // Configures the track length and track width (spacing between swerve modules)
+                  .withTrackLengthTrackWidth(Inches.of(24), Inches.of(24))
+                  // Configures the bumper size (dimensions of the robot bumper)
+                  .withBumperSize(Inches.of(30), Inches.of(30));
+
+          final SwerveDriveSimulation swerveDriveSimulation =
+              new SwerveDriveSimulation(
+                  // Specify Configuration
+                  driveTrainSimulationConfig,
+                  // Specify starting pose
+                  new Pose2d(3, 3, new Rotation2d()));
+
+          SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
+
           drive =
               new Drive(
-                  new GyroIO() {},
+                  new GyroIOSim(
+                      () -> drive.getKinematics(),
+                      () -> drive.getModuleStates()) {}, // work around crash
                   new ModuleIOSim(TunerConstants.FrontLeft),
                   new ModuleIOSim(TunerConstants.FrontRight),
                   new ModuleIOSim(TunerConstants.BackLeft),
@@ -216,7 +251,7 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSim());
-          intake = new Intake(new IntakeIOSim());
+          intake = new Intake(new IntakeIOSim(swerveDriveSimulation));
           ejector = new Ejector(new EjectorIOSim());
         }
       }
@@ -303,7 +338,11 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    elevator.isNotAtCollect.and(atReefSetpoint).whileTrue(ejector.eject(500));
+    elevator
+        .isNotAtCollect
+        .and(atReefSetpoint)
+        .and(elevator.atSetpoint)
+        .whileTrue(ejector.eject(500));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
@@ -335,6 +374,8 @@ public class Robot extends LoggedRobot {
 
     controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
+    // atReefSetpoint.whileTrue(elevator.goToSetpoint(reefSetpoint.elevatorSetpoint()));
+
     // Reset gyro to 0° when B button is pressed
     controller
         .y()
@@ -355,7 +396,18 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX()),
             Set.of(drive)));
-    intake.frontSensor.onTrue(
+
+    // intake.frontSensor.onTrue(
+    //     Commands.defer(
+    //         () ->
+    //             drive.autoAlignWithOverride(
+    //                 reefSetpoint.driveSetpoint(),
+    //                 () -> -controller.getLeftY(),
+    //                 () -> -controller.getLeftX(),
+    //                 () -> -controller.getRightX()),
+    //         Set.of(drive)));
+
+    atHpSetpoint.onTrue(
         Commands.defer(
             () ->
                 drive.autoAlignWithOverride(
@@ -669,9 +721,28 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    atHpSetpoint.onTrue(
+        Commands.run(
+            () -> {
+              SimulatedArena.getInstance()
+                  .addGamePiece(
+                      new ReefscapeCoralOnField(
+                          new Pose2d(
+                              drive.setpoint.getPose().getX(),
+                              drive.setpoint.getPose().getY(),
+                              Rotation2d.fromDegrees(90))));
+            }));
+  }
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SimulatedArena.getInstance().simulationPeriodic();
+
+    Logger.recordOutput(
+        "FieldSimulation/Algae", SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"));
+    Logger.recordOutput(
+        "FieldSimulation/Coral", SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"));
+  }
 }

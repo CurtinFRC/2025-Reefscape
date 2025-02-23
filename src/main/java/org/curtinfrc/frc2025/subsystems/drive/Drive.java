@@ -79,9 +79,9 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private double p = 6;
-  private double d = 0.2;
-  private double i = 0.03;
+  private double p = 4;
+  private double d = 0;
+  private double i = 0;
 
   private final PIDController xController = new PIDController(2, 0.0, 0);
   private final PIDController yController = new PIDController(2, 0.0, 0);
@@ -95,12 +95,25 @@ public class Drive extends SubsystemBase {
 
   public DriveSetpoints setpoint = DriveSetpoints.A;
 
+  @AutoLogOutput(key = "Drive/AngleDiff")
+  private double a() {
+    return Math.abs(
+            getPose().getRotation().getDegrees() - setpoint.getPose().getRotation().getDegrees())
+        % 360;
+  }
+
+  @AutoLogOutput(key = "Drive/xDiff")
+  private double x() {
+    return Math.abs(getPose().getX() - setpoint.getPose().getX());
+  }
+
+  @AutoLogOutput(key = "Drive/yDiff")
+  private double y() {
+    return Math.abs(getPose().getY() - setpoint.getPose().getY());
+  }
+
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint =
-      new Trigger(
-          () ->
-              Math.abs(getPose().getX() - setpoint.getPose().getX()) <= 0.015
-                  && Math.abs(getPose().getY() - setpoint.getPose().getY()) <= 0.015);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.015 && y() <= 0.015 && a() <= 3);
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
@@ -423,6 +436,8 @@ public class Drive extends SubsystemBase {
     // Generate the next speeds for the robot
     xController.setSetpoint(sample.x);
     yController.setSetpoint(sample.y);
+    headingController.setSetpoint(sample.heading);
+
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),

@@ -11,6 +11,7 @@ public interface IntakeIO {
     public double angularVelocityRotationsPerMinute;
     public boolean frontSensor;
     public boolean backSensor;
+    public boolean simHasNote = false;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}

@@ -131,17 +131,17 @@ public class RepulsorFieldPlanner {
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
           new SnowmanObstacle(
-              new Translation2d(4.49, 4), 1.5, Units.inchesToMeters(65.5 / 2.0), true),
+              new Translation2d(4.49, 4), 1.6, Units.inchesToMeters(65.5 / 2.0), true),
           new SnowmanObstacle(
-              new Translation2d(13.08, 4), 1.5, Units.inchesToMeters(65.5 / 2.0), true));
+              new Translation2d(13.08, 4), 1.6, Units.inchesToMeters(65.5 / 2.0), true));
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
   public static final List<Obstacle> WALLS =
       List.of(
-          new HorizontalObstacle(0.0, 0.5, true),
-          new HorizontalObstacle(FIELD_WIDTH, 0.5, false),
-          new VerticalObstacle(0.0, 0.5, true),
-          new VerticalObstacle(FIELD_LENGTH, 0.5, false));
+          new HorizontalObstacle(0.0, 2, true),
+          new HorizontalObstacle(FIELD_WIDTH, 1.4, false),
+          new VerticalObstacle(0.0, 2, true),
+          new VerticalObstacle(FIELD_LENGTH, 1.4, false));
 
   private List<Obstacle> fixedObstacles = new ArrayList<>();
   private Optional<Translation2d> goalOpt = Optional.empty();
@@ -153,6 +153,7 @@ public class RepulsorFieldPlanner {
   private static final int ARROWS_X = RobotBase.isSimulation() ? 40 : 0;
   private static final int ARROWS_Y = RobotBase.isSimulation() ? 20 : 0;
   private static final int ARROWS_SIZE = (ARROWS_X + 1) * (ARROWS_Y + 1);
+
   private ArrayList<Pose2d> arrows = new ArrayList<>(ARROWS_SIZE);
 
   public RepulsorFieldPlanner() {
@@ -327,7 +328,7 @@ public class RepulsorFieldPlanner {
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
           var dist = err.getNorm();
-          stepSize_m = Math.min(3.14, Math.sqrt(3 /* 14 */ * dist)) * 0.02;
+          stepSize_m = Math.min(5.14, Math.sqrt(7 /* 14 */ * dist)) * 0.02;
         }
 
         Logger.recordOutput("Repulsor/step", stepSize_m);
