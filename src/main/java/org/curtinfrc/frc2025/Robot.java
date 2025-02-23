@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.units.Units.Inches;
 import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
@@ -7,18 +8,22 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.Map;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
+import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
@@ -26,14 +31,18 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
@@ -47,6 +56,12 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnField;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -68,15 +83,31 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-  private final ButtonBoard buttonBoard = new ButtonBoard(1);
+  private final ButtonBoard board = new ButtonBoard(1);
+
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory autoFactory;
   private final Autos autos;
+
+  // Setpoints
+  public static record Setpoint(ElevatorSetpoints elevatorSetpoint, DriveSetpoints driveSetpoint) {}
+
+  @AutoLogOutput(key = "Robot/ReefSetpoint")
+  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A);
+
+  @AutoLogOutput(key = "Robot/HPSetpoint")
+  private Setpoint hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP);
+
+  // Triggers
+  @AutoLogOutput(key = "Robot/AtReefSetpoint")
+  public final Trigger atReefSetpoint;
+
+  @AutoLogOutput(key = "Robot/AtHPSetpoint")
+  public final Trigger atHpSetpoint;
 
   public Robot() {
     // Record metadata
@@ -120,7 +151,15 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
-    Logger.registerURCL(URCL.startExternal());
+    Logger.registerURCL(
+        URCL.startExternal(
+            Map.of(
+                ElevatorConstants.motorPort,
+                "Elevator",
+                EjectorConstants.motorId,
+                "Ejector",
+                IntakeConstants.intakeMotorId,
+                "Intake")));
     // Start AdvantageKit logger
     Logger.start();
 
@@ -170,6 +209,31 @@ public class Robot extends LoggedRobot {
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
+          final DriveTrainSimulationConfig driveTrainSimulationConfig =
+              DriveTrainSimulationConfig.Default()
+                  // Specify gyro type (for realistic gyro drifting and error simulation)
+                  .withGyro(COTS.ofPigeon2())
+                  // Specify swerve module (for realistic swerve dynamics)
+                  .withSwerveModule(
+                      COTS.ofMark4(
+                          DCMotor.getKrakenX60Foc(1), // Drive motor is a Kraken X60
+                          DCMotor.getFalcon500(1), // Steer motor is a Falcon 500
+                          COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
+                          3)) // L3 Gear ratio
+                  // Configures the track length and track width (spacing between swerve modules)
+                  .withTrackLengthTrackWidth(Inches.of(24), Inches.of(24))
+                  // Configures the bumper size (dimensions of the robot bumper)
+                  .withBumperSize(Inches.of(30), Inches.of(30));
+
+          final SwerveDriveSimulation swerveDriveSimulation =
+              new SwerveDriveSimulation(
+                  // Specify Configuration
+                  driveTrainSimulationConfig,
+                  // Specify starting pose
+                  new Pose2d(3, 3, new Rotation2d()));
+
+          SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
+
           drive =
               new Drive(
                   new GyroIOSim(
@@ -187,7 +251,7 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSim());
-          intake = new Intake(new IntakeIOSim());
+          intake = new Intake(new IntakeIOSim(swerveDriveSimulation));
           ejector = new Ejector(new EjectorIOSim());
         }
       }
@@ -209,7 +273,13 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
     }
 
-    superstructure = new Superstructure(drive, elevator);
+    atReefSetpoint =
+        elevator
+            .atSetpoint
+            .and(drive.atSetpoint)
+            .and(new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
+    atHpSetpoint =
+        drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
 
     autoFactory =
         new AutoFactory(
@@ -270,13 +340,14 @@ public class Robot extends LoggedRobot {
 
     elevator
         .isNotAtCollect
+        .and(atReefSetpoint)
         .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .onTrue(ejector.eject(1000));
+        .whileTrue(ejector.eject(500));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
-    ejector.setDefaultCommand(ejector.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    ejector.setDefaultCommand(
+        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
     intake
         .backSensor
@@ -284,6 +355,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+
     intake
         .backSensor
         .and(intake.frontSensor)
@@ -291,13 +363,18 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
                 .withName("front and back"));
+
     intake
         .backSensor
         .and(intake.frontSensor.negate())
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
 
+    intake.frontSensor.whileTrue(elevator.stop());
+
     controller.b().onTrue(elevator.zero().ignoringDisable(true));
+
+    // atReefSetpoint.whileTrue(elevator.goToSetpoint(reefSetpoint.elevatorSetpoint()));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -310,11 +387,249 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.a().whileTrue(elevator.goToSetpoint(Setpoints.L3));
-    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
-    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
-    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
-    SmartDashboard.putData(CommandScheduler.getInstance());
+    atReefSetpoint.onTrue(
+        Commands.defer(
+            () ->
+                drive.autoAlignWithOverride(
+                    hpSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
+
+    // intake.frontSensor.onTrue(
+    //     Commands.defer(
+    //         () ->
+    //             drive.autoAlignWithOverride(
+    //                 reefSetpoint.driveSetpoint(),
+    //                 () -> -controller.getLeftY(),
+    //                 () -> -controller.getLeftX(),
+    //                 () -> -controller.getRightX()),
+    //         Set.of(drive)));
+
+    atHpSetpoint.onTrue(
+        Commands.defer(
+            () ->
+                drive.autoAlignWithOverride(
+                    reefSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
+
+    RobotModeTriggers.teleop()
+        .and(
+            new Trigger(
+                () ->
+                    Math.abs(controller.getLeftX()) < 0.05
+                        || Math.abs(controller.getLeftY()) < 0.05))
+        .whileTrue(drive.autoAlign(hpSetpoint.driveSetpoint()));
+
+    board
+        .left()
+        .onTrue(
+            Commands.runOnce(
+                    () -> hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.LEFT_HP))
+                .ignoringDisable(true));
+    board
+        .right()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        hpSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.RIGHT_HP))
+                .ignoringDisable(true));
+
+    board
+        .coralAB()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A))
+                .ignoringDisable(true));
+
+    board
+        .coralAB()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B))
+                .ignoringDisable(true));
+
+    board
+        .coralAB()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A))
+                .ignoringDisable(true));
+
+    board
+        .coralAB()
+        .and(controller.leftTrigger())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B))
+                .ignoringDisable(true));
+
+    board
+        .coralCD()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C))
+                .ignoringDisable(true));
+
+    board
+        .coralCD()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D))
+                .ignoringDisable(true));
+
+    board
+        .coralCD()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C))
+                .ignoringDisable(true));
+
+    board
+        .coralCD()
+        .and(controller.rightTrigger())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D))
+                .ignoringDisable(true));
+
+    board
+        .coralEF()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E))
+                .ignoringDisable(true));
+
+    board
+        .coralEF()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F))
+                .ignoringDisable(true));
+
+    board
+        .coralEF()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
+                .ignoringDisable(true));
+
+    board
+        .coralEF()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F))
+                .ignoringDisable(true));
+
+    board
+        .coralGH()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G))
+                .ignoringDisable(true));
+
+    board
+        .coralGH()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H))
+                .ignoringDisable(true));
+
+    board
+        .coralGH()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G))
+                .ignoringDisable(true));
+
+    board
+        .coralGH()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H))
+                .ignoringDisable(true));
+
+    board
+        .coralIJ()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I))
+                .ignoringDisable(true));
+
+    board
+        .coralIJ()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J))
+                .ignoringDisable(true));
+
+    board
+        .coralIJ()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
+                .ignoringDisable(true));
+
+    board
+        .coralIJ()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J))
+                .ignoringDisable(true));
+
+    board
+        .coralKL()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K))
+                .ignoringDisable(true));
+
+    board
+        .coralKL()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L))
+                .ignoringDisable(true));
+
+    board
+        .coralKL()
+        .and(controller.rightBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K))
+                .ignoringDisable(true));
+
+    board
+        .coralKL()
+        .and(controller.leftBumper())
+        .onTrue(
+            Commands.runOnce(
+                    () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
+                .ignoringDisable(true));
   }
 
   /** This function is called periodically during all modes. */
@@ -406,9 +721,28 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    atHpSetpoint.onTrue(
+        Commands.run(
+            () -> {
+              SimulatedArena.getInstance()
+                  .addGamePiece(
+                      new ReefscapeCoralOnField(
+                          new Pose2d(
+                              drive.setpoint.getPose().getX(),
+                              drive.setpoint.getPose().getY(),
+                              Rotation2d.fromDegrees(90))));
+            }));
+  }
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SimulatedArena.getInstance().simulationPeriodic();
+
+    Logger.recordOutput(
+        "FieldSimulation/Algae", SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"));
+    Logger.recordOutput(
+        "FieldSimulation/Coral", SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"));
+  }
 }
