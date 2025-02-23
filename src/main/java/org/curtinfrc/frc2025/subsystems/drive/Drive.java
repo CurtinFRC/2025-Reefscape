@@ -53,6 +53,9 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
+import org.curtinfrc.frc2025.util.PoseEstimator.PoseEstimator;
+import org.curtinfrc.frc2025.util.PoseEstimator.VelocityMeasurement;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -78,6 +81,8 @@ public class Drive extends SubsystemBase {
       };
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+
+  private PoseEstimator poseTruth = new PoseEstimator(Pose2d.kZero);
 
   private double p = 6;
   private double d = 0.2;
@@ -203,7 +208,13 @@ public class Drive extends SubsystemBase {
 
       // Apply update
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+      poseTruth.addMeasurement(
+          new VelocityMeasurement(getChassisSpeeds(), 0.1, 0.1, sampleTimestamps[i]));
     }
+
+    poseTruth.update();
+
+    Logger.recordOutput("Drive/PoseTruth", poseTruth.getPose());
 
     Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
     Logger.recordOutput("Drive/xPID/error", xController.getError());
@@ -331,6 +342,7 @@ public class Drive extends SubsystemBase {
           omega = Math.copySign(omega * omega, omega);
 
           Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
+          Logger.recordOutput("Drive/Test", 0);
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(

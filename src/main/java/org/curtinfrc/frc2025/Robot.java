@@ -188,6 +188,7 @@ public class Robot extends LoggedRobot {
                   new ModuleIOTalonFX(TunerConstants.FrontRight),
                   new ModuleIOTalonFX(TunerConstants.BackLeft),
                   new ModuleIOTalonFX(TunerConstants.BackRight));
+
           vision =
               new Vision(
                   drive::addVisionMeasurement,
