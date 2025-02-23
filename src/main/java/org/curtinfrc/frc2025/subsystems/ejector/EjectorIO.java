@@ -9,7 +9,8 @@ public interface EjectorIO {
     public double currentAmps;
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
-    public boolean sensor;
+    public boolean backSensor;
+    public boolean frontSensor;
   }
 
   public default void updateInputs(EjectorIOInputs inputs) {}
