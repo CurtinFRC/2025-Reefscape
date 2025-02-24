@@ -19,7 +19,8 @@ public class Ejector extends SubsystemBase {
     this.io = io;
   }
 
-  public final Trigger sensor = new Trigger(() -> inputs.sensor);
+  public final Trigger backSensor = new Trigger(() -> inputs.backSensor);
+  public final Trigger frontSensor = new Trigger(() -> inputs.frontSensor);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
 
   @Override

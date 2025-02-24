@@ -52,7 +52,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -113,10 +113,10 @@ public class Drive extends SubsystemBase {
       ModuleIO blModuleIO,
       ModuleIO brModuleIO) {
     this.gyroIO = gyroIO;
-    modules[0] = new Module(flModuleIO, 0, TunerConstants.FrontLeft);
-    modules[1] = new Module(frModuleIO, 1, TunerConstants.FrontRight);
-    modules[2] = new Module(blModuleIO, 2, TunerConstants.BackLeft);
-    modules[3] = new Module(brModuleIO, 3, TunerConstants.BackRight);
+    modules[0] = new Module(flModuleIO, 0, CompTunerConstants.FrontLeft);
+    modules[1] = new Module(frModuleIO, 1, CompTunerConstants.FrontRight);
+    modules[2] = new Module(blModuleIO, 2, CompTunerConstants.BackLeft);
+    modules[3] = new Module(brModuleIO, 3, CompTunerConstants.BackRight);
 
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
@@ -227,7 +227,7 @@ public class Drive extends SubsystemBase {
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
-    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
+    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, CompTunerConstants.kSpeedAt12Volts);
 
     // Log unoptimized setpoints and setpoint speeds
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
@@ -685,7 +685,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the maximum linear speed in meters per sec. */
   public double getMaxLinearSpeedMetersPerSec() {
-    return TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    return CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   }
 
   /** Returns the maximum angular speed in radians per sec. */
@@ -696,10 +696,14 @@ public class Drive extends SubsystemBase {
   /** Returns an array of module translations. */
   public static Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
-      new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-      new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
-      new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-      new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
+      new Translation2d(
+          CompTunerConstants.FrontLeft.LocationX, CompTunerConstants.FrontLeft.LocationY),
+      new Translation2d(
+          CompTunerConstants.FrontRight.LocationX, CompTunerConstants.FrontRight.LocationY),
+      new Translation2d(
+          CompTunerConstants.BackLeft.LocationX, CompTunerConstants.BackLeft.LocationY),
+      new Translation2d(
+          CompTunerConstants.BackRight.LocationX, CompTunerConstants.BackRight.LocationY)
     };
   }
 
@@ -717,7 +721,7 @@ public class Drive extends SubsystemBase {
               repulsorFieldPlanner.getCmd(
                   robotPose,
                   getChassisSpeeds(),
-                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
                   true);
 
           // Apply the trajectory with rotation adjustment

@@ -19,7 +19,6 @@ public class Elevator extends SubsystemBase {
   private Setpoints setpoint = Setpoints.COLLECT;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != Setpoints.COLLECT);
-  public final Trigger toZero = new Trigger(() -> inputs.touchSensor);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -34,6 +33,10 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/setpoint", setpoint);
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
+
+    if (inputs.hominSensor) {
+      io.zero();
+    }
   }
 
   public Trigger atSetpoint = new Trigger(pid::atSetpoint);
