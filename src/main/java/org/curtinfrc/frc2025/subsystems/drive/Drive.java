@@ -11,12 +11,10 @@ import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -28,10 +26,10 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -53,6 +51,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.util.BufferUtil;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -76,8 +75,11 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition(),
         new SwerveModulePosition()
       };
-  private SwerveDrivePoseEstimator poseEstimator =
-      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+  private PoseEstimator poseEstimator =
+      new PoseEstimator(kinematics, lastModulePositions, rawGyroRotation);
+  private CircularBuffer<Double> xAcceleration = new CircularBuffer<Double>(6);
+  private CircularBuffer<Double> yAcceleration = new CircularBuffer<Double>(6);
+  private ChassisSpeeds lastChassisSpeeds = new ChassisSpeeds();
 
   private double p = 6;
   private double d = 0.2;
@@ -197,11 +199,38 @@ public class Drive extends SubsystemBase {
       } else {
         // Fallback to calculating the angle delta
         Twist2d twist = kinematics.toTwist2d(moduleDeltas);
+        // Use the angle delta from the kinematics and module deltas
         rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
 
+      var chassisSpeedsDiff = getChassisSpeeds().minus(lastChassisSpeeds);
+      var xAccel = chassisSpeedsDiff.vxMetersPerSecond / 0.02;
+      xAcceleration.addLast(xAccel);
+      var yAccel = chassisSpeedsDiff.vyMetersPerSecond / 0.02;
+      yAcceleration.addLast(yAccel);
+      var avgX = BufferUtil.average(xAcceleration);
+      var avgY = BufferUtil.average(yAcceleration);
+      Logger.recordOutput("FilteredAccelerationX", avgX);
+      Logger.recordOutput("AccelerationX", chassisSpeedsDiff.vxMetersPerSecond / 0.02);
+      Logger.recordOutput("AccelerationY", chassisSpeedsDiff.vyMetersPerSecond / 0.02);
+      Logger.recordOutput(
+          "Difference",
+          Math.abs(chassisSpeedsDiff.vxMetersPerSecond / 0.02 - gyroInputs.xAcceleration));
+      var xDiff = Math.abs(avgX - gyroIO.xAcceleration());
+      Logger.recordOutput("FilteredDifference", xDiff);
+      var yDiff = Math.abs(avgY - gyroIO.yAcceleration());
+      if (xDiff < 1) {
+        xDiff = 1;
+      }
+      if (yDiff < 1) {
+        yDiff = 1;
+      }
       // Apply update
-      poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+      poseEstimator.updateWithTime(
+          modulePositions,
+          rawGyroRotation,
+          sampleTimestamps[i],
+          VecBuilder.fill(1 / xDiff, 1 / yDiff, 1));
     }
 
     Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
@@ -214,6 +243,7 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
+    lastChassisSpeeds = getChassisSpeeds();
   }
 
   /**
@@ -661,7 +691,7 @@ public class Drive extends SubsystemBase {
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
-    return poseEstimator.getEstimatedPosition();
+    return poseEstimator.getEstimatedPose();
   }
 
   /** Returns the current odometry rotation. */
@@ -676,9 +706,7 @@ public class Drive extends SubsystemBase {
 
   /** Adds a new timestamped vision measurement. */
   public void addVisionMeasurement(
-      Pose2d visionRobotPoseMeters,
-      double timestampSeconds,
-      Matrix<N3, N1> visionMeasurementStdDevs) {
+      Pose2d visionRobotPoseMeters, double timestampSeconds, Vector<N3> visionMeasurementStdDevs) {
     poseEstimator.addVisionMeasurement(
         visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
   }
