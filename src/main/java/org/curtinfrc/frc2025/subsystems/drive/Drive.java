@@ -79,12 +79,12 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private double p = 4;
-  private double d = 0;
+  private double p = 1;
+  private double d = 0.1;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(2, 0.0, 0);
-  private final PIDController yController = new PIDController(2, 0.0, 0);
+  private final PIDController xController = new PIDController(3, 0.0, 0);
+  private final PIDController yController = new PIDController(3, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -446,7 +446,7 @@ public class Drive extends SubsystemBase {
                 ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
                 : headingController.calculate(
                     pose.getRotation().getRadians(),
-                    Math.atan2(transform.getY(), transform.getX())),
+                    Math.atan2(transform.getY(), transform.getX()) + Math.PI),
             getRotation()); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);

@@ -98,15 +98,11 @@ public final class DriveConstants {
       if (side) {
         this.pose =
             new Pose2d(
-                mappedPose.getX() + xOffset,
-                mappedPose.getY() - yOffset,
-                rotation.toRotation2d().plus(Rotation2d.kPi));
+                mappedPose.getX() + xOffset, mappedPose.getY() - yOffset, rotation.toRotation2d());
       } else {
         this.pose =
             new Pose2d(
-                mappedPose.getX() - xOffset,
-                mappedPose.getY() + yOffset,
-                rotation.toRotation2d().plus(Rotation2d.kPi));
+                mappedPose.getX() - xOffset, mappedPose.getY() + yOffset, rotation.toRotation2d());
       }
     }
 

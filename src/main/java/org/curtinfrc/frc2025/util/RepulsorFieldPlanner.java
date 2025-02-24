@@ -318,7 +318,7 @@ public class RepulsorFieldPlanner {
       Logger.recordOutput("Repulsor/err", curTrans.getDistance(goal));
       Logger.recordOutput("Repulsor/toggle_dist", stepSize_m * 1.5);
 
-      if (useGoal && err.getNorm() < stepSize_m * 5) {
+      if (useGoal && err.getNorm() < stepSize_m * 1.5) {
         return sample(goal, goalRotation, 0, 0, 0);
       } else {
         var obstacleForce = getObstacleForce(curTrans, goal).plus(getWallForce(curTrans, goal));
