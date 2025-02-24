@@ -36,6 +36,9 @@ import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
+import org.curtinfrc.frc2025.subsystems.popper.Popper;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIOComp;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -64,6 +67,7 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
+  private Popper popper;
   private Superstructure superstructure;
 
   // Controller
@@ -137,11 +141,12 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIO() {},
-                  new VisionIO() {},
-                  new VisionIO() {});
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
+          popper = new Popper(new PopperIOComp());
         }
 
         case DEVBOT -> {
@@ -162,6 +167,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
+          popper = new Popper(new PopperIO() {});
         }
 
         case SIMBOT -> {
@@ -183,6 +189,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
+          popper = new Popper(new PopperIO() {});
         }
       }
     } else {
@@ -201,6 +208,7 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
+      popper = new Popper(new PopperIO() {});
     }
 
     superstructure = new Superstructure(drive, elevator);
@@ -260,7 +268,7 @@ public class Robot extends LoggedRobot {
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getRightX()));
 
     elevator
         .isNotAtCollect
@@ -270,6 +278,7 @@ public class Robot extends LoggedRobot {
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
+    popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
 
     intake
@@ -310,6 +319,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     controller.x().whileTrue(ejector.eject(20));
+    controller.a().whileTrue(popper.setVoltage(-8));
     controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
     controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
   }
