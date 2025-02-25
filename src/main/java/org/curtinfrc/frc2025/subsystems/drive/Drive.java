@@ -410,33 +410,9 @@ public class Drive extends SubsystemBase {
   public void followTrajectory(SwerveSample sample) {
     // Get the current pose of the robot
     Pose2d pose = getPose();
-    Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
-    Logger.recordOutput("Drive/PID/error", headingController.getError());
-    // Logger.recordOutput("Drive/PID/out", out);
-    Logger.recordOutput("Drive/sample", sample);
-
     var err = new Transform2d(sample.x - pose.getX(), sample.y - pose.getY(), new Rotation2d());
     var dist = Math.hypot(err.getX(), err.getY());
     Logger.recordOutput("Drive/dist", dist);
-
-    var target_pose =
-        (DriverStation.getAlliance().get() == Alliance.Blue
-            ? new Pose2d(4.476, 4.026, new Rotation2d())
-            : new Pose2d(13.071, 4.026, new Rotation2d()));
-    var transform = target_pose.relativeTo(pose).rotateBy(pose.getRotation());
-    Logger.recordOutput("Drive/targetpose", target_pose);
-    Logger.recordOutput("Drive/transform", transform);
-    Logger.recordOutput("Drive/theta", Math.atan2(transform.getY(), transform.getX()));
-    Logger.recordOutput(
-        "Drive/projected",
-        new Pose2d(
-            pose.getX(),
-            pose.getY(),
-            new Rotation2d(Math.atan2(transform.getY(), transform.getX()))));
-    // Generate the next speeds for the robot
-    xController.setSetpoint(sample.x);
-    yController.setSetpoint(sample.y);
-    headingController.setSetpoint(sample.heading);
 
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -444,9 +420,7 @@ public class Drive extends SubsystemBase {
             sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
             dist < 1
                 ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
-                : headingController.calculate(
-                    pose.getRotation().getRadians(),
-                    Math.atan2(transform.getY(), transform.getX()) + Math.PI),
+                : headingController.calculate(pose.getRotation().getRadians(), sample.heading),
             getRotation()); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);

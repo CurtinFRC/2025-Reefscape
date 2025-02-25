@@ -31,8 +31,15 @@ public class CompTunerConstants {
           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
+  public static final double kDriveGearRatio = 5.902777777777778;
   private static final Slot0Configs driveGains =
-      new Slot0Configs().withKP(0.1).withKI(0).withKD(0).withKS(0).withKV(0.124);
+      new Slot0Configs()
+          .withKP(0.15969 * kDriveGearRatio)
+          .withKI(0)
+          .withKD(0)
+          .withKS(0.044098 * kDriveGearRatio)
+          .withKV(0.10702 * kDriveGearRatio)
+          .withKA(0.011451 * kDriveGearRatio);
 
   // The closed-loop output type to use for the steer motors;
   // This affects the PID/FF gains for the steer motors
@@ -84,7 +91,6 @@ public class CompTunerConstants {
   // This may need to be tuned to your individual robot
   private static final double kCoupleRatio = 3.125;
 
-  public static final double kDriveGearRatio = 5.902777777777778;
   private static final double kSteerGearRatio = 21.428571428571427;
   private static final Distance kWheelRadius = Inches.of(2);
 
