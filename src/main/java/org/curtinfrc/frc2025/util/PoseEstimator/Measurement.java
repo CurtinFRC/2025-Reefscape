@@ -1,7 +1,7 @@
 package org.curtinfrc.frc2025.util.PoseEstimator;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.littletonrobotics.junction.Logger;
 
 public class Measurement {
   protected Double time;
@@ -10,21 +10,21 @@ public class Measurement {
   protected Pose2dVector velocity; // m/s
   protected Pose2dVector acceleration; // m/s/s
 
-  Measurement() {
+  public Measurement() {
     pose = new Pose2dVector();
     velocity = new Pose2dVector();
     acceleration = new Pose2dVector();
     time = 0.;
   }
 
-  Measurement(Pose2d initialPose) {
+  public Measurement(Pose2d initialPose) {
     pose = new Pose2dVector(initialPose);
     velocity = new Pose2dVector();
     acceleration = new Pose2dVector();
     time = 0.;
   }
 
-  Measurement(
+  public Measurement(
       Pose2dVector newPose,
       Pose2dVector newVelocity,
       Pose2dVector newAcceleration,
@@ -35,12 +35,20 @@ public class Measurement {
     time = newTime;
   }
 
+  public void log(String key) {
+    pose.log(key + "Pose/");
+    velocity.log(key + "Velocity/");
+    acceleration.log(key + "Acceleration/");
+    Logger.recordOutput(key + "time", time);
+  }
+
   double time() {
     return time;
   }
 
   public void physicsUpdate(Double currentTime) {
     Double dt = currentTime - time;
+
     velocity = velocity.plus(acceleration.times(dt));
 
     pose = pose.plus(velocity.times(dt));
@@ -48,22 +56,14 @@ public class Measurement {
     time = currentTime;
   }
 
-  public Double getX() {
-    return pose.getX();
-  }
-
-  public Double getY() {
-    return pose.getY();
-  }
-
-  public Rotation2d getRotation() {
-    return pose.getRotation();
+  public Pose2d getPoseAsPose2d() {
+    return pose.asPose2d();
   }
 
   public Measurement merge(Measurement with) {
 
     // should only merge if have the same time
-    if (Math.abs(time - with.time) < 0.001) {
+    if (Math.abs(time - with.time) > 0.001) {
       System.out.println("Merge measurements with different times");
     }
     return new Measurement(

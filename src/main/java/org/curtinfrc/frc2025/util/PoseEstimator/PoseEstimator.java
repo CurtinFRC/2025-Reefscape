@@ -2,29 +2,32 @@ package org.curtinfrc.frc2025.util.PoseEstimator;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import java.util.ArrayList;
+import org.littletonrobotics.junction.Logger;
 
 public final class PoseEstimator {
   Measurement current;
 
-  ArrayList<ArrayList<Measurement>> newMeasurements;
+  ArrayList<Measurement> newMeasurements = new ArrayList<Measurement>();
 
   public PoseEstimator(Pose2d initialPose) {
     current = new Measurement(initialPose);
   }
 
   public Pose2d getPose() {
-    return new Pose2d(current.getX(), current.getY(), current.getRotation());
+    return current.getPoseAsPose2d();
   }
 
   public void update() {
+    current.log("Pose/Current/");
+    for (int i = 0; i < newMeasurements.size(); i++) {
+      newMeasurements.get(i).log("Pose/Measurements/" + i + "/");
+    }
+    Logger.recordOutput("Pose/Measurements/Size", newMeasurements.size());
     while (newMeasurements.size() != 0) {
 
-      current.physicsUpdate(newMeasurements.get(0).get(0).time());
+      current.physicsUpdate(newMeasurements.get(0).time());
 
-      while (newMeasurements.get(0).size() != 0) {
-        current = current.merge(newMeasurements.get(0).get(0));
-        newMeasurements.get(0).remove(0);
-      }
+      current = current.merge(newMeasurements.get(0));
 
       newMeasurements.remove(0);
     }
@@ -34,31 +37,25 @@ public final class PoseEstimator {
 
     boolean measurementAdded = false;
     if (newMeasurements.size() == 0) {
-      ArrayList<Measurement> timeStep = new ArrayList<Measurement>();
-      timeStep.add(newMeasurement);
-      newMeasurements.add(timeStep);
+      newMeasurements.add(newMeasurement);
       measurementAdded = true;
     } else {
       Double newMeasurementTime = newMeasurement.time();
       for (int i = 0; i < newMeasurements.size(); i++) {
-        Double checkMeasurementTime = newMeasurements.get(i).get(0).time();
+        Double checkMeasurementTime = newMeasurements.get(i).time();
         if (Math.abs(checkMeasurementTime - newMeasurementTime) < 0.001) {
-          newMeasurements.get(i).add(newMeasurement);
+          newMeasurements.add(i, newMeasurement);
           measurementAdded = true;
         } else if (checkMeasurementTime > newMeasurementTime) {
-          ArrayList<Measurement> timeStep = new ArrayList<Measurement>();
-          timeStep.add(newMeasurement);
 
-          newMeasurements.add(i, timeStep);
+          newMeasurements.add(i, newMeasurement);
           measurementAdded = true;
         }
       }
 
       if (measurementAdded == false) {
-        ArrayList<Measurement> timeStep = new ArrayList<Measurement>();
-        timeStep.add(newMeasurement);
 
-        newMeasurements.add(timeStep);
+        newMeasurements.add(newMeasurement);
         measurementAdded = true;
       }
     }

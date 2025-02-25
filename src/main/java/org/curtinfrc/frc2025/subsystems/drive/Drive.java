@@ -213,8 +213,9 @@ public class Drive extends SubsystemBase {
     }
 
     poseTruth.update();
+    // Logger.recordOutput("Pose/Test", 9);
 
-    Logger.recordOutput("Drive/PoseTruth", poseTruth.getPose());
+    Logger.recordOutput("Pose/PoseTruth", poseTruth.getPose());
 
     Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
     Logger.recordOutput("Drive/xPID/error", xController.getError());
@@ -342,7 +343,6 @@ public class Drive extends SubsystemBase {
           omega = Math.copySign(omega * omega, omega);
 
           Logger.recordOutput("Drive/OmegaUnlimited", omega * getMaxAngularSpeedRadPerSec());
-          Logger.recordOutput("Drive/Test", 0);
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
