@@ -285,12 +285,12 @@ public class Robot extends LoggedRobot {
         .backSensor
         .and(ejector.frontSensor.negate())
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)));
+        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(12)));
     intake
         .backSensor
         .and(ejector.frontSensor)
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(ejector.eject(5));
+        .whileTrue(ejector.eject(12));
     intake
         .backSensor
         .and(ejector.frontSensor)
