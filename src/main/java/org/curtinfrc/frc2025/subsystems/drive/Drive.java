@@ -79,12 +79,12 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private double p = 1;
-  private double d = 0.1;
+  private double p = 2.5;
+  private double d = 0;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(3, 0.0, 0);
-  private final PIDController yController = new PIDController(3, 0.0, 0);
+  private final PIDController xController = new PIDController(5, 0.0, 0);
+  private final PIDController yController = new PIDController(5, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -113,10 +113,10 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.015 && y() <= 0.015 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.025 && y() <= 0.025 && a() <= 3);
 
-  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
-  private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(10);
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(10);
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -408,6 +408,7 @@ public class Drive extends SubsystemBase {
 
   /** Follows the provided swerve sample. */
   public void followTrajectory(SwerveSample sample) {
+    Logger.recordOutput("Drive/Sample", sample);
     // Get the current pose of the robot
     Pose2d pose = getPose();
     var err = new Transform2d(sample.x - pose.getX(), sample.y - pose.getY(), new Rotation2d());
@@ -419,8 +420,8 @@ public class Drive extends SubsystemBase {
             sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
             sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
             dist < 1
-                ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
-                : headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+                ? -headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+                : -headingController.calculate(pose.getRotation().getRadians(), sample.heading),
             getRotation()); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);

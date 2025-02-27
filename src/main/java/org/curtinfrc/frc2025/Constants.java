@@ -16,7 +16,7 @@ public final class Constants {
   public static final RobotType robotType = RobotType.COMPBOT;
   public static final double ROBOT_X = 660; // mm
   public static final double ROBOT_Y = 680;
-  public static final boolean devmode = true;
+  public static final boolean devmode = false;
 
   public static final Mode getMode() {
     return switch (robotType) {
