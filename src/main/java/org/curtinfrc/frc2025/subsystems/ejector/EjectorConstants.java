@@ -2,7 +2,7 @@ package org.curtinfrc.frc2025.subsystems.ejector;
 
 public class EjectorConstants {
   public static final int motorId = 21;
-  public static final int frontSensorPort = 1;
+  public static final int frontSensorPort = 5;
   public static final int backSensorPort = 2;
   public static final int currentLimit = 15;
   public static final double ejectorMoi = 0.025;
