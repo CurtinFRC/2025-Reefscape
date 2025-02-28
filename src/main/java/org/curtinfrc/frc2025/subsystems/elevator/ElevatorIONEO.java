@@ -21,7 +21,7 @@ public class ElevatorIONEO implements ElevatorIO {
 
   public ElevatorIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
-    config.smartCurrentLimit(0, currentLimit).idleMode(IdleMode.kCoast).inverted(false);
+    config.smartCurrentLimit(0, currentLimit).idleMode(IdleMode.kBrake).inverted(false);
 
     SparkUtil.tryUntilOk(
         5,
@@ -44,7 +44,7 @@ public class ElevatorIONEO implements ElevatorIO {
     inputs.currentAmps = elevatorLeader.getOutputCurrent();
     inputs.positionRotations = elevatorLeader.getEncoder().getPosition();
     inputs.angularVelocityRotationsPerMinute = elevatorLeader.getEncoder().getVelocity();
-    inputs.hominSensor = false;
+    inputs.hominSensor = touch.get();
   }
 
   @Override
