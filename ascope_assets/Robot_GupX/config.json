@@ -1,0 +1,58 @@
+{
+  "name": "GupX",
+  "rotations": [
+    {
+      "axis": "x",
+      "degrees": 90
+    },
+    {
+      "axis": "z",
+      "degrees": 90
+    }
+  ],
+  "positions": [
+    0,
+    0,
+    0
+  ],
+  "cameras": [
+    {
+      "name": "limelight-right",
+      "rotations": {},
+      "position": [
+        0.17061,
+        -0.2105,
+        0.30815
+      ],
+      "resolution": [
+        1280,
+        800
+      ],
+      "fov": 82
+    },
+    {
+      "name": "limelight-left",
+      "rotations": {},
+      "position": [
+        0.17061,
+        0.2105,
+        0.30815
+      ],
+      "resolution": [
+        1280,
+        800
+      ],
+      "fov": 82
+    }
+  ],
+  "components": [
+    {
+      "zeroedRotations": [],
+      "zeroedPosition": [
+        0,
+        -0.585,
+        0
+      ]
+    }
+  ]
+}
