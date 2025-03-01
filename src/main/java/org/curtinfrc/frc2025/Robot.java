@@ -3,7 +3,6 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
-import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -18,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
 import java.util.Set;
-
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -93,7 +91,6 @@ public class Robot extends LoggedRobot {
 
   // Auto stuff
   private final AutoChooser autoChooser;
-  private final AutoFactory autoFactory;
   private final Autos autos;
 
   @AutoLogOutput(key = "Robot/ReefSetpoint")
@@ -275,20 +272,11 @@ public class Robot extends LoggedRobot {
     atHpSetpoint =
         drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
 
-    autoFactory =
-        new AutoFactory(
-            drive::getPose,
-            drive::setPose,
-            drive::followTrajectoryVelocity,
-            true,
-            drive,
-            drive::logTrajectory);
-
     autoChooser = new AutoChooser("Auto Chooser");
 
-    // autos = new Autos(autoFactory);
+    autos = new Autos(drive, elevator, popper, ejector, intake);
 
-    // autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("Test Path"));
+    autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -337,6 +325,7 @@ public class Robot extends LoggedRobot {
         .and(atReefSetpoint)
         .and(elevator.atSetpoint)
         .and(drive.atSetpoint)
+        .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
@@ -654,56 +643,54 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     ejector
-    .backSensor
-    .negate()
-    .onTrue(
+        .backSensor
+        .negate()
+        .onTrue(
+            Commands.defer(
+                () ->
+                    drive
+                        .autoAlignWithOverride(
+                            hpSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX())
+                        .until(atHpSetpoint),
+                Set.of(drive)));
+
+    RobotModeTriggers.teleop()
+        .onTrue(
+            Commands.defer(
+                () ->
+                    drive
+                        .autoAlignWithOverride(
+                            hpSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX())
+                        .until(atHpSetpoint),
+                Set.of(drive)));
+
+    atReefSetpoint
+        .and(ejector.backSensor)
+        .onTrue(
+            Commands.defer(
+                () ->
+                    elevator
+                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                        .until(ejector.backSensor.negate()),
+                Set.of(elevator)));
+
+    intake.frontSensor.onTrue(
         Commands.defer(
             () ->
                 drive
                     .autoAlignWithOverride(
-                        hpSetpoint.driveSetpoint(),
+                        reefSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
                         () -> -controller.getRightX())
-                    .until(atHpSetpoint),
+                    .until(atReefSetpoint),
             Set.of(drive)));
-
-
-RobotModeTriggers.teleop()
-    .onTrue(
-        Commands.defer(
-            () ->
-                drive
-                    .autoAlignWithOverride(
-                        hpSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX())
-                    .until(atHpSetpoint),
-            Set.of(drive)));
-
-atReefSetpoint
-    .and(ejector.backSensor)
-    .onTrue(
-        Commands.defer(
-            () ->
-                elevator
-                    .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                    .until(ejector.backSensor.negate()),
-            Set.of(elevator)));
-
-intake.frontSensor.onTrue(
-    Commands.defer(
-        () ->
-            drive
-                .autoAlignWithOverride(
-                    reefSetpoint.driveSetpoint(),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(atReefSetpoint),
-        Set.of(drive)));
-
   }
 
   /** This function is called periodically during operator control. */

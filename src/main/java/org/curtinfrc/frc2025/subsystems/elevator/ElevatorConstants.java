@@ -36,6 +36,7 @@ public class ElevatorConstants {
     L1(0),
     L2(0.2),
     L3(0.59735),
+    AlgaePop(0.2),
     BASE(0.01);
 
     public final double setpoint;
