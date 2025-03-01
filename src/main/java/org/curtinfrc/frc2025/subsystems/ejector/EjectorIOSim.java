@@ -13,7 +13,7 @@ public class EjectorIOSim implements EjectorIO {
   private DCMotor intakeMotor = DCMotor.getNEO(1);
   private DCMotorSim intakeMotorSim;
   private SimDevice sensorImpl;
-  private SimBoolean sensor;
+  private SimBoolean frontSensor;
   private double volts = 0;
 
   public EjectorIOSim() {
@@ -22,8 +22,8 @@ public class EjectorIOSim implements EjectorIO {
             LinearSystemId.createDCMotorSystem(intakeMotor, ejectorMoi, ejectorReduction),
             intakeMotor);
 
-    sensorImpl = SimDevice.create("EjectorSensor", sensorPort);
-    sensor = sensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    sensorImpl = SimDevice.create("EjectorSensor", frontSensorPort);
+    frontSensor = sensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
   }
 
   @Override
@@ -34,7 +34,7 @@ public class EjectorIOSim implements EjectorIO {
     inputs.currentAmps = intakeMotorSim.getCurrentDrawAmps();
     inputs.positionRotations = intakeMotorSim.getAngularPositionRotations();
     inputs.angularVelocityRotationsPerMinute = intakeMotorSim.getAngularVelocityRPM();
-    inputs.sensor = sensor.get();
+    inputs.frontSensor = frontSensor.get();
   }
 
   @Override

@@ -12,6 +12,8 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -50,7 +52,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.generated.TunerConstants;
+import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -111,10 +113,10 @@ public class Drive extends SubsystemBase {
       ModuleIO blModuleIO,
       ModuleIO brModuleIO) {
     this.gyroIO = gyroIO;
-    modules[0] = new Module(flModuleIO, 0, TunerConstants.FrontLeft);
-    modules[1] = new Module(frModuleIO, 1, TunerConstants.FrontRight);
-    modules[2] = new Module(blModuleIO, 2, TunerConstants.BackLeft);
-    modules[3] = new Module(brModuleIO, 3, TunerConstants.BackRight);
+    modules[0] = new Module(flModuleIO, 0, CompTunerConstants.FrontLeft);
+    modules[1] = new Module(frModuleIO, 1, CompTunerConstants.FrontRight);
+    modules[2] = new Module(blModuleIO, 2, CompTunerConstants.BackLeft);
+    modules[3] = new Module(brModuleIO, 3, CompTunerConstants.BackRight);
 
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
@@ -225,7 +227,7 @@ public class Drive extends SubsystemBase {
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
-    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
+    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, CompTunerConstants.kSpeedAt12Volts);
 
     // Log unoptimized setpoints and setpoint speeds
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
@@ -238,6 +240,19 @@ public class Drive extends SubsystemBase {
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  private void runCurrentStates(SwerveModuleState[] states) {
+    // Log unoptimized setpoints and setpoint speeds
+    Logger.recordOutput("SwerveStates/TorqueSetpoints", states);
+
+    // Send setpoints to modules
+    for (int i = 0; i < 4; i++) {
+      modules[i].runSetpointTorque(states[i]);
+    }
+
+    // Log optimized setpoints (runSetpoint mutates each state)
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", states);
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -400,6 +415,58 @@ public class Drive extends SubsystemBase {
             getRotation()); // Apply the generated speeds
 
     runVelocity(speeds);
+  }
+
+  public void followTrajectoryVelocity(SwerveSample sample) {
+    var rotationController = new PIDController(7.5, 0, 0);
+    Logger.recordOutput("Odometry/Sample", sample);
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
+
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            sample.vx,
+            sample.vy,
+            sample.omega + rotationController.calculate(getRotation().getRadians(), sample.heading),
+            rotation); // Apply the generated speeds
+
+    runVelocity(speeds);
+  }
+
+  public void followTrajectoryTorque(SwerveSample sample) {
+    Logger.recordOutput("Odometry/Sample", sample);
+    var states = new SwerveModuleState[4];
+
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
+    Logger.recordOutput("Drive/Kt", kT);
+
+    for (var i = 0; i < 4; i++) {
+      states[i] = new SwerveModuleState();
+      var state = states[i];
+      Translation2d f = new Translation2d(sample.moduleForcesX()[i], sample.moduleForcesY()[i]);
+      Translation2d f_fieldRelative = f.rotateBy(rotation);
+
+      // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius
+      // vector,
+      // and F be the module force vector.
+      // τ=Kti
+      // τ=r×F
+      // Kti=r×F
+      // i=(r×F)/Kt
+      Vector<N3> F = VecBuilder.fill(f_fieldRelative.getX(), f_fieldRelative.getY(), 0);
+      Vector<N3> radius = VecBuilder.fill(0, 0, Units.inchesToMeters(-2));
+      var current = Vector.cross(radius, F).div(kT);
+      state.speedMetersPerSecond = Math.hypot(current.get(0), current.get(1));
+      state.angle = Rotation2d.fromRadians(Math.atan2(current.get(1), current.get(0)));
+    }
+
+    runCurrentStates(states);
   }
 
   public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {
@@ -618,7 +685,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the maximum linear speed in meters per sec. */
   public double getMaxLinearSpeedMetersPerSec() {
-    return TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    return CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   }
 
   /** Returns the maximum angular speed in radians per sec. */
@@ -629,10 +696,14 @@ public class Drive extends SubsystemBase {
   /** Returns an array of module translations. */
   public static Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
-      new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-      new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
-      new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-      new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
+      new Translation2d(
+          CompTunerConstants.FrontLeft.LocationX, CompTunerConstants.FrontLeft.LocationY),
+      new Translation2d(
+          CompTunerConstants.FrontRight.LocationX, CompTunerConstants.FrontRight.LocationY),
+      new Translation2d(
+          CompTunerConstants.BackLeft.LocationX, CompTunerConstants.BackLeft.LocationY),
+      new Translation2d(
+          CompTunerConstants.BackRight.LocationX, CompTunerConstants.BackRight.LocationY)
     };
   }
 
@@ -650,7 +721,7 @@ public class Drive extends SubsystemBase {
               repulsorFieldPlanner.getCmd(
                   robotPose,
                   getChassisSpeeds(),
-                  TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
                   true);
 
           // Apply the trajectory with rotation adjustment

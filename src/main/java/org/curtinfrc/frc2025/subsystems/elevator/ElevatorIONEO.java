@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.currentLimit;
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
 import com.revrobotics.RelativeEncoder;
@@ -14,34 +13,43 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ElevatorIONEO implements ElevatorIO {
-  protected final SparkMax elevatorMotor =
-      new SparkMax(ElevatorConstants.motorPort, MotorType.kBrushless);
-  protected final RelativeEncoder elevatorEncoder = elevatorMotor.getEncoder();
-  protected DigitalInput touch = new DigitalInput(0);
+  private final SparkMax elevatorLeader = new SparkMax(leaderPort, MotorType.kBrushless);
+  private final SparkMax elevatorFollower = new SparkMax(followerPort, MotorType.kBrushless);
+
+  private final RelativeEncoder elevatorEncoder = elevatorLeader.getEncoder();
+  private DigitalInput touch = new DigitalInput(resetPort);
 
   public ElevatorIONEO() {
     SparkMaxConfig config = new SparkMaxConfig();
-    config.smartCurrentLimit(0, currentLimit).idleMode(IdleMode.kCoast).inverted(true);
+    config.smartCurrentLimit(0, currentLimit).idleMode(IdleMode.kCoast).inverted(false);
 
     SparkUtil.tryUntilOk(
         5,
         () ->
-            elevatorMotor.configure(
+            elevatorLeader.configure(
+                config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    config.follow(leaderPort);
+
+    SparkUtil.tryUntilOk(
+        5,
+        () ->
+            elevatorFollower.configure(
                 config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    inputs.appliedVolts = elevatorMotor.getBusVoltage() * elevatorMotor.getAppliedOutput();
-    inputs.currentAmps = elevatorMotor.getOutputCurrent();
-    inputs.positionRotations = elevatorMotor.getEncoder().getPosition();
-    inputs.angularVelocityRotationsPerMinute = elevatorMotor.getEncoder().getVelocity();
-    inputs.touchSensor = touch.get();
+    inputs.appliedVolts = elevatorLeader.getBusVoltage() * elevatorLeader.getAppliedOutput();
+    inputs.currentAmps = elevatorLeader.getOutputCurrent();
+    inputs.positionRotations = elevatorLeader.getEncoder().getPosition();
+    inputs.angularVelocityRotationsPerMinute = elevatorLeader.getEncoder().getVelocity();
+    inputs.hominSensor = false;
   }
 
   @Override
   public void setVoltage(double volts) {
-    elevatorMotor.setVoltage(volts);
+    elevatorLeader.setVoltage(volts);
   }
 
   @Override

@@ -16,12 +16,12 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
-import org.curtinfrc.frc2025.generated.TunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.*;
+import org.curtinfrc.frc2025.generated.CompTunerConstants;
+import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
-import org.curtinfrc.frc2025.subsystems.drive.GyroIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
@@ -32,18 +32,20 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
+import org.curtinfrc.frc2025.subsystems.popper.Popper;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIOComp;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelightGamepiece;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOQuestNav;
 import org.curtinfrc.frc2025.util.AutoChooser;
+import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -67,11 +69,12 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
+  private Popper popper;
   private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-
+  private final ButtonBoard buttonBoard = new ButtonBoard(1);
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory autoFactory;
@@ -131,36 +134,37 @@ public class Robot extends LoggedRobot {
           // Real robot, instantiate hardware IO implementationsRobot
           drive =
               new Drive(
-                  new GyroIOPigeon2(),
-                  new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                  new ModuleIOTalonFX(TunerConstants.FrontRight),
-                  new ModuleIOTalonFX(TunerConstants.BackLeft),
-                  new ModuleIOTalonFX(TunerConstants.BackRight));
+                  new GyroIOPigeon2(CompTunerConstants.DrivetrainConstants),
+                  new ModuleIOTalonFX(CompTunerConstants.FrontLeft),
+                  new ModuleIOTalonFX(CompTunerConstants.FrontRight),
+                  new ModuleIOTalonFX(CompTunerConstants.BackLeft),
+                  new ModuleIOTalonFX(CompTunerConstants.BackRight));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOLimelightGamepiece(camera0Name),
+                  new VisionIO() {},
                   new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOQuestNav());
-          elevator = new Elevator(new ElevatorIO() {});
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
+          elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
           climber = new Climber(new ClimberIONeo() {});
+          popper = new Popper(new PopperIOComp());
         }
 
         case DEVBOT -> {
           // Real robot, instantiate hardware IO implementationsRobot
           drive =
               new Drive(
-                  new GyroIOPigeon2(),
-                  new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                  new ModuleIOTalonFX(TunerConstants.FrontRight),
-                  new ModuleIOTalonFX(TunerConstants.BackLeft),
-                  new ModuleIOTalonFX(TunerConstants.BackRight));
+                  new GyroIOPigeon2(DevTunerConstants.DrivetrainConstants),
+                  new ModuleIOTalonFX(DevTunerConstants.FrontLeft),
+                  new ModuleIOTalonFX(DevTunerConstants.FrontRight),
+                  new ModuleIOTalonFX(DevTunerConstants.BackLeft),
+                  new ModuleIOTalonFX(DevTunerConstants.BackRight));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIO() {},
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation));
           elevator = new Elevator(new ElevatorIONEO());
@@ -168,19 +172,18 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIONEO());
                   new VisionIOQuestNav());
           climber = new Climber(new ClimberIONeo() {});
+          popper = new Popper(new PopperIO() {});
         }
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
-                  new GyroIOSim(
-                      () -> drive.getKinematics(),
-                      () -> drive.getModuleStates()) {}, // work around crash
-                  new ModuleIOSim(TunerConstants.FrontLeft),
-                  new ModuleIOSim(TunerConstants.FrontRight),
-                  new ModuleIOSim(TunerConstants.BackLeft),
-                  new ModuleIOSim(TunerConstants.BackRight));
+                  new GyroIO() {},
+                  new ModuleIOSim(CompTunerConstants.FrontLeft),
+                  new ModuleIOSim(CompTunerConstants.FrontRight),
+                  new ModuleIOSim(CompTunerConstants.BackLeft),
+                  new ModuleIOSim(CompTunerConstants.BackRight));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
@@ -188,10 +191,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIO() {});
 
-          elevator = new Elevator(new ElevatorIO() {});
+          elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
           climber = new Climber(new ClimberIOSim() {});
+          popper = new Popper(new PopperIO() {});
         }
       }
     } else {
@@ -212,6 +216,7 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
 
       climber = new Climber(new ClimberIOSim() {});
+      popper = new Popper(new PopperIO() {});
     }
 
     superstructure = new Superstructure(drive, elevator);
@@ -220,7 +225,7 @@ public class Robot extends LoggedRobot {
         new AutoFactory(
             drive::getPose,
             drive::setPose,
-            drive::followTrajectory,
+            drive::followTrajectoryVelocity,
             true,
             drive,
             drive::logTrajectory);
@@ -229,11 +234,7 @@ public class Robot extends LoggedRobot {
 
     autos = new Autos(autoFactory);
 
-    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("New Path"));
-    autoChooser.addRoutine("Follow Close Nodes", () -> autos.followPath("Close Nodes"));
-    autoChooser.addRoutine("Follow Medium Nodes", () -> autos.followPath("Medium Nodes"));
-    autoChooser.addRoutine("Follow Far Nodes", () -> autos.followPath("Far Nodes"));
-    autoChooser.addRoutine("Follow Pushaaaa T", () -> autos.followPath("Pushaaaaaa T"));
+    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("Test Path"));
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -267,53 +268,51 @@ public class Robot extends LoggedRobot {
         "Drive Steer SysId (Dynamic Reverse)",
         () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
 
-    RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+    RobotModeTriggers.autonomous()
+        .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
 
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getRightX()));
 
     elevator
         .isNotAtCollect
         .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .onTrue(ejector.eject(1000));
+        // .and(drive.atSetpoint)
+        .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
 
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(ejector.stop());
+    popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
     climber.setDefaultCommand(climber.stop());
 
     intake
         .backSensor
-        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor.negate())
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5)).withName("front"));
+        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(12)));
     intake
         .backSensor
-        .and(intake.frontSensor)
+        .and(ejector.frontSensor)
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            Commands.parallel(intake.intake(intakeVolts), ejector.eject(5))
-                .withName("front and back"));
+        .whileTrue(ejector.eject(12));
     intake
         .backSensor
-        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor)
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(Commands.parallel(intake.stop(), ejector.stop()).withName("not front and back"));
+        .whileTrue(intake.intake(intakeVolts));
+    intake
+        .backSensor
+        .negate()
+        .and(ejector.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(ejector.stop());
 
-    controller.b().onTrue(elevator.zero());
-
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            drive.joystickDriveAtAngle(
-                () -> controller.getLeftY(), () -> -controller.getLeftX(), () -> Rotation2d.kZero));
+    ejector.backSensor.whileTrue(intake.stop());
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -326,10 +325,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.rightBumper().whileTrue(superstructure.align(Setpoints.L3));
-    controller.leftBumper().whileTrue(superstructure.align(Setpoints.L2));
-    controller.leftTrigger().whileTrue(superstructure.align(Setpoints.COLLECT));
-
+    controller.x().whileTrue(ejector.eject(20));
+    controller.a().whileTrue(popper.setVoltage(-8));
+    controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
+    controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
     controller.y().whileTrue(climber.goToSetpoint());
   }
 

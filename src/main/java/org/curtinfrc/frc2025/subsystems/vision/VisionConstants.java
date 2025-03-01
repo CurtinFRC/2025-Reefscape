@@ -33,8 +33,10 @@ public class VisionConstants {
   // (Not used by Limelight, configure in web UI instead)
   public static Transform3d robotToCamera0 =
       new Transform3d(0.01, 0.06, 0.360, new Rotation3d(0, -Math.PI / 6, Math.PI));
-  public static Transform3d robotToCamera1 = new Transform3d(0.16, 0.215, 0.305, Rotation3d.kZero);
-  public static Transform3d robotToCamera2 = new Transform3d(0.16, -0.215, 0.305, Rotation3d.kZero);
+  public static Transform3d robotToCamera1 =
+      new Transform3d(0.17061, 0.2105, 0.30815, Rotation3d.kZero);
+  public static Transform3d robotToCamera2 =
+      new Transform3d(0.17061, -0.2105, 0.30815, Rotation3d.kZero);
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.3;
@@ -42,7 +44,7 @@ public class VisionConstants {
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
-  public static double linearStdDevBaseline = 0.02; // Meters
+  public static double linearStdDevBaseline = 0.03; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
 
   // Standard deviation multipliers for each camera
@@ -50,12 +52,12 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
-        1.0, // Camera 1
-        1.0, // Camera 2
+        1.5, // Camera 1
+        1.5, // Camera 2
       };
 
   // Multipliers to apply for MegaTag 2 observations
-  public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
+  public static double linearStdDevMegatag2Factor = 0.2; // More stable than full 3D solve
   public static double angularStdDevMegatag2Factor =
       Double.POSITIVE_INFINITY; // No rotation data available
   public static final Translation2d questResetPosition = Translation2d.kZero;
