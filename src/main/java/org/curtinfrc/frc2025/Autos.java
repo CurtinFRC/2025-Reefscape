@@ -1,7 +1,11 @@
 package org.curtinfrc.frc2025;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+
+import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.resetPort;
+
 import java.util.EnumMap;
 import java.util.Map;
 import org.curtinfrc.frc2025.Constants.Setpoint;
@@ -36,20 +40,29 @@ public class Autos {
       }
     }
 
-    private final Map<AlgaeLocations, Boolean> locations = new EnumMap<>(AlgaeLocations.class);
+    private final Map<AlgaeLocations, Pair<Boolean, Boolean>> locations = new EnumMap<>(AlgaeLocations.class);
 
     public AlgaePoppedStates() {
       for (AlgaeLocations loc : AlgaeLocations.values()) {
-        locations.put(loc, false);
+        locations.put(loc, Pair.of(false, false));
       }
     }
 
-    public void pop(AlgaeLocations loc) {
-      locations.put(loc, true);
+    public void pop(AlgaeLocations loc, boolean high) {
+      locations.put(loc, Pair.of(high ? false : true, high ? true : false));
     }
 
-    public boolean isPopped(AlgaeLocations loc) {
-      return locations.getOrDefault(loc, false);
+    public Pair<Boolean, Boolean> isPopped(AlgaeLocations loc) {
+      return locations.getOrDefault(loc, Pair.of(false, false));
+    }
+
+    public static boolean isHigh(AlgaeLocations loc) {
+      switch (loc) {
+        case AB, EF, IJ:
+          return false;
+        default:
+          return true;
+      }
     }
   }
 
@@ -94,14 +107,15 @@ public class Autos {
                     .autoAlign(driveSetpoint)
                     .until(drive.atSetpoint.and(ejector.backSensor.negate())));
 
-        if (!state.isPopped(loc)) {
+        boolean isHigh = AlgaePoppedStates.isHigh(loc);
+        if (isHigh ? !state.isPopped(loc).getSecond() : !state.isPopped(loc).getSecond()) {
           sequence =
               sequence.andThen(
                   elevator
-                      .goToSetpoint(ElevatorSetpoints.AlgaePop)
+                      .goToSetpoint(ElevatorSetpoints.getPopPoint(setpoint.elevatorSetpoint()))
                       .until(elevator.atSetpoint)
                       .andThen(popper.setVoltage(5).withTimeout(2).andThen(popper.stop())));
-          state.pop(loc);
+          state.pop(loc, isHigh);
         }
 
         sequence =

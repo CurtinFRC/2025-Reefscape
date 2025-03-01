@@ -93,6 +93,8 @@ public class Robot extends LoggedRobot {
   private final AutoChooser autoChooser;
   private final Autos autos;
 
+  private boolean shouldPop = false;
+
   @AutoLogOutput(key = "Robot/ReefSetpoint")
   private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A);
 
@@ -675,9 +677,11 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
+                    (shouldPop ? Commands.parallel(elevator
+                    .goToSetpoint(ElevatorSetpoints.getPopPoint(reefSetpoint.elevatorSetpoint())), popper.setVoltage(5), Commands.run(() -> shouldPop = false)).withTimeout(3) : Commands.none()).andThen(
                     elevator
                         .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                        .until(ejector.backSensor.negate()),
+                        .until(ejector.backSensor.negate())),
                 Set.of(elevator)));
 
     intake.frontSensor.onTrue(
@@ -691,6 +695,10 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getRightX())
                     .until(atReefSetpoint),
             Set.of(drive)));
+
+    controller.a().onTrue(Commands.run(() -> { 
+        shouldPop = true;
+    }));
   }
 
   /** This function is called periodically during operator control. */

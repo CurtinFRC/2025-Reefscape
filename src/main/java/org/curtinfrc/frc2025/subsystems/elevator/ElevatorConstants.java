@@ -35,14 +35,26 @@ public class ElevatorConstants {
   public static enum ElevatorSetpoints implements StructSerializable {
     L1(0),
     L2(0.2),
+    AlgaePopLow(0.2),
     L3(0.59735),
-    AlgaePop(0.2),
+    AlgaePopHigh(0.59735),
     BASE(0.01);
 
     public final double setpoint;
 
     ElevatorSetpoints(double setpoint) {
       this.setpoint = setpoint;
+    }
+
+    public static ElevatorSetpoints getPopPoint(ElevatorSetpoints point) {
+      switch (point) {
+        case L2: 
+          return AlgaePopLow;
+        case L3:
+          return AlgaePopHigh;
+        default:
+          return BASE;
+      }
     }
 
     public static final Struct<ElevatorSetpoints> struct =
