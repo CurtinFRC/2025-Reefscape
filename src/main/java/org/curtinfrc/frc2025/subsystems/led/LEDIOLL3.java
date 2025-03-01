@@ -9,7 +9,7 @@ public class LEDIOLL3 implements LEDIO {
   private State state = State.Inactive;
 
   public LEDIOLL3() {
-    mode = NetworkTableInstance.getDefault().getEntry(LL_NAME);
+    mode = NetworkTableInstance.getDefault().getTable(LL_NAME).getEntry("ledMode");
   }
 
   @Override

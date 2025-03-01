@@ -11,8 +11,8 @@ public class ElevatorConstants {
   public static final int currentLimit = 60;
 
   // TODO: TUNE PID and ff
-  public static double tolerance = 0.05;
-  public static double kP = 16;
+  public static double tolerance = 0.005;
+  public static double kP = 25; // 50
   public static double kD = 0;
   public static double kV = 0;
   public static double kA = 0.01;
@@ -36,7 +36,7 @@ public class ElevatorConstants {
     L1(0),
     L2(0.2),
     L3(0.59735),
-    BASE(0);
+    BASE(0.01);
 
     public final double setpoint;
 

@@ -1,10 +1,14 @@
 package org.curtinfrc.frc2025.subsystems.ejector;
 
 import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.*;
+import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -24,6 +28,16 @@ public class EjectorIOKraken implements EjectorIO {
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
   public EjectorIOKraken() {
+    tryUntilOk(
+        5,
+        () ->
+            motor
+                .getConfigurator()
+                .apply(
+                    new TalonFXConfiguration()
+                        .withMotorOutput(
+                            new MotorOutputConfigs()
+                                .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
   }
