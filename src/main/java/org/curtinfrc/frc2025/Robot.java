@@ -333,29 +333,21 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> controller.getRightX()));
 
-    elevator
-        .isNotAtCollect
-        .and(atReefSetpoint)
-        .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .and(elevator.algaePop.negate())
-        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
-    almostAtReefSetpoint
-        .and(ejector.backSensor)
-        .whileTrue(
-            Commands.defer(
-                () ->
-                    elevator
-                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                        .until(ejector.backSensor.negate()),
-                Set.of(elevator)));
+    // almostAtReefSetpoint
+    //     .and(ejector.backSensor)
+    //     .whileTrue(
+    //         Commands.defer(
+    //             () ->
+    //                 elevator
+    //                     .goToSetpoint(reefSetpoint.elevatorSetpoint())
+    //                     .until(ejector.backSensor.negate()),
+    //             Set.of(elevator)));
 
     intake
         .backSensor
@@ -700,6 +692,24 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getRightX()),
                 Set.of(drive)));
 
+    intake.frontSensor.onTrue(
+        Commands.defer(
+            () ->
+                drive.autoAlignWithOverride(
+                    reefSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+            Set.of(drive)));
+
+    controller
+        .a()
+        .onTrue(
+            Commands.run(
+                () -> {
+                  shouldPop = true;
+                }));
+
     atReefSetpoint
         .and(ejector.backSensor)
         .onTrue(
@@ -719,30 +729,20 @@ public class Robot extends LoggedRobot {
                                     popper.setVoltage(5),
                                     Commands.run(() -> shouldPop = false))
                                 .withTimeout(3)
-                            : Commands.none())
+                            : Commands.run(() -> {}))
                         .andThen(
                             elevator
                                 .goToSetpoint(reefSetpoint.elevatorSetpoint())
                                 .until(ejector.backSensor.negate())),
                 Set.of(elevator)));
 
-    intake.frontSensor.onTrue(
-        Commands.defer(
-            () ->
-                drive.autoAlignWithOverride(
-                    reefSetpoint.driveSetpoint(),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX()),
-            Set.of(drive)));
-
-    controller
-        .a()
-        .onTrue(
-            Commands.run(
-                () -> {
-                  shouldPop = true;
-                }));
+    elevator
+        .isNotAtCollect
+        .and(atReefSetpoint)
+        .and(elevator.atSetpoint)
+        .and(drive.atSetpoint)
+        .and(elevator.algaePop.negate())
+        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
   }
 
   /** This function is called periodically during operator control. */

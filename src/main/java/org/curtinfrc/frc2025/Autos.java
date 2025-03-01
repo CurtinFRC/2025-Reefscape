@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.HasAlgae;
 import org.curtinfrc.frc2025.Constants.Setpoint;
@@ -123,70 +124,90 @@ public class Autos {
     }
 
     public Command build() {
-      int[] stepCounter = {1};
-      Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Starting Auto Sequence");
-      stepCounter[0]++;
+      return Commands.defer(
+          () -> {
+            int[] stepCounter = {1};
+            Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Starting Auto Sequence");
+            stepCounter[0]++;
 
-      Command sequence = Commands.none().withName("Initial Empty Command");
+            Command sequence = Commands.sequence().withName("Initial Empty Command");
 
-      for (Setpoint setpoint : setpoints) {
-        DriveSetpoints driveSetpoint = setpoint.driveSetpoint();
-        AlgaePoppedStates.AlgaeLocations loc = AlgaePoppedStates.AlgaeLocations.from(driveSetpoint);
+            int i = 0;
+            for (Setpoint setpoint : setpoints) {
+              i++;
+              DriveSetpoints driveSetpoint = setpoint.driveSetpoint();
+              AlgaePoppedStates.AlgaeLocations loc =
+                  AlgaePoppedStates.AlgaeLocations.from(driveSetpoint);
 
-        Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Align to " + driveSetpoint);
-        Command alignCommand =
-            drive
-                .autoAlign(driveSetpoint)
-                .until(drive.atSetpoint.and(ejector.backSensor.negate()))
-                .withName("Align to " + driveSetpoint);
-        stepCounter[0]++;
+              boolean isHigh = AlgaePoppedStates.isHigh(loc);
+              Logger.recordOutput("isHigh", isHigh);
+              if (isHigh
+                  ? state.isPopped(loc).getSecond() == HasAlgae.HAS
+                      && setpoint.elevatorSetpoint() == ElevatorSetpoints.L3
+                  : state.isPopped(loc).getFirst() == HasAlgae.HAS
+                      && setpoint.elevatorSetpoint() == ElevatorSetpoints.L2) {
+                Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Align to " + driveSetpoint);
+                Command alignCommand =
+                    drive
+                        .autoAlign(driveSetpoint)
+                        .until(drive.atSetpoint.and(ejector.backSensor.negate()))
+                        .withName("Align to " + driveSetpoint);
+                stepCounter[0]++;
 
-        sequence = sequence.andThen(alignCommand);
+                sequence = sequence.andThen(alignCommand);
 
-        boolean isHigh = AlgaePoppedStates.isHigh(loc);
-        Logger.recordOutput("isHigh", isHigh);
-        if (isHigh
-            ? state.isPopped(loc).getSecond() == HasAlgae.HAS
-                && setpoint.elevatorSetpoint() == ElevatorSetpoints.L3
-            : state.isPopped(loc).getFirst() == HasAlgae.HAS
-                && setpoint.elevatorSetpoint() == ElevatorSetpoints.L2) {
-          Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Pop Algae at " + loc);
-          Command popCommand =
-              elevator
-                  .goToSetpoint(ElevatorSetpoints.getPopPoint(setpoint.elevatorSetpoint()))
-                  .until(elevator.atSetpoint)
-                  .andThen(popper.setVoltage(5).withTimeout(2).andThen(popper.stop()))
-                  .withName("Pop Algae at " + loc);
-          stepCounter[0]++;
+                Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Pop Algae at " + loc);
+                Command popCommand =
+                    elevator
+                        .goToSetpoint(ElevatorSetpoints.getPopPoint(setpoint.elevatorSetpoint()))
+                        .until(elevator.atSetpoint)
+                        .andThen(popper.setVoltage(5).withTimeout(2).andThen(popper.stop()))
+                        .withName("Pop Algae at " + loc);
+                stepCounter[0]++;
 
-          sequence = sequence.andThen(popCommand);
-          state.pop(loc, isHigh);
-        }
+                sequence = sequence.andThen(popCommand);
+                state.pop(loc, isHigh);
+              }
 
-        Logger.recordOutput(
-            "Auto/Sequence " + stepCounter[0], "Elevate to " + setpoint.elevatorSetpoint());
-        Command elevateCommand =
-            elevator
-                .goToSetpoint(setpoint.elevatorSetpoint())
-                .until(ejector.backSensor.negate())
-                .withName("Elevate to " + setpoint.elevatorSetpoint());
-        stepCounter[0]++;
+              Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Align to " + driveSetpoint);
+              Command alignCommand =
+                  drive
+                      .autoAlign(driveSetpoint)
+                      .until(drive.atSetpoint)
+                      .withName("Align to " + driveSetpoint);
+              stepCounter[0]++;
 
-        sequence = sequence.andThen(elevateCommand);
+              sequence = sequence.andThen(alignCommand);
 
-        Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Return to HP at " + hpSetpoint);
-        Command returnToHPCommand =
-            drive
-                .autoAlign(hpSetpoint)
-                .until(drive.atSetpoint.and(intake.frontSensor))
-                .withName("Return to HP at " + hpSetpoint);
-        stepCounter[0]++;
+              sequence =
+                  sequence.andThen(
+                      Commands.sequence(
+                              elevator.goToSetpoint(setpoint.elevatorSetpoint()).until(elevator.atSetpoint),
+                              ejector.eject(80).until(ejector.backSensor.negate()))
+                          .andThen(
+                              elevator
+                                  .goToSetpoint(ElevatorSetpoints.BASE)
+                                  .until(elevator.atSetpoint))
+                          .withName("Go Up " + loc));
 
-        sequence = sequence.andThen(returnToHPCommand);
-      }
+              Logger.recordOutput(
+                  "Auto/Sequence " + stepCounter[0], "Return to HP at " + hpSetpoint);
+              Command returnToHPCommand =
+                  drive
+                      .autoAlign(hpSetpoint)
+                      .until(drive.atSetpoint.and(intake.frontSensor))
+                      .withName("Return to HP at " + hpSetpoint);
+              stepCounter[0]++;
 
-      Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Finished Auto Sequence");
-      return sequence;
+              if (setpoints.length != i) {
+                sequence = sequence.andThen(returnToHPCommand);
+              }
+            }
+
+            Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Finished Auto Sequence");
+            return sequence;
+          },
+          Set.of(drive, elevator, popper));
     }
   }
 
@@ -212,7 +233,8 @@ public class Autos {
             ejector,
             intake,
             DriveSetpoints.LEFT_HP,
-            new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A))
+            new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A),
+            new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B))
         .build();
   }
 }
