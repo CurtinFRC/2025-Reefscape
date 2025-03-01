@@ -5,7 +5,7 @@ import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
 
 public class ElevatorConstants {
-  public static int resetPort = 5;
+  public static int resetPort = 0;
   public static int leaderPort = 31;
   public static int followerPort = 32;
   public static final int currentLimit = 60;
