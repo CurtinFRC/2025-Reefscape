@@ -113,7 +113,7 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.025 && y() <= 0.025 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.055 && y() <= 0.055 && a() <= 3);
 
   private final SlewRateLimiter xLimiter = new SlewRateLimiter(10);
   private final SlewRateLimiter yLimiter = new SlewRateLimiter(10);

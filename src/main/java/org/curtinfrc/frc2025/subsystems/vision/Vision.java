@@ -46,6 +46,10 @@ public class Vision extends VirtualSubsystem {
       inputs[i] = new VisionIOInputsAutoLogged();
     }
 
+    for (var cam : io) {
+      cam.excludeTags(new int[] {14, 15, 4, 5});
+    }
+
     // Initialize disconnected alerts
     this.disconnectedAlerts = new Alert[io.length];
     for (int i = 0; i < inputs.length; i++) {

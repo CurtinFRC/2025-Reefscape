@@ -47,4 +47,7 @@ public interface VisionIO {
   }
 
   public default void updateInputs(VisionIOInputs inputs) {}
+
+  // TODO
+  public default void excludeTags(int[] ids) {}
 }
