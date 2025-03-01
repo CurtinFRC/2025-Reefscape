@@ -21,6 +21,7 @@ import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -35,12 +36,15 @@ public class VisionIOLimelight implements VisionIO {
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
   private final DoublePublisher imuModeSet;
+  private final IntegerArrayPublisher idFilterSet;
 
   private final DoubleSubscriber latencySubscriber;
   private final DoubleSubscriber txSubscriber;
   private final DoubleSubscriber tySubscriber;
   private final DoubleArraySubscriber megatag1Subscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
+
+  private long[] allowedTags = new long[0];
 
   /**
    * Creates a new VisionIOLimelight.
@@ -52,6 +56,7 @@ public class VisionIOLimelight implements VisionIO {
     var table = NetworkTableInstance.getDefault().getTable(name);
     this.rotationSupplier = rotationSupplier;
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
+    idFilterSet = table.getIntegerArrayTopic("fiducial_id_filters_set").publish();
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
@@ -66,6 +71,9 @@ public class VisionIOLimelight implements VisionIO {
     // Update connection status based on whether an update has been seen in the last 250ms
     inputs.connected =
         ((RobotController.getFPGATime() - latencySubscriber.getLastChange()) / 1000) < 250;
+
+    idFilterSet.set(allowedTags);
+    inputs.allowedTags = allowedTags;
 
     // Update target observation
     inputs.latestTargetObservation =
@@ -162,5 +170,10 @@ public class VisionIOLimelight implements VisionIO {
             Units.degreesToRadians(rawLLArray[3]),
             Units.degreesToRadians(rawLLArray[4]),
             Units.degreesToRadians(rawLLArray[5])));
+  }
+
+  @Override
+  public void allowTags(long[] allowedTags) {
+    this.allowedTags = allowedTags;
   }
 }

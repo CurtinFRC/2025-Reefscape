@@ -24,6 +24,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import java.util.LinkedList;
 import java.util.List;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
@@ -44,10 +46,6 @@ public class Vision extends VirtualSubsystem {
     this.inputs = new VisionIOInputsAutoLogged[io.length];
     for (int i = 0; i < inputs.length; i++) {
       inputs[i] = new VisionIOInputsAutoLogged();
-    }
-
-    for (var cam : io) {
-      cam.excludeTags(new int[] {14, 15, 4, 5});
     }
 
     // Initialize disconnected alerts
@@ -79,6 +77,14 @@ public class Vision extends VirtualSubsystem {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
+      boolean red =
+          DriverStation.getAlliance().isPresent()
+              && DriverStation.getAlliance().get() == Alliance.Red;
+      if (red) {
+        io[i].allowTags(new long[] {6, 7, 8, 9, 10, 11});
+      } else {
+        io[i].allowTags(new long[] {17, 18, 19, 20, 21, 22});
+      }
     }
 
     // Initialize logging values

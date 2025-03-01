@@ -25,6 +25,7 @@ public interface VisionIO {
         new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
+    public long[] allowedTags = new long[0];
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */
@@ -48,6 +49,5 @@ public interface VisionIO {
 
   public default void updateInputs(VisionIOInputs inputs) {}
 
-  // TODO
-  public default void excludeTags(int[] ids) {}
+  public default void allowTags(long[] ids) {}
 }
