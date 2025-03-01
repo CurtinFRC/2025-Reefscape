@@ -213,7 +213,6 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-
       climber = new Climber(new ClimberIOSim() {});
       popper = new Popper(new PopperIO() {});
     }
