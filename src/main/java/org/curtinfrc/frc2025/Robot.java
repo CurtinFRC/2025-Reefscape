@@ -56,7 +56,6 @@ import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
@@ -98,7 +97,7 @@ public class Robot extends LoggedRobot {
   private boolean shouldPop = false;
 
   @AutoLogOutput(key = "Robot/ReefSetpoint")
-  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A);
+  private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A);
 
   LoggedNetworkSetpoint networkReefSetpoint =
       new LoggedNetworkSetpoint("ReefSetpoint", reefSetpoint);
@@ -111,6 +110,9 @@ public class Robot extends LoggedRobot {
   // Triggers
   @AutoLogOutput(key = "Robot/AtReefSetpoint")
   public final Trigger atReefSetpoint;
+
+  @AutoLogOutput(key = "Robot/AlmostAtReefSetpoint")
+  public final Trigger almostAtReefSetpoint;
 
   @AutoLogOutput(key = "Robot/AtHPSetpoint")
   public final Trigger atHpSetpoint;
@@ -187,10 +189,12 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIO() {},
+                  //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIOPhotonVision(camera3Name, robotToCamera3));
+                  new VisionIO() {}
+                  /*new VisionIOPhotonVision(camera3Name, robotToCamera3)*/ );
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -273,6 +277,11 @@ public class Robot extends LoggedRobot {
             .atSetpoint
             .and(elevator.atSetpoint)
             .and(new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
+
+    almostAtReefSetpoint =
+        drive.almostAtSetpoint.and(
+            new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
+
     atHpSetpoint =
         drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
 
@@ -338,11 +347,22 @@ public class Robot extends LoggedRobot {
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
+    almostAtReefSetpoint
+        .and(ejector.backSensor)
+        .whileTrue(
+            Commands.defer(
+                () ->
+                    elevator
+                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                        .until(ejector.backSensor.negate()),
+                Set.of(elevator)));
+
     intake
         .backSensor
-        .and(ejector.frontSensor)
         .and(elevator.isNotAtCollect.negate())
+        .and(elevator.atSetpoint)
         .whileTrue(ejector.eject(8));
+
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
     intake
         .backSensor
@@ -592,6 +612,27 @@ public class Robot extends LoggedRobot {
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
                 .ignoringDisable(true));
+
+    RobotModeTriggers.teleop()
+        .onTrue(
+            Commands.defer(
+                () ->
+                    ejector.backSensor.getAsBoolean()
+                        ? drive
+                            .autoAlignWithOverride(
+                                reefSetpoint.driveSetpoint(),
+                                () -> -controller.getLeftY(),
+                                () -> -controller.getLeftX(),
+                                () -> -controller.getRightX())
+                            .until(atReefSetpoint)
+                        : drive
+                            .autoAlignWithOverride(
+                                hpSetpoint.driveSetpoint(),
+                                () -> -controller.getLeftY(),
+                                () -> -controller.getLeftX(),
+                                () -> -controller.getRightX())
+                            .until(atHpSetpoint),
+                Set.of(drive)));
   }
 
   /** This function is called periodically during all modes. */
@@ -652,34 +693,11 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    drive
-                        .autoAlignWithOverride(
-                            hpSetpoint.driveSetpoint(),
-                            () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
-                            () -> -controller.getRightX())
-                        .until(atHpSetpoint),
-                Set.of(drive)));
-
-    RobotModeTriggers.teleop()
-        .onTrue(
-            Commands.defer(
-                () ->
-                    ejector.backSensor.getAsBoolean()
-                        ? drive
-                            .autoAlignWithOverride(
-                                reefSetpoint.driveSetpoint(),
-                                () -> -controller.getLeftY(),
-                                () -> -controller.getLeftX(),
-                                () -> -controller.getRightX())
-                            .until(atReefSetpoint)
-                        : drive
-                            .autoAlignWithOverride(
-                                hpSetpoint.driveSetpoint(),
-                                () -> -controller.getLeftY(),
-                                () -> -controller.getLeftX(),
-                                () -> -controller.getRightX())
-                            .until(atHpSetpoint),
+                    drive.autoAlignWithOverride(
+                        hpSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
                 Set.of(drive)));
 
     atReefSetpoint
@@ -711,13 +729,11 @@ public class Robot extends LoggedRobot {
     intake.frontSensor.onTrue(
         Commands.defer(
             () ->
-                drive
-                    .autoAlignWithOverride(
-                        reefSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX())
-                    .until(atReefSetpoint),
+                drive.autoAlignWithOverride(
+                    reefSetpoint.driveSetpoint(),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
             Set.of(drive)));
 
     controller

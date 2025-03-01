@@ -53,6 +53,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
+import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -83,8 +84,8 @@ public class Drive extends SubsystemBase {
   private double d = 0;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(2.5, 0.0, 0);
-  private final PIDController yController = new PIDController(2.5, 0.0, 0);
+  private final PIDController xController = new PIDController(3.5, 0.0, 0);
+  private final PIDController yController = new PIDController(3.5, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -113,7 +114,14 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.055 && y() <= 0.055 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 3);
+
+  @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
+  public Trigger almostAtSetpoint =
+      new Trigger(
+          () -> {
+            return getPose().minus(setpoint.getPose()).getTranslation().getNorm() < 1;
+          });
 
   RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
@@ -402,12 +410,35 @@ public class Drive extends SubsystemBase {
 
   /** Follows the provided swerve sample. */
   public void followTrajectory(SwerveSample sample) {
-    Logger.recordOutput("Drive/Sample", sample);
     // Get the current pose of the robot
     Pose2d pose = getPose();
+    Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+    Logger.recordOutput("Drive/PID/error", headingController.getError());
+    // Logger.recordOutput("Drive/PID/out", out);
+    Logger.recordOutput("Drive/sample", sample);
+
     var err = new Transform2d(sample.x - pose.getX(), sample.y - pose.getY(), new Rotation2d());
     var dist = Math.hypot(err.getX(), err.getY());
     Logger.recordOutput("Drive/dist", dist);
+
+    var target_pose =
+        (DriverStation.getAlliance().get() == Alliance.Blue
+            ? new Pose2d(4.476, 4.026, new Rotation2d())
+            : new Pose2d(13.071, 4.026, new Rotation2d()));
+    var transform = target_pose.relativeTo(pose).rotateBy(pose.getRotation());
+    Logger.recordOutput("Drive/targetpose", target_pose);
+    Logger.recordOutput("Drive/transform", transform);
+    Logger.recordOutput("Drive/theta", Math.atan2(transform.getY(), transform.getX()));
+    Logger.recordOutput(
+        "Drive/projected",
+        new Pose2d(
+            pose.getX(),
+            pose.getY(),
+            new Rotation2d(Math.atan2(transform.getY(), transform.getX()))));
+    // Generate the next speeds for the robot
+    xController.setSetpoint(sample.x);
+    yController.setSetpoint(sample.y);
+    headingController.setSetpoint(sample.heading);
 
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -415,7 +446,9 @@ public class Drive extends SubsystemBase {
             sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
             dist < 1
                 ? -headingController.calculate(pose.getRotation().getRadians(), sample.heading)
-                : -headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+                : -headingController.calculate(
+                    pose.getRotation().getRadians(),
+                    Math.atan2(transform.getY(), transform.getX())),
             getRotation()); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);

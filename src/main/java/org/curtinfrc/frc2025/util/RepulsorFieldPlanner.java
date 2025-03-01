@@ -211,8 +211,8 @@ public class RepulsorFieldPlanner {
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
-          new TeardropObstacle(new Translation2d(4.49, 4), 1.5, 2.5, .83, 3, 2),
-          new TeardropObstacle(new Translation2d(13.08, 4), 1.5, 2.5, .83, 3, 2));
+          new TeardropObstacle(new Translation2d(4.49, 4), 1.6, 2.6, 1.03, 3, 2),
+          new TeardropObstacle(new Translation2d(13.08, 4), 1.6, 2.6, 1.03, 3, 2));
 
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
@@ -398,7 +398,7 @@ public class RepulsorFieldPlanner {
       Logger.recordOutput("Repulsor/err", curTrans.getDistance(goal));
       Logger.recordOutput("Repulsor/toggle_dist", stepSize_m * 1.5);
 
-      if (useGoal && err.getNorm() < stepSize_m * 1.5) {
+      if (useGoal && err.getNorm() < stepSize_m) {
         return sample(goal, goalRotation, 0, 0, 0);
       } else {
         var obstacleForce = getObstacleForce(curTrans, goal).plus(getWallForce(curTrans, goal));
@@ -408,7 +408,7 @@ public class RepulsorFieldPlanner {
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
           var dist = err.getNorm();
-          stepSize_m = Math.min(5.14, Math.sqrt(7 /* 14 */ * dist)) * 0.02;
+          stepSize_m = Math.min(5.14, Math.sqrt(5 /* 14 */ * dist)) * 0.02;
         }
 
         Logger.recordOutput("Repulsor/step", stepSize_m);
@@ -416,6 +416,9 @@ public class RepulsorFieldPlanner {
         Logger.recordOutput("Repulsor/net", netForce);
         Logger.recordOutput("Repulsor/targetMag", stepSize_m);
         var step = new Translation2d(stepSize_m, netForce.getAngle());
+
+        Logger.recordOutput(
+            "Repulsor/actual_step", new Translation2d(step.getX() / 0.02, step.getY() / 0.02));
         var intermediateGoal = curTrans.plus(step);
 
         var endTime = System.nanoTime();

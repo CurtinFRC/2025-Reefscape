@@ -12,7 +12,7 @@ public class ElevatorConstants {
 
   // TODO: TUNE PID and ff
   public static double tolerance = 0.005;
-  public static double kP = 25; // 50
+  public static double kP = 50; // 50
   public static double kD = 0;
   public static double kV = 0;
   public static double kA = 0.01;
