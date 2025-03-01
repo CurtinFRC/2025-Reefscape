@@ -1,11 +1,11 @@
 package org.curtinfrc.frc2025.util;
 
 import choreo.trajectory.SwerveSample;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableListener;
@@ -19,7 +19,6 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class RepulsorFieldPlanner {
-
   abstract static class Obstacle {
     double strength = 1.0;
     boolean positive = true;
@@ -126,14 +125,95 @@ public class RepulsorFieldPlanner {
     }
   }
 
+  private static class TeardropObstacle extends Obstacle {
+    final Translation2d loc;
+    final double primaryMaxRange;
+    final double primaryRadius;
+    final double tailStrength;
+    final double tailLength;
+
+    public TeardropObstacle(
+        Translation2d loc,
+        double primaryStrength,
+        double primaryMaxRange,
+        double primaryRadius,
+        double tailStrength,
+        double tailLength) {
+      super(primaryStrength, true);
+      this.loc = loc;
+      this.primaryMaxRange = primaryMaxRange;
+      this.primaryRadius = primaryRadius;
+      this.tailStrength = tailStrength;
+      this.tailLength = tailLength + primaryMaxRange;
+    }
+
+    public Force getForceAtPosition(Translation2d position, Translation2d target) {
+      var targetToLoc = loc.minus(target);
+      var targetToLocAngle = targetToLoc.getAngle();
+      var sidewaysPoint = new Translation2d(tailLength, targetToLoc.getAngle()).plus(loc);
+
+      var positionToLocation = position.minus(loc);
+      var positionToLocationDistance = positionToLocation.getNorm();
+      Translation2d outwardsForce;
+      if (positionToLocationDistance <= primaryMaxRange) {
+        outwardsForce =
+            new Translation2d(
+                distToForceMag(
+                    Math.max(positionToLocationDistance - primaryRadius, 0),
+                    primaryMaxRange - primaryRadius),
+                positionToLocation.getAngle());
+      } else {
+        outwardsForce = Translation2d.kZero;
+      }
+
+      var positionToLine = position.minus(loc).rotateBy(targetToLocAngle.unaryMinus());
+      var distanceAlongLine = positionToLine.getX();
+
+      Translation2d sidewaysForce;
+      var distanceScalar = distanceAlongLine / tailLength;
+      if (distanceScalar >= 0 && distanceScalar <= 1) {
+        var secondaryMaxRange =
+            MathUtil.interpolate(primaryMaxRange, 0, distanceScalar * distanceScalar);
+        var distanceToLine = Math.abs(positionToLine.getY());
+        if (distanceToLine <= secondaryMaxRange) {
+          double strength;
+          if (distanceAlongLine < primaryMaxRange) {
+            strength = tailStrength * (distanceAlongLine / primaryMaxRange);
+          } else {
+            strength =
+                -tailStrength * distanceAlongLine / (tailLength - primaryMaxRange)
+                    + tailLength * tailStrength / (tailLength - primaryMaxRange);
+          }
+          strength *= 1 - distanceToLine / secondaryMaxRange;
+
+          var sidewaysMag = tailStrength * strength * (secondaryMaxRange - distanceToLine);
+          // flip the sidewaysMag based on which side of the goal-sideways circle the robot is on
+          var sidewaysTheta =
+              target.minus(position).getAngle().minus(position.minus(sidewaysPoint).getAngle());
+          sidewaysForce =
+              new Translation2d(
+                  sidewaysMag * Math.signum(Math.sin(sidewaysTheta.getRadians())),
+                  targetToLocAngle.rotateBy(Rotation2d.kCCW_90deg));
+        } else {
+          sidewaysForce = Translation2d.kZero;
+        }
+      } else {
+        sidewaysForce = Translation2d.kZero;
+      }
+
+      return new Force(
+          outwardsForce.plus(sidewaysForce).getNorm(),
+          outwardsForce.plus(sidewaysForce).getAngle());
+    }
+  }
+
   public static final double GOAL_STRENGTH = 0.65;
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
-          new SnowmanObstacle(
-              new Translation2d(4.49, 4), 1.6, Units.inchesToMeters(65.5 / 2.0), true),
-          new SnowmanObstacle(
-              new Translation2d(13.08, 4), 1.6, Units.inchesToMeters(65.5 / 2.0), true));
+          new TeardropObstacle(new Translation2d(4.49, 4), 1.5, 2.5, .83, 3, 2),
+          new TeardropObstacle(new Translation2d(13.08, 4), 1.5, 2.5, .83, 3, 2));
+
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
   public static final List<Obstacle> WALLS =
