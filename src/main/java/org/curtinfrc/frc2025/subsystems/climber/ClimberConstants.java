@@ -7,17 +7,15 @@ public class ClimberConstants {
 
   public static double grabberTimeout = 5.0;
 
-  private static double grabberGearRatio = 1.0; // 1:1
-  private static double grabberTargetPositionRotations =
-      0.0625; // 1/16 of a rotation / 22.5 degrees
-  public static double grabberMotorTargetPositionRotations =
-      grabberTargetPositionRotations * grabberGearRatio;
+  public static double targetPositionRotations = 0.0625; // 1/16 of a rotation / 22.5 degrees
 
-  public static double grabberkP = 1.0;
-  public static double grabberkI = 0.0;
-  public static double grabberkD = 0.0;
-  public static double grabberkMinOutput = -1.0;
-  public static double grabberkMaxOutput = 1.0;
+  public static int currentLimit = 60; // TODO: find actual value
+
+  public static double kP = 1;
+  public static double kI = 1.0;
+  public static double kD = 0.2;
+  public static double kMinOutput = -1.0;
+  public static double kMaxOutput = 1.0;
 
   public static double grabberMotorkV = 1.0;
   public static double grabberMaxVelocity = 1.0;
