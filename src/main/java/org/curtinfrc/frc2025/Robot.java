@@ -170,7 +170,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
-                  new VisionIOQuestNav());
           climber = new Climber(new ClimberIONeo() {});
           popper = new Popper(new PopperIO() {});
         }
