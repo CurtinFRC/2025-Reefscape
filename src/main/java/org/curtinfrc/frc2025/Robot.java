@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
 import java.util.Set;
+import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
+import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -663,13 +665,21 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    drive
-                        .autoAlignWithOverride(
-                            hpSetpoint.driveSetpoint(),
-                            () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
-                            () -> -controller.getRightX())
-                        .until(atHpSetpoint),
+                    ejector.backSensor.getAsBoolean()
+                        ? drive
+                            .autoAlignWithOverride(
+                                reefSetpoint.driveSetpoint(),
+                                () -> -controller.getLeftY(),
+                                () -> -controller.getLeftX(),
+                                () -> -controller.getRightX())
+                            .until(atReefSetpoint)
+                        : drive
+                            .autoAlignWithOverride(
+                                hpSetpoint.driveSetpoint(),
+                                () -> -controller.getLeftY(),
+                                () -> -controller.getLeftX(),
+                                () -> -controller.getRightX())
+                            .until(atHpSetpoint),
                 Set.of(drive)));
 
     atReefSetpoint
@@ -677,11 +687,25 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    (shouldPop ? Commands.parallel(elevator
-                    .goToSetpoint(ElevatorSetpoints.getPopPoint(reefSetpoint.elevatorSetpoint())), popper.setVoltage(5), Commands.run(() -> shouldPop = false)).withTimeout(3) : Commands.none()).andThen(
-                    elevator
-                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                        .until(ejector.backSensor.negate())),
+                    (shouldPop
+                                && ((AlgaePoppedStates.isHigh(
+                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
+                                        && reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L3)
+                                    || (!AlgaePoppedStates.isHigh(
+                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
+                                        && reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L2))
+                            ? Commands.parallel(
+                                    elevator.goToSetpoint(
+                                        ElevatorSetpoints.getPopPoint(
+                                            reefSetpoint.elevatorSetpoint())),
+                                    popper.setVoltage(5),
+                                    Commands.run(() -> shouldPop = false))
+                                .withTimeout(3)
+                            : Commands.none())
+                        .andThen(
+                            elevator
+                                .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                                .until(ejector.backSensor.negate())),
                 Set.of(elevator)));
 
     intake.frontSensor.onTrue(
@@ -696,9 +720,13 @@ public class Robot extends LoggedRobot {
                     .until(atReefSetpoint),
             Set.of(drive)));
 
-    controller.a().onTrue(Commands.run(() -> { 
-        shouldPop = true;
-    }));
+    controller
+        .a()
+        .onTrue(
+            Commands.run(
+                () -> {
+                  shouldPop = true;
+                }));
   }
 
   /** This function is called periodically during operator control. */

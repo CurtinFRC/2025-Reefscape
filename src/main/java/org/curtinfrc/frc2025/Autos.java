@@ -3,9 +3,6 @@ package org.curtinfrc.frc2025;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-
-import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.resetPort;
-
 import java.util.EnumMap;
 import java.util.Map;
 import org.curtinfrc.frc2025.Constants.Setpoint;
@@ -18,7 +15,7 @@ import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.popper.Popper;
 
 public class Autos {
-  private static class AlgaePoppedStates {
+  public static class AlgaePoppedStates {
     enum AlgaeLocations {
       AB,
       CD,
@@ -40,7 +37,8 @@ public class Autos {
       }
     }
 
-    private final Map<AlgaeLocations, Pair<Boolean, Boolean>> locations = new EnumMap<>(AlgaeLocations.class);
+    private final Map<AlgaeLocations, Pair<Boolean, Boolean>> locations =
+        new EnumMap<>(AlgaeLocations.class);
 
     public AlgaePoppedStates() {
       for (AlgaeLocations loc : AlgaeLocations.values()) {

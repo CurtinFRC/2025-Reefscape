@@ -48,7 +48,7 @@ public class ElevatorConstants {
 
     public static ElevatorSetpoints getPopPoint(ElevatorSetpoints point) {
       switch (point) {
-        case L2: 
+        case L2:
           return AlgaePopLow;
         case L3:
           return AlgaePopHigh;

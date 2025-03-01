@@ -20,7 +20,11 @@ public class Elevator extends SubsystemBase {
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
-  public final Trigger algaePop = new Trigger(() -> setpoint == ElevatorSetpoints.AlgaePop);
+  public final Trigger algaePop =
+      new Trigger(
+          () ->
+              setpoint == ElevatorSetpoints.AlgaePopHigh
+                  || setpoint == ElevatorSetpoints.AlgaePopLow);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
