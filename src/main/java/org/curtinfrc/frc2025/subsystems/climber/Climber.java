@@ -5,6 +5,7 @@ import static org.curtinfrc.frc2025.subsystems.climber.ClimberConstants.*;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Climber extends SubsystemBase {
@@ -24,18 +25,18 @@ public class Climber extends SubsystemBase {
     Logger.processInputs("Climber", inputs);
   }
 
-  public Command Raw() {
-    return run(() -> io.setVoltage(4.0));
+  public Command setVoltage(DoubleSupplier voltage) {
+    return run(() -> io.setVoltage(voltage.getAsDouble()));
   }
 
   public Command goToSetpoint() {
-    return run(
-        () -> {
+    return run(() -> {
           var out = pid.calculate(inputs.positionRotations, targetPositionRotations);
           Logger.recordOutput("Climber/OutputVoltage", out);
           Logger.recordOutput("Climber/Error", pid.getError());
           io.setVoltage(out);
-        });
+        })
+        .until(pid::atSetpoint);
   }
 
   public Command stop() {

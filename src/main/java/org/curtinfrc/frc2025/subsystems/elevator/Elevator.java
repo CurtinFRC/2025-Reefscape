@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -72,5 +73,9 @@ public class Elevator extends SubsystemBase {
         0,
         positionRotationsToMetres(inputs.positionRotations),
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
+  }
+
+  public Command setVoltage(DoubleSupplier voltage) {
+    return run(() -> io.setVoltage(voltage.getAsDouble()));
   }
 }
