@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.HasAlgae;
@@ -149,7 +150,8 @@ public class Autos {
                 Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Align to " + driveSetpoint);
                 Command alignCommand =
                     drive
-                        .autoAlign(driveSetpoint)
+                        .autoAlign(
+                            driveSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                         .until(drive.atSetpoint)
                         .withName("Align to " + driveSetpoint);
                 stepCounter[0]++;
@@ -171,7 +173,8 @@ public class Autos {
               Logger.recordOutput("Auto/Sequence " + stepCounter[0], "Align to " + driveSetpoint);
               Command alignCommand =
                   drive
-                      .autoAlign(driveSetpoint)
+                      .autoAlign(
+                          driveSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                       .until(drive.atSetpoint)
                       .withName("Align to " + driveSetpoint);
               stepCounter[0]++;
@@ -189,7 +192,7 @@ public class Autos {
                   "Auto/Sequence " + stepCounter[0], "Return to HP at " + hpSetpoint);
               Command returnToHPCommand =
                   drive
-                      .autoAlign(hpSetpoint)
+                      .autoAlign(hpSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                       .until(drive.atSetpoint.and(intake.frontSensor))
                       .withName("Return to HP at " + hpSetpoint);
               stepCounter[0]++;

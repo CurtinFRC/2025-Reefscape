@@ -46,6 +46,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
@@ -763,7 +764,12 @@ public class Drive extends SubsystemBase {
           if (Math.abs(xSupplier.getAsDouble()) < 0.05
               || Math.abs(ySupplier.getAsDouble()) < 0.05
               || Math.abs(omegaSupplier.getAsDouble()) < 0.05) {
-            autoAlign(_setpoint).execute();
+            autoAlign(
+                    _setpoint,
+                    Optional.of(xSupplier),
+                    Optional.of(ySupplier),
+                    Optional.of(omegaSupplier))
+                .execute();
             Logger.recordOutput("yay", true);
           } else {
             joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
@@ -772,8 +778,21 @@ public class Drive extends SubsystemBase {
         });
   }
 
-  public Command autoAlign(DriveSetpoints _setpoint) {
+  public Command autoAlign(
+      DriveSetpoints _setpoint,
+      Optional<DoubleSupplier> xSupplier,
+      Optional<DoubleSupplier> ySupplier,
+      Optional<DoubleSupplier> omegaSupplier) {
     return run(() -> {
+          if (xSupplier.isPresent() && ySupplier.isPresent() && omegaSupplier.isPresent()) {
+            if (Math.abs(xSupplier.get().getAsDouble()) > 0.05
+                || Math.abs(ySupplier.get().getAsDouble()) > 0.05
+                || Math.abs(omegaSupplier.get().getAsDouble()) > 0.05) {
+              joystickDrive(xSupplier.get(), ySupplier.get(), omegaSupplier.get()).execute();
+              return;
+            }
+          }
+
           this.setpoint = _setpoint;
           Logger.recordOutput("Drive/Setpoint", _setpoint.getPose());
 
