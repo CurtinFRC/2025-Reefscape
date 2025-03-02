@@ -150,7 +150,7 @@ public class Autos {
                 Command alignCommand =
                     drive
                         .autoAlign(driveSetpoint)
-                        .until(drive.atSetpoint.and(ejector.backSensor.negate()))
+                        .until(drive.atSetpoint)
                         .withName("Align to " + driveSetpoint);
                 stepCounter[0]++;
 
@@ -161,7 +161,6 @@ public class Autos {
                     elevator
                         .goToSetpoint(ElevatorSetpoints.getPopPoint(setpoint.elevatorSetpoint()))
                         .until(elevator.atSetpoint)
-                        .andThen(popper.setVoltage(5).withTimeout(2).andThen(popper.stop()))
                         .withName("Pop Algae at " + loc);
                 stepCounter[0]++;
 
@@ -181,13 +180,9 @@ public class Autos {
 
               sequence =
                   sequence.andThen(
-                      Commands.sequence(
-                              elevator.goToSetpoint(setpoint.elevatorSetpoint()).until(elevator.atSetpoint),
-                              ejector.eject(80).until(ejector.backSensor.negate()))
-                          .andThen(
-                              elevator
-                                  .goToSetpoint(ElevatorSetpoints.BASE)
-                                  .until(elevator.atSetpoint))
+                      elevator
+                          .goToSetpoint(setpoint.elevatorSetpoint())
+                          .until(ejector.backSensor.negate())
                           .withName("Go Up " + loc));
 
               Logger.recordOutput(

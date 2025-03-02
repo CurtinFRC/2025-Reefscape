@@ -56,6 +56,7 @@ import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
@@ -189,12 +190,10 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIO() {},
-                  //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIO() {}
-                  /*new VisionIOPhotonVision(camera3Name, robotToCamera3)*/ );
+                  new VisionIOPhotonVision(camera3Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -670,7 +669,22 @@ public class Robot extends LoggedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    elevator
+        .isNotAtCollect
+        .and(atReefSetpoint)
+        .and(drive.atSetpoint)
+        .and(elevator.atSetpoint)
+        .and(elevator.algaePop.negate())
+        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+
+    elevator
+        .isNotAtCollect
+        .and(atReefSetpoint)
+        .and(drive.atSetpoint)
+        .and(elevator.algaePop)
+        .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
