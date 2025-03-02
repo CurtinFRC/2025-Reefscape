@@ -182,7 +182,9 @@ public class Autos {
               sequence =
                   sequence.andThen(
                       Commands.sequence(
-                              elevator.goToSetpoint(setpoint.elevatorSetpoint()).until(elevator.atSetpoint),
+                              elevator
+                                  .goToSetpoint(setpoint.elevatorSetpoint())
+                                  .until(elevator.atSetpoint),
                               ejector.eject(80).until(ejector.backSensor.negate()))
                           .andThen(
                               elevator

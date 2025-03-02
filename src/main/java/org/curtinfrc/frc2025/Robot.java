@@ -69,6 +69,10 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
+import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -85,6 +89,8 @@ public class Robot extends LoggedRobot {
   private Ejector ejector;
   private Popper popper;
   private LED leds;
+  private Climber climber;
+
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -200,6 +206,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOKraken());
           popper = new Popper(new PopperIOKraken());
           leds = new LED(new LEDIOLL3());
+          climber = new Climber(new ClimberIONeo() {});
         }
 
         case DEVBOT -> {
@@ -223,6 +230,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIO() {});
           popper = new Popper(new PopperIO() {});
           leds = new LED(new LEDIO() {});
+            climber = new Climber(new ClimberIONeo() {});
         }
 
         case SIMBOT -> {
@@ -246,6 +254,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOSim());
           popper = new Popper(new PopperIO() {});
           leds = new LED(new LEDIO() {});
+          climber = new Climber(new ClimberIOSim() {});
         }
       }
     } else {
@@ -270,6 +279,7 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
       leds = new LED(new LEDIO() {});
+      climber = new Climber(new ClimberIO() {});
     }
 
     atReefSetpoint =
@@ -338,6 +348,7 @@ public class Robot extends LoggedRobot {
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+    climber.setDefaultCommand(climber.stop());
 
     // almostAtReefSetpoint
     //     .and(ejector.backSensor)
@@ -743,6 +754,9 @@ public class Robot extends LoggedRobot {
         .and(drive.atSetpoint)
         .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+
+    // controller.y().whileTrue(climber.goToSetpoint());
+    controller.povUp().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(controller.povRight()).andThen(elevator.goToSetpoint(ElevatorSetpoints.L3)).andThen(climber.goToSetpoint()).andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE)));
   }
 
   /** This function is called periodically during operator control. */
