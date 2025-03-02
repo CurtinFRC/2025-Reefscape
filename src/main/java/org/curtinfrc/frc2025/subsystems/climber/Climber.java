@@ -33,7 +33,7 @@ public class Climber extends SubsystemBase {
         () -> {
           var out = pid.calculate(inputs.positionRotations, targetPositionRotations);
           Logger.recordOutput("Climber/OutputVoltage", out);
-          Logger.recordOutput("Elevator/Error", pid.getError());
+          Logger.recordOutput("Climber/Error", pid.getError());
           io.setVoltage(out);
         });
   }
