@@ -15,8 +15,8 @@ import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpo
 public final class Constants {
   public static final RobotType robotType = RobotType.COMPBOT;
   // TODO account for bumpers
-  public static final double ROBOT_X = 705; // mm
-  public static final double ROBOT_Y = 730;
+  public static final double ROBOT_X = 705; // 705; // mm
+  public static final double ROBOT_Y = 730; // 730;
   public static final boolean devmode = false;
 
   public static final Mode getMode() {

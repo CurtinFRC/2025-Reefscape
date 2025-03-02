@@ -33,9 +33,9 @@ public class VisionConstants {
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)
   public static Transform3d robotToCamera0 =
-      new Transform3d(-0.123408, 0.171, 0.916995, new Rotation3d(0, Math.PI / 4, Math.PI));
+      new Transform3d(0.123408, 0.17, 0.92, new Rotation3d(0, -Math.PI / 4, Math.PI));
   public static Transform3d robotToCamera3 =
-      new Transform3d(-0.123408, -0.171, 0.916995, new Rotation3d(0, Math.PI / 4, Math.PI));
+      new Transform3d(0.123408, -0.17, 0.92, new Rotation3d(0, -Math.PI / 4, Math.PI));
   public static Transform3d robotToCamera1 =
       new Transform3d(0.17061, 0.2105, 0.30815, Rotation3d.kZero);
   public static Transform3d robotToCamera2 =
@@ -57,6 +57,7 @@ public class VisionConstants {
         1.0, // Camera 0
         1.0, // Camera 1
         1.0, // Camera 2
+        1.0, // Camera 3
       };
 
   // Multipliers to apply for MegaTag 2 observations

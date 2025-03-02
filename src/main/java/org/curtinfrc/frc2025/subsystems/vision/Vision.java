@@ -37,6 +37,7 @@ public class Vision extends VirtualSubsystem {
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private int lastPVMeasurement;
 
   public Vision(PoseEstimateConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -93,6 +94,16 @@ public class Vision extends VirtualSubsystem {
     List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
     List<Pose3d> allRobotPosesRejected = new LinkedList<>();
 
+    var discardMegatag = false;
+    if (inputs[0].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
+      lastPVMeasurement = 0;
+    } else {
+      lastPVMeasurement++;
+    }
+    if (lastPVMeasurement < 5) {
+      discardMegatag = true;
+    }
+
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
@@ -147,8 +158,14 @@ public class Vision extends VirtualSubsystem {
         double linearStdDev = linearStdDevBaseline * stdDevFactor;
         double angularStdDev = angularStdDevBaseline * stdDevFactor;
         if (observation.type() == PoseObservationType.MEGATAG_2) {
+          if (discardMegatag) {
+            continue;
+          }
           linearStdDev *= linearStdDevMegatag2Factor;
           angularStdDev *= angularStdDevMegatag2Factor;
+        }
+        if (observation.type() == PoseObservationType.MEGATAG_1 && discardMegatag) {
+          continue;
         }
         if (cameraIndex < cameraStdDevFactors.length) {
           linearStdDev *= cameraStdDevFactors[cameraIndex];

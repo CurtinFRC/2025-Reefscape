@@ -761,20 +761,12 @@ public class Drive extends SubsystemBase {
       DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          if (Math.abs(xSupplier.getAsDouble()) < 0.05
-              || Math.abs(ySupplier.getAsDouble()) < 0.05
-              || Math.abs(omegaSupplier.getAsDouble()) < 0.05) {
-            autoAlign(
-                    _setpoint,
-                    Optional.of(xSupplier),
-                    Optional.of(ySupplier),
-                    Optional.of(omegaSupplier))
-                .execute();
-            Logger.recordOutput("yay", true);
-          } else {
-            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
-            Logger.recordOutput("yay", false);
-          }
+          autoAlign(
+                  _setpoint,
+                  Optional.of(xSupplier),
+                  Optional.of(ySupplier),
+                  Optional.of(omegaSupplier))
+              .execute();
         });
   }
 
@@ -823,7 +815,7 @@ public class Drive extends SubsystemBase {
                   cmd.moduleForcesY());
 
           // Apply the adjusted sample
-          followTrajectory(adjustedSample);
+          // followTrajectory(adjustedSample);
         })
         .withName("AutoAlign");
   }

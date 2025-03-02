@@ -8,6 +8,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -176,6 +178,11 @@ public class Robot extends LoggedRobot {
 
     DriverStation.waitForDsConnection(60);
 
+    LiveWindow.disableAllTelemetry();
+    LiveWindow.setEnabled(false);
+    Shuffleboard.disableActuatorWidgets();
+    Shuffleboard.stopRecording();
+
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.robotType) {
         case COMPBOT -> {
@@ -338,15 +345,15 @@ public class Robot extends LoggedRobot {
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
-    // almostAtReefSetpoint
-    //     .and(ejector.backSensor)
-    //     .whileTrue(
-    //         Commands.defer(
-    //             () ->
-    //                 elevator
-    //                     .goToSetpoint(reefSetpoint.elevatorSetpoint())
-    //                     .until(ejector.backSensor.negate()),
-    //             Set.of(elevator)));
+    almostAtReefSetpoint
+        .and(ejector.backSensor)
+        .whileTrue(
+            Commands.defer(
+                () ->
+                    elevator
+                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                        .until(ejector.backSensor.negate()),
+                Set.of(elevator)));
 
     intake
         .backSensor
@@ -390,13 +397,13 @@ public class Robot extends LoggedRobot {
     // controller.leftBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
     // controller.rightBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
     // controller.rightTrigger().whileTrue(intake.intake(-5));
-    controller.leftTrigger().whileTrue(ejector.eject(15));
+    // controller.leftTrigger().whileTrue(ejector.eject(15));
     // controller.b().whileTrue(popper.setVoltage(3));
 
-    // elevator
-    //     .isNotAtCollect
-    //     .and(elevator.atSetpoint)
-    //     .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
+    elevator
+        .isNotAtCollect
+        .and(elevator.atSetpoint)
+        .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
 
     board
         .left()
@@ -684,18 +691,11 @@ public class Robot extends LoggedRobot {
         .and(drive.atSetpoint)
         .and(elevator.algaePop)
         .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
-  }
 
-  /** This function is called periodically during autonomous. */
-  @Override
-  public void autonomousPeriodic() {}
-
-  /** This function is called once when teleop is enabled. */
-  @Override
-  public void teleopInit() {
     ejector
         .backSensor
         .negate()
+        .and(RobotModeTriggers.teleop())
         .onTrue(
             Commands.defer(
                 () ->
@@ -706,18 +706,22 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getRightX()),
                 Set.of(drive)));
 
-    intake.frontSensor.onTrue(
-        Commands.defer(
-            () ->
-                drive.autoAlignWithOverride(
-                    reefSetpoint.driveSetpoint(),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX()),
-            Set.of(drive)));
+    intake
+        .frontSensor
+        .and(RobotModeTriggers.teleop())
+        .onTrue(
+            Commands.defer(
+                () ->
+                    drive.autoAlignWithOverride(
+                        reefSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive)));
 
     controller
         .a()
+        .and(RobotModeTriggers.teleop())
         .onTrue(
             Commands.run(
                 () -> {
@@ -726,6 +730,7 @@ public class Robot extends LoggedRobot {
 
     atReefSetpoint
         .and(ejector.backSensor)
+        .and(RobotModeTriggers.teleop())
         .onTrue(
             Commands.defer(
                 () ->
@@ -743,7 +748,7 @@ public class Robot extends LoggedRobot {
                                     popper.setVoltage(5),
                                     Commands.run(() -> shouldPop = false))
                                 .withTimeout(3)
-                            : Commands.run(() -> {}))
+                            : Commands.run(() -> {}).until(() -> true))
                         .andThen(
                             elevator
                                 .goToSetpoint(reefSetpoint.elevatorSetpoint())
@@ -752,12 +757,21 @@ public class Robot extends LoggedRobot {
 
     elevator
         .isNotAtCollect
+        .and(RobotModeTriggers.teleop())
         .and(atReefSetpoint)
         .and(elevator.atSetpoint)
         .and(drive.atSetpoint)
         .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
   }
+
+  /** This function is called periodically during autonomous. */
+  @Override
+  public void autonomousPeriodic() {}
+
+  /** This function is called once when teleop is enabled. */
+  @Override
+  public void teleopInit() {}
 
   /** This function is called periodically during operator control. */
   @Override
