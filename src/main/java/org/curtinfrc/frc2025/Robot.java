@@ -329,7 +329,17 @@ public class Robot extends LoggedRobot {
     controller.a().whileTrue(popper.setVoltage(-8));
     controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
     controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
-    controller.y().whileTrue(climber.goToSetpoint());
+    controller
+        .y()
+        .whileTrue(
+            elevator
+                .goToSetpoint(Setpoints.L2)
+                .andThen(
+                    climber
+                        .home(-3)
+                        .andThen(elevator.goToSetpoint(Setpoints.L3))
+                        .andThen(climber.home(5))
+                        .andThen(elevator.goToSetpoint(Setpoints.COLLECT))));
   }
 
   /** This function is called periodically during all modes. */

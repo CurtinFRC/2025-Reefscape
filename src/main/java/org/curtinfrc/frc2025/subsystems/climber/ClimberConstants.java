@@ -1,7 +1,7 @@
 package org.curtinfrc.frc2025.subsystems.climber;
 
 public class ClimberConstants {
-  public static int grabberMotorPort = 99;
+  public static int grabberMotorPort = 9;
 
   public static double targetPositionRotations = 0.0625; // 1/16 of a rotation / 22.5 degrees
 
