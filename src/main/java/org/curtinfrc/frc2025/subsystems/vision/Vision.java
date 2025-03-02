@@ -31,6 +31,7 @@ import java.util.List;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends VirtualSubsystem {
   private final PoseEstimateConsumer consumer;
@@ -65,6 +66,12 @@ public class Vision extends VirtualSubsystem {
    */
   public Rotation2d getTargetX(int cameraIndex) {
     return inputs[cameraIndex].latestTargetObservation.tx();
+  }
+
+  public void setLEDMode(VisionLEDMode mode) {
+    for (var i : io) {
+      i.setLEDMode(mode);
+    }
   }
 
   public boolean hasTarget(int cameraIndex) {

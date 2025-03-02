@@ -22,6 +22,7 @@ import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.IntegerArrayPublisher;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -30,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 /** IO implementation for real Limelight hardware. */
 public class VisionIOLimelight implements VisionIO {
@@ -37,6 +39,7 @@ public class VisionIOLimelight implements VisionIO {
   private final DoubleArrayPublisher orientationPublisher;
   private final DoublePublisher imuModeSet;
   private final IntegerArrayPublisher idFilterSet;
+  private final NetworkTableEntry ledMode;
 
   private final DoubleSubscriber latencySubscriber;
   private final DoubleSubscriber txSubscriber;
@@ -55,6 +58,7 @@ public class VisionIOLimelight implements VisionIO {
   public VisionIOLimelight(String name, Supplier<Rotation2d> rotationSupplier) {
     var table = NetworkTableInstance.getDefault().getTable(name);
     this.rotationSupplier = rotationSupplier;
+    ledMode = table.getEntry("ledMode");
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
     idFilterSet = table.getIntegerArrayTopic("fiducial_id_filters_set").publish();
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
@@ -175,5 +179,21 @@ public class VisionIOLimelight implements VisionIO {
   @Override
   public void allowTags(long[] allowedTags) {
     this.allowedTags = allowedTags;
+  }
+
+  @Override
+  public void setLEDMode(VisionLEDMode mode) {
+    switch (mode) {
+      case kOn:
+        ledMode.setNumber(3);
+        break;
+      case kBlink:
+        ledMode.setNumber(2);
+        break;
+      case kDefault:
+      case kOff:
+        ledMode.setNumber(1);
+        break;
+    }
   }
 }

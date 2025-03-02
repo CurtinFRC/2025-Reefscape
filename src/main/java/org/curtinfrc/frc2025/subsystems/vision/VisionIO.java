@@ -16,6 +16,7 @@ package org.curtinfrc.frc2025.subsystems.vision;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public interface VisionIO {
   @AutoLog
@@ -50,4 +51,6 @@ public interface VisionIO {
   public default void updateInputs(VisionIOInputs inputs) {}
 
   public default void allowTags(long[] ids) {}
+
+  public default void setLEDMode(VisionLEDMode mode) {}
 }

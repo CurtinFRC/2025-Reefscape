@@ -46,10 +46,6 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
-import org.curtinfrc.frc2025.subsystems.led.LED;
-import org.curtinfrc.frc2025.subsystems.led.LEDIO;
-import org.curtinfrc.frc2025.subsystems.led.LEDIO.State;
-import org.curtinfrc.frc2025.subsystems.led.LEDIOLL3;
 import org.curtinfrc.frc2025.subsystems.popper.Popper;
 import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
 import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
@@ -70,6 +66,7 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -85,7 +82,6 @@ public class Robot extends LoggedRobot {
   private Elevator elevator;
   private Ejector ejector;
   private Popper popper;
-  private LED leds;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -198,7 +194,6 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
           popper = new Popper(new PopperIOKraken());
-          leds = new LED(new LEDIOLL3());
         }
 
         case DEVBOT -> {
@@ -221,7 +216,6 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
           popper = new Popper(new PopperIO() {});
-          leds = new LED(new LEDIO() {});
         }
 
         case SIMBOT -> {
@@ -244,7 +238,6 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
           popper = new Popper(new PopperIO() {});
-          leds = new LED(new LEDIO() {});
         }
       }
     } else {
@@ -268,7 +261,6 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
-      leds = new LED(new LEDIO() {});
     }
 
     atReefSetpoint =
@@ -353,6 +345,22 @@ public class Robot extends LoggedRobot {
         .and(elevator.atSetpoint)
         .whileTrue(ejector.eject(8));
 
+    atHpSetpoint.whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kBlink)));
+    ejector
+        .frontSensor
+        .or(intake.frontSensor)
+        .or(intake.backSensor)
+        .or(ejector.backSensor)
+        .whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kOn)));
+    ejector
+        .frontSensor
+        .or(intake.frontSensor)
+        .or(intake.backSensor)
+        .or(ejector.backSensor)
+        .and(atHpSetpoint)
+        .negate()
+        .whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kOff)));
+
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
 
     intake
@@ -370,11 +378,6 @@ public class Robot extends LoggedRobot {
 
     ejector.backSensor.whileTrue(intake.stop());
     intake.frontSensor.whileTrue(elevator.stop());
-    ejector
-        .backSensor
-        .negate()
-        .and(drive.atSetpoint)
-        .whileTrue(Commands.runOnce(() -> leds.setState(State.Blink)));
 
     // Reset gyro to 0° when B button is pressed
     controller
