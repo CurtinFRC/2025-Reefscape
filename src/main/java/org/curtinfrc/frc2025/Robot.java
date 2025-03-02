@@ -332,22 +332,21 @@ public class Robot extends LoggedRobot {
             () -> -controller.getLeftX(),
             () -> controller.getRightX()));
 
+    elevator
+        .isNotAtCollect
+        .and(atReefSetpoint)
+        .and(elevator.atSetpoint)
+        .and(drive.atSetpoint)
+        .and(elevator.algaePop.negate())
+        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
-    // almostAtReefSetpoint
-    //     .and(ejector.backSensor)
-    //     .whileTrue(
-    //         Commands.defer(
-    //             () ->
-    //                 elevator
-    //                     .goToSetpoint(reefSetpoint.elevatorSetpoint())
-    //                     .until(ejector.backSensor.negate()),
-    //             Set.of(elevator)));
-
+    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
         .backSensor
         .and(elevator.isNotAtCollect.negate())
@@ -355,6 +354,7 @@ public class Robot extends LoggedRobot {
         .whileTrue(ejector.eject(8));
 
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
+
     intake
         .backSensor
         .negate()
@@ -390,7 +390,7 @@ public class Robot extends LoggedRobot {
     // controller.leftBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
     // controller.rightBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
     // controller.rightTrigger().whileTrue(intake.intake(-5));
-    controller.leftTrigger().whileTrue(ejector.eject(15));
+    controller.leftTrigger().whileTrue(intake.intake(-intakeVolts));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
@@ -414,7 +414,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.A))
@@ -422,7 +422,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.B))
@@ -430,7 +430,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A))
@@ -438,7 +438,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralAB()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B))
@@ -446,7 +446,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.C))
@@ -454,7 +454,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.D))
@@ -462,7 +462,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.C))
@@ -470,7 +470,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralCD()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.D))
@@ -478,7 +478,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.E))
@@ -486,7 +486,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.F))
@@ -494,7 +494,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
@@ -502,7 +502,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralEF()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F))
@@ -510,7 +510,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.G))
@@ -518,7 +518,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.H))
@@ -526,7 +526,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.G))
@@ -534,7 +534,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralGH()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.H))
@@ -542,7 +542,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.I))
@@ -550,7 +550,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.J))
@@ -558,7 +558,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
@@ -566,7 +566,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralIJ()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J))
@@ -574,7 +574,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.leftBumper())
+        .and(controller.leftTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.K))
@@ -582,7 +582,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.rightBumper())
+        .and(controller.rightTrigger())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L3, DriveSetpoints.L))
@@ -590,7 +590,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.leftTrigger())
+        .and(controller.leftBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K))
@@ -598,7 +598,7 @@ public class Robot extends LoggedRobot {
 
     board
         .coralKL()
-        .and(controller.rightTrigger())
+        .and(controller.rightBumper())
         .whileTrue(
             Commands.runOnce(
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
@@ -609,21 +609,22 @@ public class Robot extends LoggedRobot {
             Commands.defer(
                 () ->
                     ejector.backSensor.getAsBoolean()
-                        ? drive
-                            .autoAlignWithOverride(
-                                reefSetpoint.driveSetpoint(),
-                                () -> -controller.getLeftY(),
-                                () -> -controller.getLeftX(),
-                                () -> -controller.getRightX())
-                            .until(atReefSetpoint)
-                        : drive
-                            .autoAlignWithOverride(
-                                hpSetpoint.driveSetpoint(),
-                                () -> -controller.getLeftY(),
-                                () -> -controller.getLeftX(),
-                                () -> -controller.getRightX())
-                            .until(atHpSetpoint),
+                        ? drive.autoAlignWithOverride(
+                            reefSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX())
+                        : drive.autoAlignWithOverride(
+                            hpSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX()),
                 Set.of(drive)));
+
+    ejector
+        .frontSensor
+        .and(intake.backSensor)
+        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(8)));
   }
 
   /** This function is called periodically during all modes. */
@@ -706,6 +707,34 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getRightX()),
                 Set.of(drive)));
 
+    atReefSetpoint
+        .and(ejector.backSensor)
+        .onTrue(
+            Commands.defer(
+                () ->
+                    (shouldPop
+                                && ((AlgaePoppedStates.isHigh(
+                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
+                                        && reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L3)
+                                    || (!AlgaePoppedStates.isHigh(
+                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
+                                        && (reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L2
+                                            || reefSetpoint.elevatorSetpoint()
+                                                == ElevatorSetpoints.L3)))
+                            ? Commands.parallel(
+                                    elevator.goToSetpoint(
+                                        ElevatorSetpoints.getPopPoint(
+                                            reefSetpoint.elevatorSetpoint())),
+                                    popper.setVoltage(5),
+                                    Commands.run(() -> shouldPop = false))
+                                .withTimeout(3)
+                            : Commands.run(() -> {}))
+                        .andThen(
+                            elevator
+                                .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                                .until(ejector.backSensor.negate())),
+                Set.of(elevator)));
+
     intake.frontSensor.onTrue(
         Commands.defer(
             () ->
@@ -724,39 +753,17 @@ public class Robot extends LoggedRobot {
                   shouldPop = true;
                 }));
 
-    atReefSetpoint
+    ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+
+    almostAtReefSetpoint
         .and(ejector.backSensor)
-        .onTrue(
+        .whileTrue(
             Commands.defer(
                 () ->
-                    (shouldPop
-                                && ((AlgaePoppedStates.isHigh(
-                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-                                        && reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L3)
-                                    || (!AlgaePoppedStates.isHigh(
-                                            AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-                                        && reefSetpoint.elevatorSetpoint() == ElevatorSetpoints.L2))
-                            ? Commands.parallel(
-                                    elevator.goToSetpoint(
-                                        ElevatorSetpoints.getPopPoint(
-                                            reefSetpoint.elevatorSetpoint())),
-                                    popper.setVoltage(5),
-                                    Commands.run(() -> shouldPop = false))
-                                .withTimeout(3)
-                            : Commands.run(() -> {}))
-                        .andThen(
-                            elevator
-                                .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                                .until(ejector.backSensor.negate())),
+                    elevator
+                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
+                        .withInterruptBehavior(InterruptionBehavior.kCancelSelf),
                 Set.of(elevator)));
-
-    elevator
-        .isNotAtCollect
-        .and(atReefSetpoint)
-        .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .and(elevator.algaePop.negate())
-        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
   }
 
   /** This function is called periodically during operator control. */

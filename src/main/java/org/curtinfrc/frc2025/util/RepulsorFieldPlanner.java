@@ -207,12 +207,12 @@ public class RepulsorFieldPlanner {
     }
   }
 
-  public static final double GOAL_STRENGTH = 0.65;
+  public static final double GOAL_STRENGTH = 1.2;
 
   public static final List<Obstacle> FIELD_OBSTACLES =
       List.of(
-          new TeardropObstacle(new Translation2d(4.49, 4), 1.6, 2.6, 1.03, 3, 2),
-          new TeardropObstacle(new Translation2d(13.08, 4), 1.6, 2.6, 1.03, 3, 2));
+          new TeardropObstacle(new Translation2d(4.49, 4), 1.2, 2.2, 1.03, 3, 2),
+          new TeardropObstacle(new Translation2d(13.08, 4), 1.2, 2.2, 1.03, 3, 2));
 
   static final double FIELD_LENGTH = 16.42;
   static final double FIELD_WIDTH = 8.16;
@@ -283,7 +283,7 @@ public class RepulsorFieldPlanner {
             DataLogManager.getLog(), "SmartDashboard/Alerts", "SmartDashboard/Alerts");
   }
 
-  private boolean useGoalInArrows = false;
+  private boolean useGoalInArrows = true;
   private boolean useObstaclesInArrows = true;
   private boolean useWallsInArrows = true;
   private Pose2d arrowBackstage = new Pose2d(-10, -10, Rotation2d.kZero);
@@ -310,6 +310,12 @@ public class RepulsorFieldPlanner {
           arrows.set(x * (ARROWS_Y + 1) + y, new Pose2d(translation, rotation));
         }
       }
+    }
+
+    if (RobotBase.isSimulation()) {
+      Pose2d[] arr = new Pose2d[0];
+
+      Logger.recordOutput("Repulsor/arrows", arrows.toArray(arr));
     }
   }
 
@@ -408,7 +414,7 @@ public class RepulsorFieldPlanner {
           SmartDashboard.putNumber("forceLog", netForce.getNorm());
           var closeToGoalMax = maxSpeed * Math.min(err.getNorm() / 2, 1);
           var dist = err.getNorm();
-          stepSize_m = Math.min(5.14, Math.sqrt(5 /* 14 */ * dist)) * 0.02;
+          stepSize_m = Math.min(5.14, Math.sqrt(6 /* 14 */ * dist)) * 0.02;
         }
 
         Logger.recordOutput("Repulsor/step", stepSize_m);

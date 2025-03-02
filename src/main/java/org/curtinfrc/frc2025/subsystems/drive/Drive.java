@@ -81,7 +81,7 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private double p = 2.5;
+  private double p = 3.5;
   private double d = 0;
   private double i = 0;
 
@@ -445,7 +445,7 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds.fromFieldRelativeSpeeds(
             sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
             sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
-            dist < 1
+            dist < 0.5
                 ? -headingController.calculate(pose.getRotation().getRadians(), sample.heading)
                 : -headingController.calculate(
                     pose.getRotation().getRadians(),
@@ -759,23 +759,8 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
-    return run(
-        () -> {
-          if (Math.abs(xSupplier.getAsDouble()) < 0.05
-              || Math.abs(ySupplier.getAsDouble()) < 0.05
-              || Math.abs(omegaSupplier.getAsDouble()) < 0.05) {
-            autoAlign(
-                    _setpoint,
-                    Optional.of(xSupplier),
-                    Optional.of(ySupplier),
-                    Optional.of(omegaSupplier))
-                .execute();
-            Logger.recordOutput("yay", true);
-          } else {
-            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
-            Logger.recordOutput("yay", false);
-          }
-        });
+    return autoAlign(
+        _setpoint, Optional.of(xSupplier), Optional.of(ySupplier), Optional.of(omegaSupplier));
   }
 
   public Command autoAlign(
