@@ -18,6 +18,9 @@ import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
+import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
@@ -64,6 +67,7 @@ public class Robot extends LoggedRobot {
   // Subsystems
   private Drive drive;
   private Vision vision;
+  private Climber climber;
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
@@ -146,6 +150,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
+          climber = new Climber(new ClimberIONeo() {});
           popper = new Popper(new PopperIOComp());
         }
 
@@ -167,6 +172,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIONEO());
+          climber = new Climber(new ClimberIONeo() {});
           popper = new Popper(new PopperIO() {});
         }
 
@@ -189,6 +195,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
+          climber = new Climber(new ClimberIOSim() {});
           popper = new Popper(new PopperIO() {});
         }
       }
@@ -208,6 +215,7 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
+      climber = new Climber(new ClimberIOSim() {});
       popper = new Popper(new PopperIO() {});
     }
 
@@ -280,6 +288,7 @@ public class Robot extends LoggedRobot {
     ejector.setDefaultCommand(ejector.stop());
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
+    climber.setDefaultCommand(climber.stop());
 
     intake
         .backSensor
@@ -305,8 +314,6 @@ public class Robot extends LoggedRobot {
 
     ejector.backSensor.whileTrue(intake.stop());
 
-    controller.b().onTrue(elevator.zero().ignoringDisable(true));
-
     // Reset gyro to 0° when B button is pressed
     controller
         .y()
@@ -322,6 +329,17 @@ public class Robot extends LoggedRobot {
     controller.a().whileTrue(popper.setVoltage(-8));
     controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
     controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
+    controller
+        .y()
+        .whileTrue(
+            elevator
+                .goToSetpoint(Setpoints.L2)
+                .andThen(
+                    climber
+                        .home(-3)
+                        .andThen(elevator.goToSetpoint(Setpoints.L3))
+                        .andThen(climber.home(5))
+                        .andThen(elevator.goToSetpoint(Setpoints.COLLECT))));
   }
 
   /** This function is called periodically during all modes. */
