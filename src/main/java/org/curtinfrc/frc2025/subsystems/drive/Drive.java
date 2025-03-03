@@ -755,7 +755,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlignWithOverride(
-      Supplier<DriveSetpoints> _setpoint,
+      DriveSetpoints _setpoint,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
@@ -764,7 +764,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlign(
-      Supplier<DriveSetpoints> _setpoint,
+      DriveSetpoints _setpoint,
       Optional<DoubleSupplier> xSupplier,
       Optional<DoubleSupplier> ySupplier,
       Optional<DoubleSupplier> omegaSupplier) {
@@ -778,10 +778,10 @@ public class Drive extends SubsystemBase {
             }
           }
 
-          this.setpoint = _setpoint.get();
-          Logger.recordOutput("Drive/Setpoint", _setpoint.get().getPose());
+          this.setpoint = _setpoint;
+          Logger.recordOutput("Drive/Setpoint", _setpoint.getPose());
 
-          repulsorFieldPlanner.setGoal(_setpoint.get().getPose().getTranslation());
+          repulsorFieldPlanner.setGoal(_setpoint.getPose().getTranslation());
 
           var robotPose = getPose();
           SwerveSample cmd =
@@ -797,7 +797,7 @@ public class Drive extends SubsystemBase {
                   cmd.t,
                   cmd.x,
                   cmd.y,
-                  _setpoint.get().getPose().getRotation().getRadians(),
+                  _setpoint.getPose().getRotation().getRadians(),
                   cmd.vx,
                   cmd.vy,
                   0,

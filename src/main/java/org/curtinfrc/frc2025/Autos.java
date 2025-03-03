@@ -151,10 +151,7 @@ public class Autos {
                 Command alignCommand =
                     drive
                         .autoAlign(
-                            () -> driveSetpoint,
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty())
+                            driveSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                         .until(drive.atSetpoint)
                         .withName("Align to " + driveSetpoint);
                 stepCounter[0]++;
@@ -177,7 +174,7 @@ public class Autos {
               Command alignCommand =
                   drive
                       .autoAlign(
-                          () -> driveSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
+                          driveSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                       .until(drive.atSetpoint)
                       .withName("Align to " + driveSetpoint);
               stepCounter[0]++;
@@ -195,8 +192,7 @@ public class Autos {
                   "Auto/Sequence " + stepCounter[0], "Return to HP at " + hpSetpoint);
               Command returnToHPCommand =
                   drive
-                      .autoAlign(
-                          () -> hpSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
+                      .autoAlign(hpSetpoint, Optional.empty(), Optional.empty(), Optional.empty())
                       .until(drive.atSetpoint.and(intake.frontSensor))
                       .withName("Return to HP at " + hpSetpoint);
               stepCounter[0]++;
