@@ -18,7 +18,7 @@ public class ElevatorConstants {
   public static double kA = 0.01;
   public static double kG = 0;
 
-  public static double climbkP = 5;
+  public static double climbkP = 45;
   public static double climbkI = 0;
   public static double climbkD = 0;
 
@@ -43,8 +43,8 @@ public class ElevatorConstants {
     L3(0.59735),
     AlgaePopHigh(0.55),
     BASE(0.01),
-    climbPrep(0.2),
-    climbAttempt(0.3),
+    climbPrep(0.37),
+    climbAttempt(0.5),
     climbed(0.01);
 
     public final double setpoint;

@@ -8,12 +8,14 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Servo;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
 public class ClimberIONeo implements ClimberIO {
   private final SparkMax climberMotor =
       new SparkMax(ClimberConstants.grabberMotorPort, MotorType.kBrushless);
-  protected final RelativeEncoder climberEncoder = climberMotor.getEncoder();
+  private final RelativeEncoder climberEncoder = climberMotor.getEncoder();
+  private final Servo servo = new Servo(0);
 
   public ClimberIONeo() {
     SparkMaxConfig config = new SparkMaxConfig();
@@ -35,11 +37,22 @@ public class ClimberIONeo implements ClimberIO {
     inputs.currentAmps = climberMotor.getOutputCurrent();
     inputs.positionRotations = climberEncoder.getPosition();
     inputs.angularVelocityRotationsPerMinute = climberEncoder.getVelocity();
+    inputs.ratchet = servo.get();
   }
 
   @Override
   public void setVoltage(double voltage) {
     voltage = MathUtil.clamp(voltage, -12.0, 12.0);
     climberMotor.set(voltage);
+  }
+
+  @Override
+  public void engageRatchet() {
+    servo.set(0.5);
+  }
+
+  @Override
+  public void disableRatchet() {
+    servo.set(0);
   }
 }

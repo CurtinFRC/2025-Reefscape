@@ -49,7 +49,15 @@ public class Climber extends SubsystemBase {
   }
 
   public Command stop() {
-    return run(() -> io.setVoltage(0.0));
+    return runOnce(() -> io.setVoltage(0.0));
+  }
+
+  public Command engage() {
+    return runOnce(() -> io.engageRatchet());
+  }
+
+  public Command disengage() {
+    return runOnce(() -> io.disableRatchet());
   }
 
   @AutoLogOutput(key = "Climber/stalled")

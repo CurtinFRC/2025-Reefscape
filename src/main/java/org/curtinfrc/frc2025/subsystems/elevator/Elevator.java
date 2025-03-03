@@ -2,6 +2,7 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -22,6 +23,7 @@ public class Elevator extends SubsystemBase {
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
+  public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
   public final Trigger algaePop =
       new Trigger(
           () ->
@@ -31,6 +33,7 @@ public class Elevator extends SubsystemBase {
   public Elevator(ElevatorIO io) {
     this.io = io;
     pid.setTolerance(tolerance);
+    climbPID.setTolerance(tolerance);
   }
 
   @Override
@@ -67,10 +70,10 @@ public class Elevator extends SubsystemBase {
           var out =
               climbPID.calculate(
                   positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-          Logger.recordOutput("Elevator/Output", out);
-          Logger.recordOutput("Elevator/Error", pid.getError());
+          Logger.recordOutput("Elevator/ClimberOutput", out);
+          Logger.recordOutput("Elevator/ClimberError", pid.getError());
           Logger.recordOutput("Elevator/ClimberPID", true);
-          io.setVoltage(out);
+          io.setVoltage(MathUtil.clamp(out, -3, 3));
         });
   }
 

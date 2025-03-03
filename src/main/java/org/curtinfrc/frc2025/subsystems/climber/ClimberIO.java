@@ -10,6 +10,7 @@ public interface ClimberIO {
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
     public boolean atSetpoint;
+    public double ratchet;
   }
 
   public default void updateInputs(ClimberIOInputs inputs) {}
@@ -17,4 +18,8 @@ public interface ClimberIO {
   public default void setVoltage(double voltage) {}
 
   public default void goToSetpoint() {}
+
+  public default void engageRatchet() {}
+
+  public default void disableRatchet() {}
 }

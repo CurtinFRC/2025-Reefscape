@@ -342,7 +342,13 @@ public class Robot extends LoggedRobot {
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
-        climber.stop().andThen(elevator.goToClimberSetpoint(ElevatorSetpoints.climbed)));
+        climber
+            .stop()
+            .andThen(
+                elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed)
+                    .until(elevator.atClimbSetpoint)
+                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
     // elevator
     //     .isNotAtCollect
@@ -401,7 +407,7 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     ejector.backSensor.whileTrue(intake.stop());
-    intake.backSensor.whileTrue(elevator.stop());
+    intake.backSensor.and(ejector.backSensor.or(ejector.frontSensor)).whileTrue(elevator.stop());
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -435,14 +441,14 @@ public class Robot extends LoggedRobot {
     //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
     //             Commands.waitSeconds(0.4)));
     controller
-        .a()
+        .x()
         .onTrue(
             climber
                 .goToSetpoint(ClimberConstants.targetPositionRotationsIn)
                 .andThen(elevator.goToSetpoint(ElevatorSetpoints.climbPrep)));
 
     controller // climb attempt
-        .x()
+        .a()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
@@ -677,8 +683,7 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    // ejector.backSensor.getAsBoolean()
-                    true
+                    ejector.backSensor.getAsBoolean()
                         ? drive.autoAlignWithOverride(
                             () -> reefSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
@@ -691,10 +696,10 @@ public class Robot extends LoggedRobot {
                             () -> -controller.getRightX()),
                 Set.of(drive)));
 
-    ejector
-        .frontSensor
-        .and(intake.backSensor)
-        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(8)));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
+
+    new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
 
   /** This function is called periodically during all modes. */
