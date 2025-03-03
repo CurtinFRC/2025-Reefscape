@@ -1,6 +1,9 @@
 package org.curtinfrc.frc2025.subsystems.intake;
 
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.*;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeBackSensorPort;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeMoi;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.motorReduction;
 
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
@@ -10,12 +13,12 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IntakeIOSim implements IntakeIO {
-  private DCMotor intakeMotor = DCMotor.getNEO(1);
-  private DCMotorSim intakeMotorSim;
-  private SimDevice frontImpl;
-  private SimBoolean frontSensor;
-  private SimDevice backImpl;
-  private SimBoolean backSensor;
+  private final DCMotor intakeMotor = DCMotor.getNEO(1);
+  private final DCMotorSim intakeMotorSim;
+  private final SimDevice frontImpl;
+  private final SimBoolean frontSensor;
+  private final SimDevice backImpl;
+  private final SimBoolean backSensor;
   private double volts = 0;
 
   public IntakeIOSim() {
@@ -45,6 +48,5 @@ public class IntakeIOSim implements IntakeIO {
   @Override
   public void setVoltage(double volts) {
     this.volts = volts;
-    intakeMotorSim.setInputVoltage(volts);
   }
 }

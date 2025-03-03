@@ -21,6 +21,8 @@ import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.IntegerArrayPublisher;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -29,18 +31,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 /** IO implementation for real Limelight hardware. */
 public class VisionIOLimelight implements VisionIO {
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
   private final DoublePublisher imuModeSet;
+  private final IntegerArrayPublisher idFilterSet;
+  private final NetworkTableEntry ledMode;
 
   private final DoubleSubscriber latencySubscriber;
   private final DoubleSubscriber txSubscriber;
   private final DoubleSubscriber tySubscriber;
   private final DoubleArraySubscriber megatag1Subscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
+
+  private long[] allowedTags = new long[0];
 
   /**
    * Creates a new VisionIOLimelight.
@@ -51,7 +58,9 @@ public class VisionIOLimelight implements VisionIO {
   public VisionIOLimelight(String name, Supplier<Rotation2d> rotationSupplier) {
     var table = NetworkTableInstance.getDefault().getTable(name);
     this.rotationSupplier = rotationSupplier;
+    ledMode = table.getEntry("ledMode");
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
+    idFilterSet = table.getIntegerArrayTopic("fiducial_id_filters_set").publish();
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
     tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
@@ -66,6 +75,9 @@ public class VisionIOLimelight implements VisionIO {
     // Update connection status based on whether an update has been seen in the last 250ms
     inputs.connected =
         ((RobotController.getFPGATime() - latencySubscriber.getLastChange()) / 1000) < 250;
+
+    idFilterSet.set(allowedTags);
+    inputs.allowedTags = allowedTags;
 
     // Update target observation
     inputs.latestTargetObservation =
@@ -162,5 +174,26 @@ public class VisionIOLimelight implements VisionIO {
             Units.degreesToRadians(rawLLArray[3]),
             Units.degreesToRadians(rawLLArray[4]),
             Units.degreesToRadians(rawLLArray[5])));
+  }
+
+  @Override
+  public void allowTags(long[] allowedTags) {
+    this.allowedTags = allowedTags;
+  }
+
+  @Override
+  public void setLEDMode(VisionLEDMode mode) {
+    switch (mode) {
+      case kOn:
+        ledMode.setNumber(3);
+        break;
+      case kBlink:
+        ledMode.setNumber(2);
+        break;
+      case kDefault:
+      case kOff:
+        ledMode.setNumber(1);
+        break;
+    }
   }
 }
