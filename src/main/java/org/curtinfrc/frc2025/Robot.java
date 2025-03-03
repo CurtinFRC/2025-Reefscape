@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
@@ -290,6 +292,8 @@ public class Robot extends LoggedRobot {
     // autos = new Autos(drive, elevator, popper, ejector, intake);
 
     // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
+
+    autoChooser.addCmd("One Piece", this::onePiece);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -906,4 +910,10 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
+
+  public Command onePiece() {
+    return drive
+        .autoAlign(() -> DriveSetpoints.F, Optional.empty(), Optional.empty(), Optional.empty())
+        .andThen(elevator.goToSetpoint(ElevatorSetpoints.L2));
+  }
 }
