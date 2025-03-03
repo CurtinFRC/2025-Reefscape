@@ -18,6 +18,10 @@ public class ElevatorConstants {
   public static double kA = 0.01;
   public static double kG = 0;
 
+  public static double climbkP = 5;
+  public static double climbkI = 0;
+  public static double climbkD = 0;
+
   public static final double pulleyRadiusMeters = 0.03055;
   public static final double gearing = 8.1818;
   public static final double maxHeightMeters = 0.8;
@@ -38,7 +42,10 @@ public class ElevatorConstants {
     AlgaePopLow(0.1),
     L3(0.59735),
     AlgaePopHigh(0.55),
-    BASE(0.01);
+    BASE(0.01),
+    climbPrep(0.2),
+    climbAttempt(0.3),
+    climbed(0.01);
 
     public final double setpoint;
 

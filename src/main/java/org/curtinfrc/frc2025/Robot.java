@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -24,6 +25,7 @@ import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
@@ -339,6 +341,20 @@ public class Robot extends LoggedRobot {
         .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
+    climber.stalled.onTrue(
+        climber.stop().andThen(elevator.goToClimberSetpoint(ElevatorSetpoints.climbed)));
+
+    // elevator
+    //     .isNotAtCollect
+    //     .and(atReefSetpoint)
+    //     .and(elevator.atSetpoint)
+    //     .and(drive.atSetpoint)
+    //     .and(elevator.algaePop.negate())
+    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    // intake.setDefaultCommand(intake.stop());
+
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
@@ -418,17 +434,38 @@ public class Robot extends LoggedRobot {
     //             popper.setVoltage(10),
     //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
     //             Commands.waitSeconds(0.4)));
+    controller
+        .a()
+        .onTrue(
+            climber
+                .goToSetpoint(ClimberConstants.targetPositionRotationsIn)
+                .andThen(elevator.goToSetpoint(ElevatorSetpoints.climbPrep)));
 
-    // controller.y().whileTrue(climber.goToSetpoint().withTimeout(1.5));   // works in sim. test on robot before testing below code
-    controller    // test above first
-        .povUp()
+    controller // climb attempt
+        .x()
+        .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
-                .goToSetpoint(ElevatorSetpoints.L2)
-                .until(controller.povUp().negate())
-                .andThen(elevator.goToSetpoint(ElevatorSetpoints.L3).until(controller.povDown()))
-                .andThen(climber.goToSetpoint().withTimeout(1.5))
-                .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
+                .goToSetpoint(ElevatorSetpoints.climbAttempt)
+                .until(elevator.atSetpoint)
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
+                .andThen(new ScheduleCommand(elevator.goToSetpoint(ElevatorSetpoints.climbPrep))));
+
+    // controller
+    //     .povRight()
+    //     .whileTrue(
+    //         climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn).withTimeout(1.5));
+    // controller // test above first
+    //     .povUp()
+    //     .onTrue(
+    //         elevator
+    //             .goToSetpoint(ElevatorSetpoints.L2) // TODO: make actual setpoints for climb
+    //             .until(controller.povUp().negate())
+    //             .andThen(elevator.goToSetpoint(ElevatorSetpoints.L3).until(controller.povDown()))
+    //             .andThen(climber.goToSetpoint().withTimeout(1.5))
+    //
+    // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
     board
         .left()

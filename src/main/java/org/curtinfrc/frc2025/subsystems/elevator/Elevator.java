@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -15,6 +16,7 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
+  private final PIDController climbPID = new PIDController(climbkP, climbkI, climbkD);
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
@@ -53,6 +55,21 @@ public class Elevator extends SubsystemBase {
               pid.calculate(positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
+          Logger.recordOutput("Elevator/ClimberPID", false);
+          io.setVoltage(out);
+        });
+  }
+
+  public Command goToClimberSetpoint(ElevatorSetpoints point) {
+    return run(
+        () -> {
+          setpoint = point;
+          var out =
+              climbPID.calculate(
+                  positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+          Logger.recordOutput("Elevator/Output", out);
+          Logger.recordOutput("Elevator/Error", pid.getError());
+          Logger.recordOutput("Elevator/ClimberPID", true);
           io.setVoltage(out);
         });
   }
