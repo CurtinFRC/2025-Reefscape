@@ -23,6 +23,10 @@ import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
+import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
@@ -82,6 +86,7 @@ public class Robot extends LoggedRobot {
   private Elevator elevator;
   private Ejector ejector;
   private Popper popper;
+  private Climber climber;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -192,6 +197,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
           popper = new Popper(new PopperIOKraken());
+          climber = new Climber(new ClimberIONeo());
         }
 
         case DEVBOT -> {
@@ -214,6 +220,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
           popper = new Popper(new PopperIO() {});
+          climber = new Climber(new ClimberIONeo());
         }
 
         case SIMBOT -> {
@@ -236,6 +243,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
           popper = new Popper(new PopperIO() {});
+          climber = new Climber(new ClimberIOSim());
         }
       }
     } else {
@@ -259,6 +267,7 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
+      climber = new Climber(new ClimberIO() {});
     }
 
     atReefSetpoint =
@@ -335,6 +344,7 @@ public class Robot extends LoggedRobot {
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+    climber.setDefaultCommand(climber.stop());
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
@@ -408,6 +418,17 @@ public class Robot extends LoggedRobot {
     //             popper.setVoltage(10),
     //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
     //             Commands.waitSeconds(0.4)));
+
+    // controller.y().whileTrue(climber.goToSetpoint().withTimeout(1.5));   // works in sim. test on robot before testing below code
+    controller    // test above first
+        .povUp()
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2)
+                .until(controller.povUp().negate())
+                .andThen(elevator.goToSetpoint(ElevatorSetpoints.L3).until(controller.povDown()))
+                .andThen(climber.goToSetpoint().withTimeout(1.5))
+                .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
     board
         .left()
