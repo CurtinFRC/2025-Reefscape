@@ -115,7 +115,7 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 1);
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =
@@ -755,7 +755,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlignWithOverride(
-      DriveSetpoints _setpoint,
+      Supplier<DriveSetpoints> _setpoint,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
@@ -764,7 +764,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Command autoAlign(
-      DriveSetpoints _setpoint,
+      Supplier<DriveSetpoints> _setpoint,
       Optional<DoubleSupplier> xSupplier,
       Optional<DoubleSupplier> ySupplier,
       Optional<DoubleSupplier> omegaSupplier) {
@@ -778,10 +778,10 @@ public class Drive extends SubsystemBase {
             }
           }
 
-          this.setpoint = _setpoint;
-          Logger.recordOutput("Drive/Setpoint", _setpoint.getPose());
+          this.setpoint = _setpoint.get();
+          Logger.recordOutput("Drive/Setpoint", this.setpoint.getPose());
 
-          repulsorFieldPlanner.setGoal(_setpoint.getPose().getTranslation());
+          repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
 
           var robotPose = getPose();
           SwerveSample cmd =
@@ -797,7 +797,7 @@ public class Drive extends SubsystemBase {
                   cmd.t,
                   cmd.x,
                   cmd.y,
-                  _setpoint.getPose().getRotation().getRadians(),
+                  this.setpoint.getPose().getRotation().getRadians(),
                   cmd.vx,
                   cmd.vy,
                   0,
