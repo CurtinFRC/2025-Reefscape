@@ -2,12 +2,14 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 
 import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -15,11 +17,13 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
+  private final PIDController climbPID = new PIDController(climbkP, climbkI, climbkD);
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
+  public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
   public final Trigger algaePop =
       new Trigger(
           () ->
@@ -29,6 +33,7 @@ public class Elevator extends SubsystemBase {
   public Elevator(ElevatorIO io) {
     this.io = io;
     pid.setTolerance(tolerance);
+    climbPID.setTolerance(tolerance);
   }
 
   @Override
@@ -53,7 +58,22 @@ public class Elevator extends SubsystemBase {
               pid.calculate(positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
           Logger.recordOutput("Elevator/Output", out);
           Logger.recordOutput("Elevator/Error", pid.getError());
+          Logger.recordOutput("Elevator/ClimberPID", false);
           io.setVoltage(out);
+        });
+  }
+
+  public Command goToClimberSetpoint(ElevatorSetpoints point) {
+    return run(
+        () -> {
+          setpoint = point;
+          var out =
+              climbPID.calculate(
+                  positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+          Logger.recordOutput("Elevator/ClimberOutput", out);
+          Logger.recordOutput("Elevator/ClimberError", pid.getError());
+          Logger.recordOutput("Elevator/ClimberPID", true);
+          io.setVoltage(MathUtil.clamp(out, -3, 3));
         });
   }
 

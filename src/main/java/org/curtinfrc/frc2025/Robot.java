@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -23,6 +24,11 @@ import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
+import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
@@ -82,6 +88,7 @@ public class Robot extends LoggedRobot {
   private Elevator elevator;
   private Ejector ejector;
   private Popper popper;
+  private Climber climber;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -192,6 +199,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
           popper = new Popper(new PopperIOKraken());
+          climber = new Climber(new ClimberIONeo());
         }
 
         case DEVBOT -> {
@@ -214,6 +222,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
           popper = new Popper(new PopperIO() {});
+          climber = new Climber(new ClimberIONeo());
         }
 
         case SIMBOT -> {
@@ -236,6 +245,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
           popper = new Popper(new PopperIO() {});
+          climber = new Climber(new ClimberIOSim());
         }
       }
     } else {
@@ -259,6 +269,7 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
+      climber = new Climber(new ClimberIO() {});
     }
 
     atReefSetpoint =
@@ -330,11 +341,32 @@ public class Robot extends LoggedRobot {
         .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
+    climber.stalled.onTrue(
+        climber
+            .stop()
+            .andThen(
+                elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed)
+                    .until(elevator.atClimbSetpoint)
+                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
+
+    // elevator
+    //     .isNotAtCollect
+    //     .and(atReefSetpoint)
+    //     .and(elevator.atSetpoint)
+    //     .and(drive.atSetpoint)
+    //     .and(elevator.algaePop.negate())
+    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    // intake.setDefaultCommand(intake.stop());
+
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+    climber.setDefaultCommand(climber.stop());
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
@@ -375,7 +407,7 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     ejector.backSensor.whileTrue(intake.stop());
-    intake.backSensor.whileTrue(elevator.stop());
+    intake.backSensor.and(ejector.backSensor.or(ejector.frontSensor)).whileTrue(elevator.stop());
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -408,6 +440,38 @@ public class Robot extends LoggedRobot {
     //             popper.setVoltage(10),
     //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
     //             Commands.waitSeconds(0.4)));
+    controller
+        .x()
+        .onTrue(
+            climber
+                .goToSetpoint(ClimberConstants.targetPositionRotationsIn)
+                .andThen(elevator.goToSetpoint(ElevatorSetpoints.climbPrep)));
+
+    controller // climb attempt
+        .a()
+        .and(() -> climber.climberDeployed)
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.climbAttempt)
+                .until(elevator.atSetpoint)
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
+                .andThen(new ScheduleCommand(elevator.goToSetpoint(ElevatorSetpoints.climbPrep))));
+
+    // controller
+    //     .povRight()
+    //     .whileTrue(
+    //         climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn).withTimeout(1.5));
+    // controller // test above first
+    //     .povUp()
+    //     .onTrue(
+    //         elevator
+    //             .goToSetpoint(ElevatorSetpoints.L2) // TODO: make actual setpoints for climb
+    //             .until(controller.povUp().negate())
+    //             .andThen(elevator.goToSetpoint(ElevatorSetpoints.L3).until(controller.povDown()))
+    //             .andThen(climber.goToSetpoint().withTimeout(1.5))
+    //
+    // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
     board
         .left()
@@ -619,8 +683,7 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    // ejector.backSensor.getAsBoolean()
-                    true
+                    ejector.backSensor.getAsBoolean()
                         ? drive.autoAlignWithOverride(
                             () -> reefSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
@@ -633,10 +696,10 @@ public class Robot extends LoggedRobot {
                             () -> -controller.getRightX()),
                 Set.of(drive)));
 
-    ejector
-        .frontSensor
-        .and(intake.backSensor)
-        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(8)));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
+
+    new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
 
   /** This function is called periodically during all modes. */
