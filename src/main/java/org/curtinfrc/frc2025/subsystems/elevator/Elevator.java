@@ -7,8 +7,10 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import java.util.function.BooleanSupplier;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -50,31 +52,38 @@ public class Elevator extends SubsystemBase {
     }
   }
 
-  public Command goToSetpoint(ElevatorSetpoints point) {
-    return run(
-        () -> {
-          setpoint = point;
-          var out =
-              pid.calculate(positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-          Logger.recordOutput("Elevator/Output", out);
-          Logger.recordOutput("Elevator/Error", pid.getError());
-          Logger.recordOutput("Elevator/ClimberPID", false);
-          io.setVoltage(out);
-        });
+  public Command goToSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
+    return Commands.either(
+        run(
+            () -> {
+              setpoint = point;
+              var out =
+                  pid.calculate(
+                      positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+              Logger.recordOutput("Elevator/Output", out);
+              Logger.recordOutput("Elevator/Error", pid.getError());
+              Logger.recordOutput("Elevator/ClimberPID", false);
+              io.setVoltage(out);
+            }),
+        Commands.none(),
+        safe);
   }
 
-  public Command goToClimberSetpoint(ElevatorSetpoints point) {
-    return run(
-        () -> {
-          setpoint = point;
-          var out =
-              climbPID.calculate(
-                  positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-          Logger.recordOutput("Elevator/ClimberOutput", out);
-          Logger.recordOutput("Elevator/ClimberError", pid.getError());
-          Logger.recordOutput("Elevator/ClimberPID", true);
-          io.setVoltage(MathUtil.clamp(out, -3, 3));
-        });
+  public Command goToClimberSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
+    return Commands.either(
+        run(
+            () -> {
+              setpoint = point;
+              var out =
+                  climbPID.calculate(
+                      positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+              Logger.recordOutput("Elevator/ClimberOutput", out);
+              Logger.recordOutput("Elevator/ClimberError", pid.getError());
+              Logger.recordOutput("Elevator/ClimberPID", true);
+              io.setVoltage(MathUtil.clamp(out, -3, 3));
+            }),
+        Commands.none(),
+        safe);
   }
 
   public Command zero() {

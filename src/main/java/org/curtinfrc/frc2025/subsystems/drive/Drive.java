@@ -85,8 +85,8 @@ public class Drive extends SubsystemBase {
   private double d = 0;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(3.5, 0.0, 0);
-  private final PIDController yController = new PIDController(3.5, 0.0, 0);
+  private final PIDController xController = new PIDController(5, 0.0, 0);
+  private final PIDController yController = new PIDController(5, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -115,7 +115,7 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 1);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 3);
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =

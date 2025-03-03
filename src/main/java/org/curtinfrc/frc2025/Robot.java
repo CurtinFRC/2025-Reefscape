@@ -294,6 +294,7 @@ public class Robot extends LoggedRobot {
     // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
 
     autoChooser.addCmd("One Piece", this::onePiece);
+    autoChooser.addCmd("Test Auto", this::testAuto);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -340,9 +341,6 @@ public class Robot extends LoggedRobot {
     elevator
         .isNotAtCollect
         .and(atReefSetpoint)
-        .and(elevator.atSetpoint)
-        .and(drive.atSetpoint)
-        .and(elevator.algaePop.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
@@ -350,7 +348,7 @@ public class Robot extends LoggedRobot {
             .stop()
             .andThen(
                 elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed)
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
                     .until(elevator.atClimbSetpoint)
                     .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
@@ -369,7 +367,8 @@ public class Robot extends LoggedRobot {
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
-    elevator.setDefaultCommand(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+    elevator.setDefaultCommand(
+        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
     climber.setDefaultCommand(climber.stop());
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
@@ -411,7 +410,6 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     ejector.backSensor.whileTrue(intake.stop());
-    intake.backSensor.and(ejector.backSensor.or(ejector.frontSensor)).whileTrue(elevator.stop());
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -449,18 +447,23 @@ public class Robot extends LoggedRobot {
         .onTrue(
             climber
                 .goToSetpoint(ClimberConstants.targetPositionRotationsIn)
-                .andThen(elevator.goToSetpoint(ElevatorSetpoints.climbPrep)));
+                .andThen(
+                    elevator.goToSetpoint(
+                        ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
 
     controller // climb attempt
         .a()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
-                .goToSetpoint(ElevatorSetpoints.climbAttempt)
+                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
                 .until(elevator.atSetpoint)
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
-                .andThen(new ScheduleCommand(elevator.goToSetpoint(ElevatorSetpoints.climbPrep))));
+                .andThen(
+                    new ScheduleCommand(
+                        elevator.goToSetpoint(
+                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
     // controller
     //     .povRight()
@@ -703,6 +706,17 @@ public class Robot extends LoggedRobot {
     ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
     ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
 
+    almostAtReefSetpoint
+        .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
+        .and(ejector.backSensor)
+        .onTrue(
+            Commands.defer(
+                () ->
+                    elevator
+                        .goToSetpoint(reefSetpoint.elevatorSetpoint(), intake.backSensor.negate())
+                        .until(ejector.backSensor.negate()),
+                Set.of(elevator)));
+
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
 
@@ -750,20 +764,20 @@ public class Robot extends LoggedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    elevator
-        .isNotAtCollect
-        .and(atReefSetpoint)
-        .and(drive.atSetpoint)
-        .and(elevator.atSetpoint)
-        .and(elevator.algaePop.negate())
-        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-
-    elevator
-        .isNotAtCollect
-        .and(atReefSetpoint)
-        .and(drive.atSetpoint)
-        .and(elevator.algaePop)
-        .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
+    // elevator
+    //     .isNotAtCollect
+    //     .and(atReefSetpoint)
+    //     .and(drive.atSetpoint)
+    //     .and(elevator.atSetpoint)
+    //     .and(elevator.algaePop.negate())
+    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+    //
+    // elevator
+    //     .isNotAtCollect
+    //     .and(atReefSetpoint)
+    //     .and(drive.atSetpoint)
+    //     .and(elevator.algaePop)
+    //     .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
   }
 
   /** This function is called periodically during autonomous. */
@@ -840,57 +854,32 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getRightX()),
             Set.of(drive)));
 
-    ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
+    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
     controller
         .rightTrigger()
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
-                popper.setVoltage(10), elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow)));
+                popper.setVoltage(10),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
     drive
         .atSetpoint
         .and(controller.leftTrigger())
         .whileTrue(
             Commands.race(
                     popper.setVoltage(10),
-                    elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
+                    elevator.goToSetpoint(
+                        ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()),
                     Commands.waitSeconds(0.4))
-                .andThen(elevator.goToSetpoint(reefSetpoint.elevatorSetpoint())));
-
-    almostAtReefSetpoint
-        .and(controller.rightTrigger().or(controller.leftTrigger()).negate())
-        .and(ejector.backSensor)
-        .whileTrue(
-            Commands.defer(
-                () ->
-                    elevator
-                        .goToSetpoint(reefSetpoint.elevatorSetpoint())
-                        .withInterruptBehavior(InterruptionBehavior.kCancelSelf),
-                Set.of(elevator)));
+                .andThen(
+                    elevator.goToSetpoint(
+                        reefSetpoint.elevatorSetpoint(), intake.backSensor.negate())));
   }
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {
-    if (ejector.getCurrentCommand() != null) {
-      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
-    } else {
-      Logger.recordOutput("EjectorCommand", "null");
-    }
-
-    if (intake.getCurrentCommand() != null) {
-      Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
-    } else {
-      Logger.recordOutput("IntakeCommand", "null");
-    }
-
-    if (intake.getCurrentCommand() != null) {
-      Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
-    } else {
-      Logger.recordOutput("DriveCommand", "null");
-    }
-  }
+  public void teleopPeriodic() {}
 
   /** This function is called once when test mode is enabled. */
   @Override
@@ -913,7 +902,24 @@ public class Robot extends LoggedRobot {
 
   public Command onePiece() {
     return drive
-        .autoAlign(() -> DriveSetpoints.F, Optional.empty(), Optional.empty(), Optional.empty())
-        .andThen(elevator.goToSetpoint(ElevatorSetpoints.L2));
+        .autoAlign(() -> DriveSetpoints.C, Optional.empty(), Optional.empty(), Optional.empty())
+        .until(drive.atSetpoint)
+        .andThen(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(elevator.atSetpoint)
+                .andThen(
+                    Commands.parallel(
+                        elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
+                        ejector.eject(8))))
+        .until(ejector.backSensor.negate());
+  }
+
+  public Command testAuto() {
+    return onePiece()
+        .andThen(
+            Commands.parallel(
+                popper.setVoltage(10),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
   }
 }

@@ -9,7 +9,7 @@ public class EjectorConstants {
   public static final double ejectorReduction = 1;
   public static final double kP = 0;
   public static final double kD = 0;
-  public static final double kS = 0.3;
-  public static final double kV = 0.6;
+  public static final double kS = 0.8;
+  public static final double kV = 0.22;
   public static final double kA = 0;
 }
