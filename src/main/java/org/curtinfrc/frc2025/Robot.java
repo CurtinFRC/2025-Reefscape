@@ -342,7 +342,7 @@ public class Robot extends LoggedRobot {
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getRightX()));
 
     elevator
         .isNotAtCollect
