@@ -438,7 +438,9 @@ public class Robot extends LoggedRobot {
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     controller.leftStick().whileTrue(intake.intake(-intakeVolts));
-    controller.rightStick().whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller
+        .rightStick()
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
@@ -886,18 +888,15 @@ public class Robot extends LoggedRobot {
             Commands.parallel(
                 popper.setVoltage(10),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
-    drive
-        .atSetpoint
-        .and(controller.leftTrigger())
-        .whileTrue(
-            Commands.race(
-                    popper.setVoltage(10),
-                    elevator.goToSetpoint(
-                        ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()),
-                    Commands.waitSeconds(0.4))
-                .andThen(
-                    elevator.goToSetpoint(
-                        reefSetpoint.elevatorSetpoint(), intake.backSensor.negate())));
+
+
+                controller
+                .leftTrigger()
+                // .and(drive.atSetpoint)
+                .whileTrue(
+                    Commands.parallel(
+                        popper.setVoltage(10),
+                        elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
   }
 
   /** This function is called periodically during operator control. */
