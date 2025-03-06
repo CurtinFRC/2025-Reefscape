@@ -499,8 +499,8 @@ public class Robot extends LoggedRobot {
         .processor()
         .onTrue(
             Commands.runOnce(() -> overridden = !overridden)
-                .ignoringDisable(true)
-                .andThen(drive.runOnce(() -> {})));
+                
+                .andThen(drive.runOnce(() -> {})).ignoringDisable(true));
 
     board
         .left()
