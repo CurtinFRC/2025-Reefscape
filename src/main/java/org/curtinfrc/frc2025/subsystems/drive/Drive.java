@@ -440,6 +440,10 @@ public class Drive extends SubsystemBase {
     xController.setSetpoint(sample.x);
     yController.setSetpoint(sample.y);
     headingController.setSetpoint(sample.heading);
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
 
     ChassisSpeeds speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -450,7 +454,7 @@ public class Drive extends SubsystemBase {
                 : -headingController.calculate(
                     pose.getRotation().getRadians(),
                     Math.atan2(transform.getY(), transform.getX())),
-            getRotation()); // Apply the generated speeds
+            rotation); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);
   }
