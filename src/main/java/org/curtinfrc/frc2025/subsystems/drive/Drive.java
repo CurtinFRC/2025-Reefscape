@@ -454,7 +454,7 @@ public class Drive extends SubsystemBase {
                 : -headingController.calculate(
                     pose.getRotation().getRadians(),
                     Math.atan2(transform.getY(), transform.getX())),
-            rotation); // Apply the generated speeds
+            getRotation()); // Apply the generated speeds
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);
   }
