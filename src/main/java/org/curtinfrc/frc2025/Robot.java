@@ -370,7 +370,6 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake(intakeVolts));
     // intake.setDefaultCommand(intake.stop());
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
