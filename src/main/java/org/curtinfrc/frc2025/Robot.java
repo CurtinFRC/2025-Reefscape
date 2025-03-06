@@ -833,12 +833,11 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    drive
-                        .autoAlignWithOverride(
-                            () -> hpSetpoint.driveSetpoint(),
-                            () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
-                            () -> controller.getRightX()),
+                    drive.autoAlignWithOverride(
+                        () -> hpSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> controller.getRightX()),
                 Set.of(drive)));
 
     intake
@@ -847,13 +846,12 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    drive
-                        .autoAlignWithOverride(
-                            () -> reefSetpoint.driveSetpoint(),
-                            () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
-                            () -> -controller.getRightX()),
-                Set.of(drive))); 
+                    drive.autoAlignWithOverride(
+                        () -> reefSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive)));
   }
 
   /** This function is called periodically during operator control. */
