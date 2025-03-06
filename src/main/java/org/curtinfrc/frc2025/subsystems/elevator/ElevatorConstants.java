@@ -8,7 +8,7 @@ public class ElevatorConstants {
   public static int resetPort = 0;
   public static int leaderPort = 31;
   public static int followerPort = 32;
-  public static final int currentLimit = 60;
+  public static final int currentLimit = 50;
 
   // TODO: TUNE PID and ff
   public static double tolerance = 0.021;
