@@ -85,8 +85,8 @@ public class Drive extends SubsystemBase {
   private double d = 0;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(5, 0.0, 0);
-  private final PIDController yController = new PIDController(5, 0.0, 0);
+  private final PIDController xController = new PIDController(4.5, 0.0, 0);
+  private final PIDController yController = new PIDController(4.5, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -443,7 +443,6 @@ public class Drive extends SubsystemBase {
     boolean isFlipped =
         DriverStation.getAlliance().isPresent()
             && DriverStation.getAlliance().get() == Alliance.Red;
-    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
 
     ChassisSpeeds speeds;
     if (isFlipped) {
