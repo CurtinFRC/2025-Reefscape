@@ -59,7 +59,7 @@ public class EjectorIOKraken implements EjectorIO {
   @Override
   public void updateInputs(EjectorIOInputs inputs) {
     BaseStatusSignal.refreshAll(velocity, voltage, current, position);
-    follower.setControl(new Follower(ID, false));
+    follower.setControl(new Follower(ID, true));
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
     inputs.positionRotations = position.getValueAsDouble();

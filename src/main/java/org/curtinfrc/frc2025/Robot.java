@@ -89,7 +89,7 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-//   private Popper popper;
+  //   private Popper popper;
   private Climber climber;
 
   // Controller
@@ -206,7 +206,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
-        //   popper = new Popper(new PopperIOKraken());
+          //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -229,7 +229,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
-        //   popper = new Popper(new PopperIO() {});
+          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -252,7 +252,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-        //   popper = new Popper(new PopperIO() {});
+          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
         }
       }
@@ -276,7 +276,7 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-    //   popper = new Popper(new PopperIO() {});
+      //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
     }
 
