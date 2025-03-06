@@ -25,14 +25,17 @@ public class VisionConstants {
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Camera names, must match names configured on coprocessor
-  public static String camera0Name = "limelight-back";
+  public static String camera0Name = "limelight-3";
+  public static String camera3Name = "limelight-3g";
   public static String camera1Name = "limelight-left";
   public static String camera2Name = "limelight-right";
 
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)
   public static Transform3d robotToCamera0 =
-      new Transform3d(0.01, 0.06, 0.360, new Rotation3d(0, -Math.PI / 6, Math.PI));
+      new Transform3d(0.123408, 0.171, 0.916995, new Rotation3d(0, -Math.PI / 4, Math.PI));
+  public static Transform3d robotToCamera3 =
+      new Transform3d(0.123408, -0.171, 0.916995, new Rotation3d(0, -Math.PI / 4, Math.PI));
   public static Transform3d robotToCamera1 =
       new Transform3d(0.17061, 0.2105, 0.30815, Rotation3d.kZero);
   public static Transform3d robotToCamera2 =
@@ -44,7 +47,7 @@ public class VisionConstants {
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
-  public static double linearStdDevBaseline = 0.03; // Meters
+  public static double linearStdDevBaseline = 0.07; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
 
   // Standard deviation multipliers for each camera
@@ -52,8 +55,9 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
-        1.5, // Camera 1
-        1.5, // Camera 2
+        0.8, // Camera 1
+        0.8, // Camera 2
+        1.0 // Camera 3
       };
 
   // Multipliers to apply for MegaTag 2 observations

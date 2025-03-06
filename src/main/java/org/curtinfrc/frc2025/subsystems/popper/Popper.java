@@ -15,7 +15,7 @@ public class Popper extends SubsystemBase {
   @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Intake", inputs);
+    Logger.processInputs("Popper", inputs);
   }
 
   public Command setVoltage(double volts) {

@@ -24,17 +24,21 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import java.util.LinkedList;
 import java.util.List;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends VirtualSubsystem {
   private final PoseEstimateConsumer consumer;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private int lastPVMeasurement;
 
   public Vision(PoseEstimateConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -64,6 +68,12 @@ public class Vision extends VirtualSubsystem {
     return inputs[cameraIndex].latestTargetObservation.tx();
   }
 
+  public void setLEDMode(VisionLEDMode mode) {
+    for (var i : io) {
+      i.setLEDMode(mode);
+    }
+  }
+
   public boolean hasTarget(int cameraIndex) {
     return inputs[cameraIndex].connected
         && inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
@@ -75,6 +85,14 @@ public class Vision extends VirtualSubsystem {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
+      boolean red =
+          DriverStation.getAlliance().isPresent()
+              && DriverStation.getAlliance().get() == Alliance.Red;
+      if (red) {
+        io[i].allowTags(new long[] {6, 7, 8, 9, 10, 11});
+      } else {
+        io[i].allowTags(new long[] {17, 18, 19, 20, 21, 22});
+      }
     }
 
     // Initialize logging values
@@ -87,7 +105,15 @@ public class Vision extends VirtualSubsystem {
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
-
+      var discardMegatag = false;
+      if (inputs[0].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
+        lastPVMeasurement = 0;
+      } else {
+        lastPVMeasurement++;
+      }
+      if (lastPVMeasurement < 5) {
+        discardMegatag = true;
+      }
       // Initialize logging values
       List<Pose3d> tagPoses = new LinkedList<>();
       List<Pose3d> robotPoses = new LinkedList<>();
@@ -137,8 +163,14 @@ public class Vision extends VirtualSubsystem {
         double linearStdDev = linearStdDevBaseline * stdDevFactor;
         double angularStdDev = angularStdDevBaseline * stdDevFactor;
         if (observation.type() == PoseObservationType.MEGATAG_2) {
+          if (discardMegatag) {
+            continue;
+          }
           linearStdDev *= linearStdDevMegatag2Factor;
           angularStdDev *= angularStdDevMegatag2Factor;
+        }
+        if (observation.type() == PoseObservationType.MEGATAG_1 && discardMegatag) {
+          continue;
         }
         if (cameraIndex < cameraStdDevFactors.length) {
           linearStdDev *= cameraStdDevFactors[cameraIndex];
