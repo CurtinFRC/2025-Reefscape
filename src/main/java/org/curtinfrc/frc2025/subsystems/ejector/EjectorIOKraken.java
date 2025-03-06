@@ -20,7 +20,6 @@ public class EjectorIOKraken implements EjectorIO {
   private static final int ID = 46;
   private static final int FOLLOWER_ID = 46;
 
-
   private final TalonFX motor = new TalonFX(ID);
   private final TalonFX follower = new TalonFX(FOLLOWER_ID);
 
@@ -43,16 +42,16 @@ public class EjectorIOKraken implements EjectorIO {
                         .withMotorOutput(
                             new MotorOutputConfigs()
                                 .withInverted(InvertedValue.Clockwise_Positive))));
-                                tryUntilOk(
-                                  5,
-                                  () ->
-                                      follower
-                                          .getConfigurator()
-                                          .apply(
-                                              new TalonFXConfiguration()
-                                                  .withMotorOutput(
-                                                      new MotorOutputConfigs()
-                                                          .withInverted(InvertedValue.Clockwise_Positive))));
+    tryUntilOk(
+        5,
+        () ->
+            follower
+                .getConfigurator()
+                .apply(
+                    new TalonFXConfiguration()
+                        .withMotorOutput(
+                            new MotorOutputConfigs()
+                                .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
   }

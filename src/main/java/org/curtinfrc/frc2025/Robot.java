@@ -54,9 +54,9 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
-import org.curtinfrc.frc2025.subsystems.popper.Popper;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
+// import org.curtinfrc.frc2025.subsystems.popper.Popper;
+// import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+// import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -89,7 +89,7 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-  private Popper popper;
+//   private Popper popper;
   private Climber climber;
 
   // Controller
@@ -206,7 +206,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
-          popper = new Popper(new PopperIOKraken());
+        //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -229,7 +229,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
-          popper = new Popper(new PopperIO() {});
+        //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -252,7 +252,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-          popper = new Popper(new PopperIO() {});
+        //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
         }
       }
@@ -276,7 +276,7 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      popper = new Popper(new PopperIO() {});
+    //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
     }
 
@@ -373,7 +373,7 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    popper.setDefaultCommand(popper.stop());
+    // popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
         elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
     climber.setDefaultCommand(climber.stop());
@@ -752,7 +752,7 @@ public class Robot extends LoggedRobot {
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
-                popper.setVoltage(10),
+                ejector.setVoltage(10),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
 
     controller
@@ -767,7 +767,7 @@ public class Robot extends LoggedRobot {
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
-                popper.setVoltage(10),
+                ejector.setVoltage(10),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
   }
 
@@ -954,7 +954,7 @@ public class Robot extends LoggedRobot {
     return onePiece()
         .andThen(
             Commands.parallel(
-                popper.setVoltage(10),
+                ejector.setVoltage(10),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
   }
 }

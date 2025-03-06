@@ -43,4 +43,8 @@ public class Ejector extends SubsystemBase {
           io.setVoltage(pid_out + ff_out);
         });
   }
+
+  public Command setVoltage(double volts) {
+    return run(() -> io.setVoltage(volts));
+  }
 }
