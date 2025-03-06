@@ -856,7 +856,12 @@ public class Robot extends LoggedRobot {
                             () -> -controller.getRightX())
                         .until(
                             atReefSetpoint.or(
-                                ejector.backSensor.negate().or(intake.frontSensor.negate()))),
+                                ejector
+                                    .backSensor
+                                    .negate()
+                                    .and(intake.frontSensor.negate())
+                                    .and(intake.backSensor.negate())
+                                    .and(ejector.frontSensor.negate()))),
                 Set.of(drive)));
   }
 
