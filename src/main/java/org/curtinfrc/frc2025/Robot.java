@@ -493,7 +493,9 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
-    board.processor().onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
+    board
+        .processor()
+        .onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
 
     board
         .left()

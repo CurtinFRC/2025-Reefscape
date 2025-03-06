@@ -9,7 +9,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 
 public class PopperIOKraken implements PopperIO {
-  private static final int ID = 46;
+  private static final int ID = 45;
 
   private final TalonFX motor = new TalonFX(ID);
 

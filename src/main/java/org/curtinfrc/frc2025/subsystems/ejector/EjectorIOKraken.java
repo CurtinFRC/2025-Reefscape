@@ -16,7 +16,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class EjectorIOKraken implements EjectorIO {
-  private static final int ID = 45;
+  private static final int ID = 46;
 
   private final TalonFX motor = new TalonFX(ID);
   private final DigitalInput frontSensor = new DigitalInput(frontSensorPort);
