@@ -742,6 +742,13 @@ public class Robot extends LoggedRobot {
 
     controller
         .rightTrigger()
+        .and(board.coralAB().negate())
+        .and(board.coralCD().negate())
+        .and(board.coralEF().negate())
+        .and(board.coralGH().negate())
+        .and(board.coralIJ().negate())
+        .and(board.coralIJ().negate())
+        .and(board.coralKL().negate())
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
@@ -750,6 +757,13 @@ public class Robot extends LoggedRobot {
 
     controller
         .leftTrigger()
+        .and(board.coralAB().negate())
+        .and(board.coralCD().negate())
+        .and(board.coralEF().negate())
+        .and(board.coralGH().negate())
+        .and(board.coralIJ().negate())
+        .and(board.coralIJ().negate())
+        .and(board.coralKL().negate())
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
