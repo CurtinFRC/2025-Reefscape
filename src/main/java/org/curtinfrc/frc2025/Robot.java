@@ -121,6 +121,12 @@ public class Robot extends LoggedRobot {
   @AutoLogOutput(key = "Robot/AtHPSetpoint")
   public final Trigger atHpSetpoint;
 
+  @AutoLogOutput(key = "Robot/Overridden")
+  private boolean overridden = false;
+
+  @AutoLogOutput(key = "Robot/Overide")
+  private final Trigger override = new Trigger(() -> overridden);
+
   public Robot() {
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
@@ -341,6 +347,7 @@ public class Robot extends LoggedRobot {
     elevator
         .isNotAtCollect
         .and(atReefSetpoint)
+        .and(override.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
@@ -422,10 +429,16 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // controller.leftBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
-    // controller.rightBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
-    // controller.rightTrigger().whileTrue(intake.intake(-5));
-    // controller.leftTrigger().whileTrue(intake.intake(-intakeVolts));
+    controller
+        .leftBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+    controller
+        .rightBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller.leftStick().whileTrue(intake.intake(-intakeVolts));
+    controller.rightStick().whileTrue(ejector.eject(15));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
@@ -479,6 +492,8 @@ public class Robot extends LoggedRobot {
     //             .andThen(climber.goToSetpoint().withTimeout(1.5))
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
+
+    board.processor().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     board
         .left()
@@ -687,6 +702,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     RobotModeTriggers.teleop()
+        .and(override.negate())
         .onTrue(
             Commands.defer(
                 () ->
@@ -707,6 +723,7 @@ public class Robot extends LoggedRobot {
     ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
 
     almostAtReefSetpoint
+        .and(override.negate())
         .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
         .and(ejector.backSensor)
         .onTrue(
@@ -790,6 +807,7 @@ public class Robot extends LoggedRobot {
     ejector
         .backSensor
         .negate()
+        .and(override.negate())
         .onTrue(
             Commands.defer(
                 () ->
@@ -844,15 +862,18 @@ public class Robot extends LoggedRobot {
     //                             .until(ejector.backSensor.negate())),
     //             Set.of(elevator)));
 
-    intake.frontSensor.onTrue(
-        Commands.defer(
-            () ->
-                drive.autoAlignWithOverride(
-                    () -> reefSetpoint.driveSetpoint(),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX()),
-            Set.of(drive)));
+    intake
+        .frontSensor
+        .and(override.negate())
+        .onTrue(
+            Commands.defer(
+                () ->
+                    drive.autoAlignWithOverride(
+                        () -> reefSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive)));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
 
