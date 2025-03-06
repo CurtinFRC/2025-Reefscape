@@ -852,7 +852,7 @@ public class Robot extends LoggedRobot {
                         () -> hpSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
-                        () -> controller.getRightX()),
+                        () -> controller.getRightX()).until(atHpSetpoint),
                 Set.of(drive)));
     //     ejector
     //         .backSensor
@@ -909,7 +909,7 @@ public class Robot extends LoggedRobot {
                         () -> reefSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
+                        () -> -controller.getRightX()).until(atReefSetpoint.or(ejector.backSensor.negate())),
                 Set.of(drive)));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));

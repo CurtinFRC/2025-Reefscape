@@ -115,7 +115,7 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.02 && y() <= 0.02 && a() <= 1);
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =
