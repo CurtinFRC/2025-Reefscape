@@ -739,6 +739,22 @@ public class Robot extends LoggedRobot {
                 Set.of(elevator)));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
+
+    controller
+        .rightTrigger()
+        // .and(drive.atSetpoint)
+        .whileTrue(
+            Commands.parallel(
+                popper.setVoltage(10),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+
+    controller
+        .leftTrigger()
+        // .and(drive.atSetpoint)
+        .whileTrue(
+            Commands.parallel(
+                popper.setVoltage(10),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
   }
 
   /** This function is called periodically during all modes. */
@@ -880,23 +896,6 @@ public class Robot extends LoggedRobot {
                 Set.of(drive)));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
-
-    controller
-        .rightTrigger()
-        // .and(drive.atSetpoint)
-        .whileTrue(
-            Commands.parallel(
-                popper.setVoltage(10),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
-
-
-                controller
-                .leftTrigger()
-                // .and(drive.atSetpoint)
-                .whileTrue(
-                    Commands.parallel(
-                        popper.setVoltage(10),
-                        elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
   }
 
   /** This function is called periodically during operator control. */
