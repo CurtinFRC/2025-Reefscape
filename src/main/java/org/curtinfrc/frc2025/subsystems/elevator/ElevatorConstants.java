@@ -40,7 +40,7 @@ public class ElevatorConstants {
     L1(0),
     L2(0.2),
     AlgaePopLow(0.1),
-    L3(0.59735),
+    L3(0.58),
     AlgaePopHigh(0.55),
     BASE(0.01),
     climbPrep(0.37),
