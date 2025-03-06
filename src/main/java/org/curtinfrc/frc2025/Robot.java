@@ -370,6 +370,7 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake(intakeVolts));
     // intake.setDefaultCommand(intake.stop());
 
+    intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     popper.setDefaultCommand(popper.stop());
@@ -492,9 +493,7 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
-    board
-        .processor()
-        .onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
+    board.processor().onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
 
     board
         .left()
