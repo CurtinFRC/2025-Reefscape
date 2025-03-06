@@ -497,7 +497,9 @@ public class Robot extends LoggedRobot {
 
     board
         .processor()
-        .onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
+        .onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true).andThen(drive.joystickDrive( () -> -controller.getLeftY(),
+        () -> -controller.getLeftX(),
+        () -> -controller.getRightX())));
 
     board
         .left()
