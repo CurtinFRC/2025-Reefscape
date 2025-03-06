@@ -817,22 +817,7 @@ public class Robot extends LoggedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {
-    // elevator
-    //     .isNotAtCollect
-    //     .and(atReefSetpoint)
-    //     .and(drive.atSetpoint)
-    //     .and(elevator.atSetpoint)
-    //     .and(elevator.algaePop.negate())
-    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-    //
-    // elevator
-    //     .isNotAtCollect
-    //     .and(atReefSetpoint)
-    //     .and(drive.atSetpoint)
-    //     .and(elevator.algaePop)
-    //     .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
-  }
+  public void autonomousInit() {}
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -848,71 +833,29 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.defer(
                 () ->
-                    drive.autoAlignWithOverride(
-                        () -> hpSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> controller.getRightX()).until(atHpSetpoint),
+                    drive
+                        .autoAlignWithOverride(
+                            () -> hpSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> controller.getRightX())
+                        .until(atHpSetpoint),
                 Set.of(drive)));
-    //     ejector
-    //         .backSensor
-    //         .negate()
-    //         .onTrue(Commands.defer(() -> drive.autoAlignWithOverride(() ->
-    // hpSetpoint.driveSetpoint(), () -> -controller.getLeftY(), () -> -controller.getLeftX()
-    // , () -> -controller.getRightX())));
-    // Commands.defer(
-    //     () ->
-    //         drive.autoAlignWithOverride(
-    //             () -> hpSetpoint.driveSetpoint(),
-    //             () -> -controller.getLeftY(),
-    //             () -> -controller.getLeftX(),
-    //             () -> -controller.getRightX()),
-    //     Set.of(drive)));
-
-    // atReefSetpoint
-    //     .and(ejector.backSensor)
-    //     .onTrue(
-    //         Commands.defer(
-    //             () ->
-    //                 (shouldPop
-    //                             && ((AlgaePoppedStates.isHigh(
-    //                                         AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-    //                                     && reefSetpoint.elevatorSetpoint() ==
-    // ElevatorSetpoints.L3)
-    //                                 || (!AlgaePoppedStates.isHigh(
-    //                                         AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-    //                                     && (reefSetpoint.elevatorSetpoint() ==
-    // ElevatorSetpoints.L2
-    //                                         || reefSetpoint.elevatorSetpoint()
-    //                                             == ElevatorSetpoints.L3)))
-    //                         ? Commands.parallel(
-    //                                 elevator.goToSetpoint(
-    //                                     ElevatorSetpoints.getPopPoint(
-    //                                         reefSetpoint.elevatorSetpoint())),
-    //                                 popper.setVoltage(5),
-    //                                 Commands.run(() -> shouldPop = false))
-    //                             .withTimeout(3)
-    //                         : Commands.run(() -> {}))
-    //                     .andThen(
-    //                         elevator
-    //                             .goToSetpoint(reefSetpoint.elevatorSetpoint())
-    //                             .until(ejector.backSensor.negate())),
-    //             Set.of(elevator)));
-
+ 
     intake
         .frontSensor
         .and(override.negate())
         .onTrue(
             Commands.defer(
                 () ->
-                    drive.autoAlignWithOverride(
-                        () -> reefSetpoint.driveSetpoint(),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()).until(atReefSetpoint.or(ejector.backSensor.negate())),
+                    drive
+                        .autoAlignWithOverride(
+                            () -> reefSetpoint.driveSetpoint(),
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX())
+                        .until(atReefSetpoint.or(ejector.backSensor.negate().and(intake.frontSensor.negate()))),
                 Set.of(drive)));
-
-    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
   }
 
   /** This function is called periodically during operator control. */
