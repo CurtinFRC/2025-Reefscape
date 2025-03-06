@@ -438,7 +438,7 @@ public class Robot extends LoggedRobot {
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     controller.leftStick().whileTrue(intake.intake(-intakeVolts));
-    controller.rightStick().whileTrue(ejector.eject(15));
+    controller.rightStick().whileTrue(ejector.eject(15).andThen(ejector.eject(15)));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
@@ -493,7 +493,9 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
-    board.processor().onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
+    board
+        .processor()
+        .onTrue(Commands.runOnce(() -> overridden = !overridden).ignoringDisable(true));
 
     board
         .left()
