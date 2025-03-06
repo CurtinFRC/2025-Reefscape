@@ -841,7 +841,7 @@ public class Robot extends LoggedRobot {
                             () -> controller.getRightX())
                         .until(atHpSetpoint),
                 Set.of(drive)));
- 
+
     intake
         .frontSensor
         .and(override.negate())
@@ -854,7 +854,9 @@ public class Robot extends LoggedRobot {
                             () -> -controller.getLeftY(),
                             () -> -controller.getLeftX(),
                             () -> -controller.getRightX())
-                        .until(atReefSetpoint.or(ejector.backSensor.negate().and(intake.frontSensor.negate()))),
+                        .until(
+                            atReefSetpoint.or(
+                                ejector.backSensor.negate().and(intake.frontSensor.negate()))),
                 Set.of(drive)));
   }
 
