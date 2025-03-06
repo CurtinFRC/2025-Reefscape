@@ -63,7 +63,7 @@ public final class DriveConstants {
     // PROCESSOR(Pose2d.kZero),
     LEFT_HP(new Pose2d(1.313582181930542, 7.24, Rotation2d.fromDegrees(125.989 + 180))),
     RIGHT_HP(
-        new Pose2d(1.313582181930542, 0.89, Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
+        new Pose2d(1.313582181930542, 0.85, Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
 
     private final Pose2d pose;
 
