@@ -838,8 +838,7 @@ public class Robot extends LoggedRobot {
                             () -> hpSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
                             () -> -controller.getLeftX(),
-                            () -> controller.getRightX())
-                        .until(atHpSetpoint),
+                            () -> controller.getRightX()),
                 Set.of(drive)));
 
     intake
@@ -853,16 +852,8 @@ public class Robot extends LoggedRobot {
                             () -> reefSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
                             () -> -controller.getLeftX(),
-                            () -> -controller.getRightX())
-                        .until(
-                            atReefSetpoint.or(
-                                ejector
-                                    .backSensor
-                                    .negate()
-                                    .and(intake.frontSensor.negate())
-                                    .and(intake.backSensor.negate())
-                                    .and(ejector.frontSensor.negate()))),
-                Set.of(drive)));
+                            () -> -controller.getRightX()),
+                Set.of(drive))); 
   }
 
   /** This function is called periodically during operator control. */
