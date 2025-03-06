@@ -438,7 +438,7 @@ public class Robot extends LoggedRobot {
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     controller.leftStick().whileTrue(intake.intake(-intakeVolts));
-    controller.rightStick().whileTrue(ejector.eject(15).andThen(ejector.eject(15)));
+    controller.rightStick().whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
