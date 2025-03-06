@@ -741,7 +741,7 @@ public class Robot extends LoggedRobot {
                         .until(ejector.backSensor.negate()),
                 Set.of(elevator)));
 
-    new Trigger(this::isEnabled).onTrue(climber.disengage());
+    new Trigger(this::isEnabled).onTrue(climber.engage());
 
     controller
         .rightTrigger()
