@@ -342,7 +342,7 @@ public class Robot extends LoggedRobot {
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> controller.getRightX()));
+            () -> -controller.getRightX()));
 
     elevator
         .isNotAtCollect
@@ -718,12 +718,12 @@ public class Robot extends LoggedRobot {
                             () -> reefSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
                             () -> -controller.getLeftX(),
-                            () -> controller.getRightX())
+                            () -> -controller.getRightX())
                         : drive.autoAlignWithOverride(
                             () -> hpSetpoint.driveSetpoint(),
                             () -> -controller.getLeftY(),
                             () -> -controller.getLeftX(),
-                            () -> controller.getRightX()),
+                            () -> -controller.getRightX()),
                 Set.of(drive)));
 
     ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
@@ -837,7 +837,7 @@ public class Robot extends LoggedRobot {
                         () -> hpSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
-                        () -> controller.getRightX()),
+                        () -> -controller.getRightX()),
                 Set.of(drive)));
 
     intake
@@ -850,7 +850,7 @@ public class Robot extends LoggedRobot {
                         () -> reefSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
-                        () -> controller.getRightX()),
+                        () -> -controller.getRightX()),
                 Set.of(drive)));
   }
 
