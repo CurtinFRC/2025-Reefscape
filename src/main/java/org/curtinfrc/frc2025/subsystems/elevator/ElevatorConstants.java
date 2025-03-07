@@ -39,7 +39,7 @@ public class ElevatorConstants {
   public static enum ElevatorSetpoints implements StructSerializable {
     L1(0),
     L2(0.2),
-    AlgaePopLow(0.05\),
+    AlgaePopLow(0.05),
     L3(0.59),
     AlgaePopHigh(0.5),
     BASE(0.01),
