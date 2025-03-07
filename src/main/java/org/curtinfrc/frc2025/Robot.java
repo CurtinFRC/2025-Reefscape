@@ -307,6 +307,7 @@ public class Robot extends LoggedRobot {
 
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
+    autoChooser.addCmd("Three Note", this::threeCoral);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -904,5 +905,35 @@ public class Robot extends LoggedRobot {
             Commands.parallel(
                 ejector.setVoltage(10),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+  }
+
+  public Command threeCoral() {
+    // E F B
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP));
+  }
+
+  private Command node(Setpoint point) {
+    return drive
+        .autoAlign(
+            () -> point.driveSetpoint(), Optional.empty(), Optional.empty(), Optional.empty())
+        .until(drive.atSetpoint)
+        .andThen(elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate()))
+        .until(elevator.atSetpoint)
+        .andThen(
+            Commands.parallel(
+                ejector.eject(15),
+                elevator.goToSetpoint(point.elevatorSetpoint(), almostAtReefSetpoint)))
+        .until(ejector.backSensor.negate());
+  }
+
+  private Command intake(DriveSetpoints point) {
+    return drive
+        .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
+        .until(intake.frontSensor);
   }
 }
