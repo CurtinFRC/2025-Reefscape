@@ -202,8 +202,8 @@ public class Robot extends LoggedRobot {
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOPhotonVision(camera3Name, robotToCamera1),
-                  new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIOPhotonVision(camera1Name, robotToCamera3));
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOPhotonVision(camera2Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -1002,11 +1002,11 @@ public class Robot extends LoggedRobot {
   public Command threeCoral() {
     // E F B
     return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
-    .andThen(intake(DriveSetpoints.RIGHT_HP))
-    .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-    .andThen(intake(DriveSetpoints.RIGHT_HP))
-    .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-    .andThen(intake(DriveSetpoints.RIGHT_HP));
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP));
   }
 
   private Command node(Setpoint point) {
