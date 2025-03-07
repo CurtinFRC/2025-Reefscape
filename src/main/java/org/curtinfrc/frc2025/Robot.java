@@ -992,11 +992,7 @@ public class Robot extends LoggedRobot {
   }
 
   public Command testAuto() {
-    return onePiece()
-        .andThen(
-            Commands.parallel(
-                ejector.setVoltage(10),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
   }
 
   public Command threeCoral() {
@@ -1036,12 +1032,12 @@ public class Robot extends LoggedRobot {
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
         .until(ejector.backSensor.negate())
-        .withName("Eject");
+        .withName("Eject").withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 
   private Command intake(DriveSetpoints point) {
     return drive
         .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
-        .until(intake.frontSensor);
+        .until(intake.frontSensor).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }

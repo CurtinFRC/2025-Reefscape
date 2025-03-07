@@ -95,6 +95,7 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpointPose =
       new Trigger(() -> xSetpointController.atSetpoint() && ySetpointController.atSetpoint());
 
+  @AutoLogOutput(key = "Drive/CurrentSetpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
 
   @AutoLogOutput(key = "Drive/AngleDiff")
