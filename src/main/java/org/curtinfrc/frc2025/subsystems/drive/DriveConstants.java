@@ -3,6 +3,8 @@ package org.curtinfrc.frc2025.subsystems.drive;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.util.ChoreoAllianceFlipUtil;
+import choreo.util.ChoreoAllianceFlipUtil.Flipper;
+
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -16,6 +18,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
+import org.littletonrobotics.junction.AutoLogOutput;
 
 public final class DriveConstants {
   public static final double DEADBAND = 0;
@@ -70,6 +73,7 @@ public final class DriveConstants {
 
     private final Pose2d pose;
 
+    @AutoLogOutput(key = "Drive/ActualCurrentSetpoint")
     public Pose2d getPose() {
       boolean isFlipped =
           DriverStation.getAlliance().isPresent()
@@ -77,6 +81,10 @@ public final class DriveConstants {
       if (isFlipped) {
         return ChoreoAllianceFlipUtil.flip(pose);
       }
+      // if (isFlipped) {
+      //   var partialFlipped = ChoreoAllianceFlipUtil.flip(pose);
+      //   return new Pose2d(partialFlipped.getX(), Flipper.MIRRORED.flipY(partialFlipped.getY()), partialFlipped.getRotation().unaryMinus());
+      // }
       return pose;
     }
 
