@@ -43,8 +43,8 @@ public class ElevatorConstants {
     L3(0.59),
     AlgaePopHigh(0.5),
     BASE(0.01),
-    climbPrep(0.37),
-    climbAttempt(0.5),
+    climbPrep(0.33),
+    climbAttempt(0.46),
     climbed(0.01);
 
     public final double setpoint;
