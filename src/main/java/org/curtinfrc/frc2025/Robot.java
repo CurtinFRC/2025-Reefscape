@@ -201,9 +201,9 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIOPhotonVision(camera3Name, robotToCamera3));
+                  new VisionIOPhotonVision(camera1Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -361,13 +361,14 @@ public class Robot extends LoggedRobot {
         climber
             .stop()
             .andThen(
-                
-                        elevator.goToClimberSetpoint(
-                            ElevatorSetpoints.climbed, intake.backSensor.negate()).withTimeout(0.5)
+                elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                    .withTimeout(0.5)
                     .andThen(
                         Commands.parallel(
                             climber.engage(),
-                            elevator.goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())))
+                            elevator.goToClimberSetpoint(
+                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
                     .until(elevator.atClimbSetpoint)
                     .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
@@ -1000,12 +1001,12 @@ public class Robot extends LoggedRobot {
 
   public Command threeCoral() {
     // E F B
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E));
-    // .andThen(intake(DriveSetpoints.RIGHT_HP))
-    // .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-    // .andThen(intake(DriveSetpoints.RIGHT_HP))
-    // .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-    // .andThen(intake(DriveSetpoints.RIGHT_HP));
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
+    .andThen(intake(DriveSetpoints.RIGHT_HP))
+    .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
+    .andThen(intake(DriveSetpoints.RIGHT_HP))
+    .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
+    .andThen(intake(DriveSetpoints.RIGHT_HP));
   }
 
   private Command node(Setpoint point) {
