@@ -715,6 +715,8 @@ public class Robot extends LoggedRobot {
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
                 .ignoringDisable(true));
 
+    // board.coralAB().and().whileTrue()
+
     RobotModeTriggers.teleop()
         .and(override.negate())
         .onTrue(
@@ -748,7 +750,7 @@ public class Robot extends LoggedRobot {
                         .until(ejector.backSensor.negate()),
                 Set.of(elevator)));
 
-    new Trigger(this::isEnabled).onTrue(climber.disengage());
+    new Trigger(this::isEnabled).onTrue(climber.engage());
 
     controller
         .rightTrigger()
