@@ -63,7 +63,7 @@ public class EjectorIOKraken implements EjectorIO {
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
     inputs.positionRotations = position.getValueAsDouble();
-    inputs.angularVelocityRotationsPerMinute = position.getValueAsDouble();
+    inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
     inputs.frontSensor = frontSensor.get();
     inputs.backSensor = backSensor.get();
   }
