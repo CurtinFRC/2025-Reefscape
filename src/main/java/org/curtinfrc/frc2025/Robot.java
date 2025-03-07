@@ -502,7 +502,78 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
-    board.coralAB().and(controller.rightBumper().negate().and(controller.leftBumper().negate()).and(controller.rightTrigger().negate()).and(controller.leftTrigger().negate())).whileTrue(null);
+    board
+        .coralAB()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A)));
+    board
+        .coralCD()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.C)));
+    board
+        .coralEF()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E)));
+    board
+        .coralGH()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.G)));
+    board
+        .coralIJ()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.I)));
+    board
+        .coralKL()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.K)));
 
     board
         .processor()
@@ -926,10 +997,22 @@ public class Robot extends LoggedRobot {
         .autoAlign(
             () -> point.driveSetpoint(), Optional.empty(), Optional.empty(), Optional.empty())
         .until(drive.atSetpoint)
-        .andThen(elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate()))
+        .andThen(
+            Commands.parallel(
+                drive.autoAlign(
+                    () -> point.driveSetpoint(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()),
+                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .until(elevator.atSetpoint)
         .andThen(
             Commands.parallel(
+                drive.autoAlign(
+                    () -> point.driveSetpoint(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()),
                 ejector.eject(15),
                 elevator.goToSetpoint(point.elevatorSetpoint(), almostAtReefSetpoint)))
         .until(ejector.backSensor.negate());
