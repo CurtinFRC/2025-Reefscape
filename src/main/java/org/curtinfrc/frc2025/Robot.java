@@ -281,6 +281,11 @@ public class Robot extends LoggedRobot {
       climber = new Climber(new ClimberIO() {});
     }
 
+    PortForwarder.add(5820, "limelight-3.local", 1181);
+    PortForwarder.add(5830, "limelight-3g.local", 1181);
+    PortForwarder.add(5821, "limelight-3.local", 5800);
+    PortForwarder.add(5831, "limelight-3g.local", 5800);
+
     atReefSetpoint =
         drive
             .atSetpoint

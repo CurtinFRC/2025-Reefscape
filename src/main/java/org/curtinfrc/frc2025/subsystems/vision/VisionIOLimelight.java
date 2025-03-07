@@ -71,7 +71,7 @@ public class VisionIOLimelight implements VisionIO {
     megatag2Subscriber =
         table.getDoubleArrayTopic("botpose_orb_wpiblue").subscribe(new double[] {});
     imuModeSet = table.getDoubleTopic("imumode_set").publish();
-    
+
     int portOffset = 10 * numberLimelights;
     for (int port = 5800; port <= 5809; port++) {
       PortForwarder.add(port + portOffset, name + ".local", port);
