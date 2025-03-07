@@ -814,6 +814,7 @@ public class Robot extends LoggedRobot {
     almostAtReefSetpoint
         .and(override.negate())
         .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
+        .and(RobotModeTriggers.autonomous().negate())
         .and(ejector.backSensor)
         .onTrue(
             Commands.defer(
@@ -883,6 +884,16 @@ public class Robot extends LoggedRobot {
     } else {
       networkReefSetpoint.set(reefSetpoint);
       networkHpSetpoint.set(hpSetpoint);
+    }
+
+    if (drive.getCurrentCommand() != null) {
+      Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
+    }
+    if (elevator.getCurrentCommand() != null) {
+      Logger.recordOutput("Elevator/Command", elevator.getCurrentCommand().getName());
+    }
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("Ejector/Command", ejector.getCurrentCommand().getName());
     }
 
     // Return to normal thread priority
@@ -984,12 +995,12 @@ public class Robot extends LoggedRobot {
 
   public Command threeCoral() {
     // E F B
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP));
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E));
+    // .andThen(intake(DriveSetpoints.RIGHT_HP))
+    // .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
+    // .andThen(intake(DriveSetpoints.RIGHT_HP))
+    // .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
+    // .andThen(intake(DriveSetpoints.RIGHT_HP));
   }
 
   private Command node(Setpoint point) {
@@ -1005,7 +1016,9 @@ public class Robot extends LoggedRobot {
                     Optional.empty(),
                     Optional.empty()),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+        .withName("firststep")
         .until(elevator.atSetpoint)
+        .withName("GetToAutoPosition")
         .andThen(
             Commands.parallel(
                 drive.autoAlign(
@@ -1014,8 +1027,10 @@ public class Robot extends LoggedRobot {
                     Optional.empty(),
                     Optional.empty()),
                 ejector.eject(15),
-                elevator.goToSetpoint(point.elevatorSetpoint(), almostAtReefSetpoint)))
-        .until(ejector.backSensor.negate());
+                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+        .withName("Eject")
+        .until(ejector.backSensor.negate())
+        .withName("Eject");
   }
 
   private Command intake(DriveSetpoints point) {

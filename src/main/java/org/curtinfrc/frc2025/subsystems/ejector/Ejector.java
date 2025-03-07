@@ -34,14 +34,14 @@ public class Ejector extends SubsystemBase {
   }
 
   public Command eject(double rpm) {
-    return run(
-        () -> {
+    return run(() -> {
           Logger.recordOutput("Ejector/VelocitySetpoint", rpm);
           var pid_out = pid.calculate(inputs.angularVelocityRotationsPerMinute, rpm);
           Logger.recordOutput("Ejector/VelocityErrror", pid.getError());
           var ff_out = ff.calculate(rpm);
           io.setVoltage(pid_out + ff_out);
-        });
+        })
+        .withName("Eject");
   }
 
   public Command setVoltage(double volts) {
