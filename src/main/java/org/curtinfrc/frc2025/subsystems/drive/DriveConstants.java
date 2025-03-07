@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
-import org.littletonrobotics.junction.AutoLogOutput;
 
 public final class DriveConstants {
   public static final double DEADBAND = 0;
