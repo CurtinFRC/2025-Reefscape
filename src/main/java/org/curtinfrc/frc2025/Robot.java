@@ -361,8 +361,8 @@ public class Robot extends LoggedRobot {
         climber
             .stop()
             .andThen(
-                elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                Commands.race(elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate()), Commands.waitSeconds(0.5)).andThen(Commands.parallel(climber.engage(), elevator.goToClimberSetpoint(ElevatorSetpoints.climbed)))
                     .until(elevator.atClimbSetpoint)
                     .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
