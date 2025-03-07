@@ -502,6 +502,8 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
+    board.coralAB().and(controller.rightBumper().negate().and(controller.leftBumper().negate()).and(controller.rightTrigger().negate()).and(controller.leftTrigger().negate())).whileTrue(null);
+
     board
         .processor()
         .onTrue(
