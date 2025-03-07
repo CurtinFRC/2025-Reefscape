@@ -95,7 +95,6 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpointPose =
       new Trigger(() -> xSetpointController.atSetpoint() && ySetpointController.atSetpoint());
 
-  @AutoLogOutput(key = "Drive/CurrentSetpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
 
   @AutoLogOutput(key = "Drive/AngleDiff")
@@ -228,7 +227,7 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
     Logger.recordOutput("Drive/xPID/error", xController.getError());
     Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
-
+Logger.recordOutput("Drive/CurrentSetpoint", DriveSetpoints.struct,setpoint);
     Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
     Logger.recordOutput("Drive/yPID/error", yController.getError());
     Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());

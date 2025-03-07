@@ -1032,12 +1032,14 @@ public class Robot extends LoggedRobot {
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
         .until(ejector.backSensor.negate())
-        .withName("Eject").withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+        .withName("Eject")
+        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 
   private Command intake(DriveSetpoints point) {
     return drive
         .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
-        .until(intake.frontSensor).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+        .until(intake.frontSensor)
+        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }
