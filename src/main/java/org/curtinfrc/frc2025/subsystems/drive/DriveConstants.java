@@ -61,11 +61,12 @@ public final class DriveConstants {
     K(aprilTagLayout.getTagPose(19).get(), true),
     L(aprilTagLayout.getTagPose(19).get(), false),
     // PROCESSOR(Pose2d.kZero),
-    LEFT_HP(new Pose2d(1.313582181930542, 7.24, Rotation2d.fromDegrees(125.989 + 180))),
+    LEFT_HP(
+        new Pose2d(1.148711085319519, 7.199769020080566, Rotation2d.fromDegrees(125.989 + 180))),
     RIGHT_HP(
         new Pose2d(
-            1.313582181930542,
-            0.9346669316291809,
+            0.9220133423805237,
+            0.9964936375617981,
             Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
 
     private final Pose2d pose;

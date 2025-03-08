@@ -309,7 +309,8 @@ public class Robot extends LoggedRobot {
 
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
-    autoChooser.addCmd("Three Note", this::threeCoral);
+    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
+    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -512,7 +513,7 @@ public class Robot extends LoggedRobot {
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
 
-    controller.b().whileTrue(climber.disengage());
+    controller.b().whileTrue(climber.disengage()); // TODO always do for climb retry
 
     board
         .coralAB()
@@ -1000,7 +1001,7 @@ public class Robot extends LoggedRobot {
     return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
   }
 
-  public Command threeCoral() {
+  public Command threeCoralRight() {
     // E F B
     return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
         .andThen(intake(DriveSetpoints.RIGHT_HP))
@@ -1008,6 +1009,16 @@ public class Robot extends LoggedRobot {
         .andThen(intake(DriveSetpoints.RIGHT_HP))
         .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
         .andThen(intake(DriveSetpoints.RIGHT_HP));
+  }
+
+  public Command threeCoralLeft() {
+    // I J A
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
+        .andThen(intake(DriveSetpoints.LEFT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)))
+        .andThen(intake(DriveSetpoints.LEFT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)))
+        .andThen(intake(DriveSetpoints.LEFT_HP));
   }
 
   private Command node(Setpoint point) {
