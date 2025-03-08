@@ -200,11 +200,11 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                  new VisionIO() {},
+                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOPhotonVision(camera2Name, robotToCamera3));
+                  new VisionIO() {});
+                  //   new VisionIOPhotonVision(camera2Name, robotToCamera3)); // BROKEN
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
