@@ -200,7 +200,8 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIO() {},
                   new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
