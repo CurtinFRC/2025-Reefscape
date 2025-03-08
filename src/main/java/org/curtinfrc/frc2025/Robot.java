@@ -1036,9 +1036,13 @@ public class Robot extends LoggedRobot {
   }
 
   private Command intake(DriveSetpoints point) {
-    return drive
-        .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
-        .until(intake.frontSensor)
+    return elevator
+        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+        .until(elevator.atSetpoint)
+        .andThen(
+            drive
+                .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
+                .until(intake.frontSensor))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }
