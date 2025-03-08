@@ -204,7 +204,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIO() {});
-                  //   new VisionIOPhotonVision(camera2Name, robotToCamera3)); // BROKEN
+          //   new VisionIOPhotonVision(camera2Name, robotToCamera3)); // BROKEN
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -844,7 +844,7 @@ public class Robot extends LoggedRobot {
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
-                ejector.setVoltage(10),
+                ejector.setVoltage(8),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
 
     controller
@@ -859,7 +859,7 @@ public class Robot extends LoggedRobot {
         // .and(drive.atSetpoint)
         .whileTrue(
             Commands.parallel(
-                ejector.setVoltage(10),
+                ejector.setVoltage(8),
                 elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
   }
 
