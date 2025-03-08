@@ -820,7 +820,6 @@ public class Robot extends LoggedRobot {
     almostAtReefSetpoint
         .and(override.negate())
         .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
-        .and(RobotModeTriggers.autonomous().negate())
         .and(ejector.backSensor)
         .onTrue(
             Commands.defer(
