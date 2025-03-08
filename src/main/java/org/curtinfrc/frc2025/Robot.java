@@ -200,11 +200,12 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIO() {},
                   new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIO() {});
-          //   new VisionIOPhotonVision(camera2Name, robotToCamera3)); // BROKEN
+                //   new VisionIO() {});
+                  new VisionIOPhotonVision(camera2Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
@@ -389,7 +390,7 @@ public class Robot extends LoggedRobot {
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     // popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
-        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
+        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
@@ -820,7 +821,7 @@ public class Robot extends LoggedRobot {
 
     almostAtReefSetpoint
         .and(override.negate())
-        .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
+        .and(controller.rightTrigger().negate().and(controller.leftTrigger().negate()))
         .and(ejector.backSensor)
         .onTrue(
             Commands.defer(
