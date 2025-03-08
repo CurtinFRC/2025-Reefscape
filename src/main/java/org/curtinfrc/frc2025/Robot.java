@@ -1060,6 +1060,7 @@ public class Robot extends LoggedRobot {
             drive
                 .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
                 .until(intake.frontSensor))
+        .andThen(Commands.waitSeconds(1.5))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }
