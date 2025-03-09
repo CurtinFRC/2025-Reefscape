@@ -1044,7 +1044,7 @@ public class Robot extends LoggedRobot {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty()),
-                ejector.eject(15),
+                ejector.eject(15).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
         .until(ejector.backSensor.negate())
