@@ -123,7 +123,7 @@ public class Robot extends LoggedRobot {
   public final Trigger atHpSetpoint;
 
   @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = false;
+  private boolean overridden = true;
 
   @AutoLogOutput(key = "Robot/Overide")
   private final Trigger override = new Trigger(() -> overridden);
@@ -448,13 +448,35 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     controller
-        .leftBumper()
+        .rightTrigger()
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
     controller
         .rightBumper()
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+
+    controller
+        .leftBumper()
+        .whileTrue(
+            Commands.parallel(
+                ejector.setVoltage(8),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+
+    controller
+        .leftTrigger()
+        .whileTrue(
+            Commands.parallel(
+                ejector.setVoltage(8),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
+    // controller
+    //     .leftBumper()
+    //     .and(override)
+    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+    // controller
+    //     .rightBumper()
+    //     .and(override)
+    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     controller.leftStick().whileTrue(intake.intake(-intakeVolts));
     controller
         .rightStick()
@@ -838,35 +860,37 @@ public class Robot extends LoggedRobot {
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
 
-    controller
-        .rightTrigger()
-        .and(board.coralAB().negate())
-        .and(board.coralCD().negate())
-        .and(board.coralEF().negate())
-        .and(board.coralGH().negate())
-        .and(board.coralIJ().negate())
-        .and(board.coralIJ().negate())
-        .and(board.coralKL().negate())
-        // .and(drive.atSetpoint)
-        .whileTrue(
-            Commands.parallel(
-                ejector.setVoltage(8),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+    // controller
+    //     .rightTrigger()
+    //     .and(board.coralAB().negate())
+    //     .and(board.coralCD().negate())
+    //     .and(board.coralEF().negate())
+    //     .and(board.coralGH().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralKL().negate())
+    //     // .and(drive.atSetpoint)
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             ejector.setVoltage(8),
+    //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow,
+    // intake.backSensor.negate())));
 
-    controller
-        .leftTrigger()
-        .and(board.coralAB().negate())
-        .and(board.coralCD().negate())
-        .and(board.coralEF().negate())
-        .and(board.coralGH().negate())
-        .and(board.coralIJ().negate())
-        .and(board.coralIJ().negate())
-        .and(board.coralKL().negate())
-        // .and(drive.atSetpoint)
-        .whileTrue(
-            Commands.parallel(
-                ejector.setVoltage(8),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
+    // controller
+    //     .leftTrigger()
+    //     .and(board.coralAB().negate())
+    //     .and(board.coralCD().negate())
+    //     .and(board.coralEF().negate())
+    //     .and(board.coralGH().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralKL().negate())
+    //     // .and(drive.atSetpoint)
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             ejector.setVoltage(8),
+    //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh,
+    // intake.backSensor.negate())));
   }
 
   /** This function is called periodically during all modes. */
