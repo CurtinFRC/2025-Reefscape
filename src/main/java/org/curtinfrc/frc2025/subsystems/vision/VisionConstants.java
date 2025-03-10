@@ -25,10 +25,10 @@ public class VisionConstants {
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Camera names, must match names configured on coprocessor
-  public static String camera0Name = "limelight-3";
+  public static String camera0Name = "top-right";
   public static String camera3Name = "limelight-3g";
   public static String camera1Name = "limelight-left";
-  public static String camera2Name = "limelight-right";
+  public static String camera2Name = "top-left";
 
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)

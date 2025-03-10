@@ -61,8 +61,13 @@ public final class DriveConstants {
     K(aprilTagLayout.getTagPose(19).get(), true),
     L(aprilTagLayout.getTagPose(19).get(), false),
     // PROCESSOR(Pose2d.kZero),
-    LEFT_HP(new Pose2d(1.18, 7.24, Rotation2d.fromDegrees(125.989 + 180))),
-    RIGHT_HP(new Pose2d(1.10, 0.89, Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
+    LEFT_HP(
+        new Pose2d(1.148711085319519, 7.199769020080566, Rotation2d.fromDegrees(125.989 + 180))),
+    RIGHT_HP(
+        new Pose2d(
+            0.9220133423805237,
+            0.9964936375617981,
+            Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
 
     private final Pose2d pose;
 
@@ -73,6 +78,11 @@ public final class DriveConstants {
       if (isFlipped) {
         return ChoreoAllianceFlipUtil.flip(pose);
       }
+      // if (isFlipped) {
+      //   var partialFlipped = ChoreoAllianceFlipUtil.flip(pose);
+      //   return new Pose2d(partialFlipped.getX(), Flipper.MIRRORED.flipY(partialFlipped.getY()),
+      // partialFlipped.getRotation().unaryMinus());
+      // }
       return pose;
     }
 

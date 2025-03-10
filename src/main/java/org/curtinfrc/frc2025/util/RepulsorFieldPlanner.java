@@ -214,8 +214,8 @@ public class RepulsorFieldPlanner {
           new TeardropObstacle(new Translation2d(4.49, 4), 1.2, 2.2, 1.03, 3, 2),
           new TeardropObstacle(new Translation2d(13.08, 4), 1.2, 2.2, 1.03, 3, 2));
 
-  static final double FIELD_LENGTH = 16.42;
-  static final double FIELD_WIDTH = 8.16;
+  static final double FIELD_LENGTH = 17.55;
+  static final double FIELD_WIDTH = 8.05;
   public static final List<Obstacle> WALLS =
       List.of(
           new HorizontalObstacle(0.0, 2, true),

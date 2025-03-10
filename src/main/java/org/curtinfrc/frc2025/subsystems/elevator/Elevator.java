@@ -54,19 +54,20 @@ public class Elevator extends SubsystemBase {
 
   public Command goToSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
     return Commands.either(
-        run(
-            () -> {
-              setpoint = point;
-              var out =
-                  pid.calculate(
-                      positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-              Logger.recordOutput("Elevator/Output", out);
-              Logger.recordOutput("Elevator/Error", pid.getError());
-              Logger.recordOutput("Elevator/ClimberPID", false);
-              io.setVoltage(out);
-            }),
-        Commands.none(),
-        safe);
+            run(
+                () -> {
+                  setpoint = point;
+                  var out =
+                      pid.calculate(
+                          positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+                  Logger.recordOutput("Elevator/Output", out);
+                  Logger.recordOutput("Elevator/Error", pid.getError());
+                  Logger.recordOutput("Elevator/ClimberPID", false);
+                  io.setVoltage(out);
+                }),
+            Commands.none(),
+            safe)
+        .withName("GoToSetpoint");
   }
 
   public Command goToClimberSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
