@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -35,6 +36,8 @@ import org.photonvision.common.hardware.VisionLEDMode;
 
 /** IO implementation for real Limelight hardware. */
 public class VisionIOLimelight implements VisionIO {
+  public static int numberLimelights = 0;
+
   private final Supplier<Rotation2d> rotationSupplier;
   private final DoubleArrayPublisher orientationPublisher;
   private final DoublePublisher imuModeSet;
@@ -68,6 +71,12 @@ public class VisionIOLimelight implements VisionIO {
     megatag2Subscriber =
         table.getDoubleArrayTopic("botpose_orb_wpiblue").subscribe(new double[] {});
     imuModeSet = table.getDoubleTopic("imumode_set").publish();
+
+    int portOffset = 10 * numberLimelights;
+    for (int port = 5800; port <= 5809; port++) {
+      PortForwarder.add(port + portOffset, name + ".local", port);
+    }
+    numberLimelights += 1;
   }
 
   @Override

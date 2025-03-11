@@ -85,8 +85,8 @@ public class Drive extends SubsystemBase {
   private double d = 0;
   private double i = 0;
 
-  private final PIDController xController = new PIDController(5, 0.0, 0);
-  private final PIDController yController = new PIDController(5, 0.0, 0);
+  private final PIDController xController = new PIDController(4.5, 0.0, 0);
+  private final PIDController yController = new PIDController(4.5, 0.0, 0);
   private final PIDController headingController = new PIDController(p, i, d);
 
   private final PIDController xSetpointController = new PIDController(0, 0.0, 0);
@@ -115,7 +115,7 @@ public class Drive extends SubsystemBase {
   }
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
-  public Trigger atSetpoint = new Trigger(() -> x() <= 0.03 && y() <= 0.03 && a() <= 3);
+  public Trigger atSetpoint = new Trigger(() -> x() <= 0.02 && y() <= 0.02 && a() <= 1);
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =
@@ -227,7 +227,7 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
     Logger.recordOutput("Drive/xPID/error", xController.getError());
     Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
-
+    Logger.recordOutput("Drive/CurrentSetpoint", setpoint.getPose());
     Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
     Logger.recordOutput("Drive/yPID/error", yController.getError());
     Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());
@@ -440,17 +440,35 @@ public class Drive extends SubsystemBase {
     xController.setSetpoint(sample.x);
     yController.setSetpoint(sample.y);
     headingController.setSetpoint(sample.heading);
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
 
-    ChassisSpeeds speeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
-            sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
-            dist < 0.5
-                ? -headingController.calculate(pose.getRotation().getRadians(), sample.heading)
-                : -headingController.calculate(
-                    pose.getRotation().getRadians(),
-                    Math.atan2(transform.getY(), transform.getX())),
-            getRotation()); // Apply the generated speeds
+    ChassisSpeeds speeds;
+    if (isFlipped) {
+      speeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
+              sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
+              dist < 0.5
+                  ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+                  : headingController.calculate(
+                      pose.getRotation().getRadians(),
+                      Math.atan2(transform.getY(), transform.getX())),
+              getRotation()); // Apply the generated speeds
+    } else {
+      speeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              sample.vx + (sample.vx != 0 ? 0 : xController.calculate(pose.getX(), sample.x)),
+              sample.vy + (sample.vy != 0 ? 0 : yController.calculate(pose.getY(), sample.y)),
+              dist < 0.5
+                  ? headingController.calculate(pose.getRotation().getRadians(), sample.heading)
+                  : headingController.calculate(
+                      pose.getRotation().getRadians(),
+                      Math.atan2(transform.getY(), transform.getX())),
+              getRotation()); // Apply the generated speeds
+    }
+
     Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
     runVelocity(speeds);
   }

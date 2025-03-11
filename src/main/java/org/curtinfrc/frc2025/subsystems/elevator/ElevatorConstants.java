@@ -8,7 +8,7 @@ public class ElevatorConstants {
   public static int resetPort = 0;
   public static int leaderPort = 31;
   public static int followerPort = 32;
-  public static final int currentLimit = 60;
+  public static final int currentLimit = 50;
 
   // TODO: TUNE PID and ff
   public static double tolerance = 0.021;
@@ -39,11 +39,11 @@ public class ElevatorConstants {
   public static enum ElevatorSetpoints implements StructSerializable {
     L1(0),
     L2(0.2),
-    AlgaePopLow(0.1),
-    L3(0.59735),
-    AlgaePopHigh(0.55),
+    AlgaePopLow(0.05),
+    L3(0.59),
+    AlgaePopHigh(0.5),
     BASE(0.01),
-    climbPrep(0.37),
+    climbPrep(0.4),
     climbAttempt(0.5),
     climbed(0.01);
 

@@ -7,6 +7,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.Angle;
@@ -16,9 +17,12 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class EjectorIOKraken implements EjectorIO {
-  private static final int ID = 45;
+  private static final int ID = 46;
+  private static final int FOLLOWER_ID = 46;
 
   private final TalonFX motor = new TalonFX(ID);
+  private final TalonFX follower = new TalonFX(FOLLOWER_ID);
+
   private final DigitalInput frontSensor = new DigitalInput(frontSensorPort);
   private final DigitalInput backSensor = new DigitalInput(backSensorPort);
 
@@ -38,6 +42,16 @@ public class EjectorIOKraken implements EjectorIO {
                         .withMotorOutput(
                             new MotorOutputConfigs()
                                 .withInverted(InvertedValue.Clockwise_Positive))));
+    tryUntilOk(
+        5,
+        () ->
+            follower
+                .getConfigurator()
+                .apply(
+                    new TalonFXConfiguration()
+                        .withMotorOutput(
+                            new MotorOutputConfigs()
+                                .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
   }
@@ -45,10 +59,11 @@ public class EjectorIOKraken implements EjectorIO {
   @Override
   public void updateInputs(EjectorIOInputs inputs) {
     BaseStatusSignal.refreshAll(velocity, voltage, current, position);
+    follower.setControl(new Follower(ID, true));
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
     inputs.positionRotations = position.getValueAsDouble();
-    inputs.angularVelocityRotationsPerMinute = position.getValueAsDouble();
+    inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
     inputs.frontSensor = frontSensor.get();
     inputs.backSensor = backSensor.get();
   }

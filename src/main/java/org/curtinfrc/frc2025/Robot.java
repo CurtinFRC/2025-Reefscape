@@ -6,6 +6,7 @@ import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -54,9 +55,9 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
-import org.curtinfrc.frc2025.subsystems.popper.Popper;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
+// import org.curtinfrc.frc2025.subsystems.popper.Popper;
+// import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+// import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -89,7 +90,7 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-  private Popper popper;
+  //   private Popper popper;
   private Climber climber;
 
   // Controller
@@ -120,6 +121,12 @@ public class Robot extends LoggedRobot {
 
   @AutoLogOutput(key = "Robot/AtHPSetpoint")
   public final Trigger atHpSetpoint;
+
+  @AutoLogOutput(key = "Robot/Overridden")
+  private boolean overridden = true;
+
+  @AutoLogOutput(key = "Robot/Overide")
+  private final Trigger override = new Trigger(() -> overridden);
 
   public Robot() {
     // Record metadata
@@ -193,14 +200,16 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  //   new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  new VisionIO() {},
+                  new VisionIOPhotonVision(camera3Name, robotToCamera1),
                   new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIOPhotonVision(camera3Name, robotToCamera3));
+                  //   new VisionIO() {});
+                  new VisionIOPhotonVision(camera2Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
-          popper = new Popper(new PopperIOKraken());
+          //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -223,7 +232,7 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
-          popper = new Popper(new PopperIO() {});
+          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -240,13 +249,13 @@ public class Robot extends LoggedRobot {
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
-                  new VisionIO() {},
-                  new VisionIO() {});
+                  new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
+                  new VisionIOPhotonVisionSim(camera3Name, robotToCamera3, drive::getPose));
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-          popper = new Popper(new PopperIO() {});
+          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
         }
       }
@@ -270,9 +279,14 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      popper = new Popper(new PopperIO() {});
+      //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
     }
+
+    PortForwarder.add(5820, "limelight-3.local", 1181);
+    PortForwarder.add(5830, "limelight-3g.local", 1181);
+    PortForwarder.add(5821, "limelight-3.local", 5800);
+    PortForwarder.add(5831, "limelight-3g.local", 5800);
 
     atReefSetpoint =
         drive
@@ -295,6 +309,8 @@ public class Robot extends LoggedRobot {
 
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
+    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
+    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -341,6 +357,7 @@ public class Robot extends LoggedRobot {
     elevator
         .isNotAtCollect
         .and(atReefSetpoint)
+        .and(override.negate())
         .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
@@ -349,6 +366,12 @@ public class Robot extends LoggedRobot {
             .andThen(
                 elevator
                     .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                    .withTimeout(0.5)
+                    .andThen(
+                        Commands.parallel(
+                            climber.engage(),
+                            elevator.goToClimberSetpoint(
+                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
                     .until(elevator.atClimbSetpoint)
                     .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
@@ -366,9 +389,11 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake(intakeVolts));
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    popper.setDefaultCommand(popper.stop());
+    // popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
-        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
+        elevator
+            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
@@ -422,10 +447,40 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // controller.leftBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
-    // controller.rightBumper().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
-    // controller.rightTrigger().whileTrue(intake.intake(-5));
-    // controller.leftTrigger().whileTrue(intake.intake(-intakeVolts));
+    controller
+        .rightTrigger()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+    controller
+        .rightBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+
+    controller
+        .leftBumper()
+        .whileTrue(
+            Commands.parallel(
+                ejector.setVoltage(8),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+
+    controller
+        .leftTrigger()
+        .whileTrue(
+            Commands.parallel(
+                ejector.setVoltage(8),
+                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
+    // controller
+    //     .leftBumper()
+    //     .and(override)
+    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+    // controller
+    //     .rightBumper()
+    //     .and(override)
+    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller.leftStick().whileTrue(intake.intake(-intakeVolts));
+    controller
+        .rightStick()
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // controller.b().whileTrue(popper.setVoltage(3));
 
     // elevator
@@ -479,6 +534,88 @@ public class Robot extends LoggedRobot {
     //             .andThen(climber.goToSetpoint().withTimeout(1.5))
     //
     // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
+
+    controller.b().whileTrue(climber.disengage()); // TODO always do for climb retry
+
+    board
+        .coralAB()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.A)));
+    board
+        .coralCD()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.C)));
+    board
+        .coralEF()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.E)));
+    board
+        .coralGH()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.G)));
+    board
+        .coralIJ()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.I)));
+    board
+        .coralKL()
+        .and(
+            controller
+                .rightBumper()
+                .negate()
+                .and(controller.leftBumper().negate())
+                .and(controller.rightTrigger().negate())
+                .and(controller.leftTrigger().negate()))
+        .whileTrue(
+            Commands.runOnce(
+                () -> reefSetpoint = new Setpoint(ElevatorSetpoints.BASE, DriveSetpoints.K)));
+
+    board
+        .processor()
+        .onTrue(
+            Commands.runOnce(() -> overridden = !overridden)
+                .andThen(drive.runOnce(() -> {}))
+                .ignoringDisable(true));
 
     board
         .left()
@@ -686,7 +823,10 @@ public class Robot extends LoggedRobot {
                     () -> reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.L))
                 .ignoringDisable(true));
 
+    // board.coralAB().and().whileTrue()
+
     RobotModeTriggers.teleop()
+        .and(override.negate())
         .onTrue(
             Commands.defer(
                 () ->
@@ -707,7 +847,8 @@ public class Robot extends LoggedRobot {
     ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
 
     almostAtReefSetpoint
-        .and(controller.rightTrigger().and(controller.leftTrigger()).negate())
+        .and(override.negate())
+        .and(controller.rightTrigger().negate().and(controller.leftTrigger().negate()))
         .and(ejector.backSensor)
         .onTrue(
             Commands.defer(
@@ -718,6 +859,38 @@ public class Robot extends LoggedRobot {
                 Set.of(elevator)));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
+
+    // controller
+    //     .rightTrigger()
+    //     .and(board.coralAB().negate())
+    //     .and(board.coralCD().negate())
+    //     .and(board.coralEF().negate())
+    //     .and(board.coralGH().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralKL().negate())
+    //     // .and(drive.atSetpoint)
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             ejector.setVoltage(8),
+    //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow,
+    // intake.backSensor.negate())));
+
+    // controller
+    //     .leftTrigger()
+    //     .and(board.coralAB().negate())
+    //     .and(board.coralCD().negate())
+    //     .and(board.coralEF().negate())
+    //     .and(board.coralGH().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralIJ().negate())
+    //     .and(board.coralKL().negate())
+    //     // .and(drive.atSetpoint)
+    //     .whileTrue(
+    //         Commands.parallel(
+    //             ejector.setVoltage(8),
+    //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh,
+    // intake.backSensor.negate())));
   }
 
   /** This function is called periodically during all modes. */
@@ -749,6 +922,16 @@ public class Robot extends LoggedRobot {
       networkHpSetpoint.set(hpSetpoint);
     }
 
+    if (drive.getCurrentCommand() != null) {
+      Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
+    }
+    if (elevator.getCurrentCommand() != null) {
+      Logger.recordOutput("Elevator/Command", elevator.getCurrentCommand().getName());
+    }
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("Ejector/Command", ejector.getCurrentCommand().getName());
+    }
+
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
   }
@@ -763,22 +946,7 @@ public class Robot extends LoggedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {
-    // elevator
-    //     .isNotAtCollect
-    //     .and(atReefSetpoint)
-    //     .and(drive.atSetpoint)
-    //     .and(elevator.atSetpoint)
-    //     .and(elevator.algaePop.negate())
-    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-    //
-    // elevator
-    //     .isNotAtCollect
-    //     .and(atReefSetpoint)
-    //     .and(drive.atSetpoint)
-    //     .and(elevator.algaePop)
-    //     .whileTrue(popper.setVoltage(5).until(elevator.atSetpoint));
-  }
+  public void autonomousInit() {}
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -790,6 +958,7 @@ public class Robot extends LoggedRobot {
     ejector
         .backSensor
         .negate()
+        .and(override.negate())
         .onTrue(
             Commands.defer(
                 () ->
@@ -797,84 +966,21 @@ public class Robot extends LoggedRobot {
                         () -> hpSetpoint.driveSetpoint(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
-                        () -> controller.getRightX()),
+                        () -> -controller.getRightX()),
                 Set.of(drive)));
-    //     ejector
-    //         .backSensor
-    //         .negate()
-    //         .onTrue(Commands.defer(() -> drive.autoAlignWithOverride(() ->
-    // hpSetpoint.driveSetpoint(), () -> -controller.getLeftY(), () -> -controller.getLeftX()
-    // , () -> -controller.getRightX())));
-    // Commands.defer(
-    //     () ->
-    //         drive.autoAlignWithOverride(
-    //             () -> hpSetpoint.driveSetpoint(),
-    //             () -> -controller.getLeftY(),
-    //             () -> -controller.getLeftX(),
-    //             () -> -controller.getRightX()),
-    //     Set.of(drive)));
 
-    // atReefSetpoint
-    //     .and(ejector.backSensor)
-    //     .onTrue(
-    //         Commands.defer(
-    //             () ->
-    //                 (shouldPop
-    //                             && ((AlgaePoppedStates.isHigh(
-    //                                         AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-    //                                     && reefSetpoint.elevatorSetpoint() ==
-    // ElevatorSetpoints.L3)
-    //                                 || (!AlgaePoppedStates.isHigh(
-    //                                         AlgaeLocations.from(reefSetpoint.driveSetpoint()))
-    //                                     && (reefSetpoint.elevatorSetpoint() ==
-    // ElevatorSetpoints.L2
-    //                                         || reefSetpoint.elevatorSetpoint()
-    //                                             == ElevatorSetpoints.L3)))
-    //                         ? Commands.parallel(
-    //                                 elevator.goToSetpoint(
-    //                                     ElevatorSetpoints.getPopPoint(
-    //                                         reefSetpoint.elevatorSetpoint())),
-    //                                 popper.setVoltage(5),
-    //                                 Commands.run(() -> shouldPop = false))
-    //                             .withTimeout(3)
-    //                         : Commands.run(() -> {}))
-    //                     .andThen(
-    //                         elevator
-    //                             .goToSetpoint(reefSetpoint.elevatorSetpoint())
-    //                             .until(ejector.backSensor.negate())),
-    //             Set.of(elevator)));
-
-    intake.frontSensor.onTrue(
-        Commands.defer(
-            () ->
-                drive.autoAlignWithOverride(
-                    () -> reefSetpoint.driveSetpoint(),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX()),
-            Set.of(drive)));
-
-    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
-
-    controller
-        .rightTrigger()
-        // .and(drive.atSetpoint)
-        .whileTrue(
-            Commands.parallel(
-                popper.setVoltage(10),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
-    drive
-        .atSetpoint
-        .and(controller.leftTrigger())
-        .whileTrue(
-            Commands.race(
-                    popper.setVoltage(10),
-                    elevator.goToSetpoint(
-                        ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()),
-                    Commands.waitSeconds(0.4))
-                .andThen(
-                    elevator.goToSetpoint(
-                        reefSetpoint.elevatorSetpoint(), intake.backSensor.negate())));
+    intake
+        .frontSensor
+        .and(override.negate())
+        .onTrue(
+            Commands.defer(
+                () ->
+                    drive.autoAlignWithOverride(
+                        () -> reefSetpoint.driveSetpoint(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                Set.of(drive)));
   }
 
   /** This function is called periodically during operator control. */
@@ -916,10 +1022,69 @@ public class Robot extends LoggedRobot {
   }
 
   public Command testAuto() {
-    return onePiece()
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
+  }
+
+  public Command threeCoralRight() {
+    // E F B
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
+        .andThen(intake(DriveSetpoints.RIGHT_HP));
+  }
+
+  public Command threeCoralLeft() {
+    // I J A
+    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
+        .andThen(intake(DriveSetpoints.LEFT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)))
+        .andThen(intake(DriveSetpoints.LEFT_HP))
+        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)))
+        .andThen(intake(DriveSetpoints.LEFT_HP));
+  }
+
+  private Command node(Setpoint point) {
+    return drive
+        .autoAlign(
+            () -> point.driveSetpoint(), Optional.empty(), Optional.empty(), Optional.empty())
+        .until(drive.atSetpoint)
         .andThen(
             Commands.parallel(
-                popper.setVoltage(10),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+                drive.autoAlign(
+                    () -> point.driveSetpoint(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()),
+                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+        .withName("firststep")
+        .until(elevator.atSetpoint)
+        .withName("GetToAutoPosition")
+        .andThen(
+            Commands.parallel(
+                drive.autoAlign(
+                    () -> point.driveSetpoint(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()),
+                ejector.eject(15).asProxy(),
+                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+        .withName("Eject")
+        .until(ejector.backSensor.negate())
+        .withName("Eject")
+        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+  }
+
+  private Command intake(DriveSetpoints point) {
+    return elevator
+        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+        .until(elevator.atSetpoint)
+        .andThen(
+            drive
+                .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
+                .until(intake.frontSensor))
+        .andThen(Commands.waitSeconds(1.5))
+        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }
