@@ -11,18 +11,14 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Servo;
 import org.curtinfrc.frc2025.util.SparkUtil;
 
-public class ClimberIONeo implements ClimberIO {
-  private final SparkMax climberMotor =
-      new SparkMax(ClimberConstants.grabberMotorPort, MotorType.kBrushless);
+public class ClimberIOComp implements ClimberIO {
+  private final SparkMax climberMotor = new SparkMax(9, MotorType.kBrushless);
   private final RelativeEncoder climberEncoder = climberMotor.getEncoder();
   private final Servo servo = new Servo(0);
 
-  public ClimberIONeo() {
+  public ClimberIOComp() {
     SparkMaxConfig config = new SparkMaxConfig();
-    config
-        .smartCurrentLimit(0, ClimberConstants.currentLimit)
-        .idleMode(IdleMode.kBrake)
-        .inverted(false); // TODO: test direction
+    config.smartCurrentLimit(0, 60).idleMode(IdleMode.kBrake).inverted(false);
 
     SparkUtil.tryUntilOk(
         5,
