@@ -59,7 +59,8 @@ public class Elevator extends SubsystemBase {
                   setpoint = point;
                   var out =
                       pid.calculate(
-                          positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+                          io.positionRotationsToMetres(inputs.positionRotations),
+                          setpoint.setpoint);
                   Logger.recordOutput("Elevator/Output", out);
                   Logger.recordOutput("Elevator/Error", pid.getError());
                   Logger.recordOutput("Elevator/ClimberPID", false);
@@ -77,7 +78,7 @@ public class Elevator extends SubsystemBase {
               setpoint = point;
               var out =
                   climbPID.calculate(
-                      positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+                      io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
               Logger.recordOutput("Elevator/ClimberOutput", out);
               Logger.recordOutput("Elevator/ClimberError", pid.getError());
               Logger.recordOutput("Elevator/ClimberPID", true);
@@ -100,7 +101,7 @@ public class Elevator extends SubsystemBase {
     return new Pose3d(
         0,
         0,
-        positionRotationsToMetres(inputs.positionRotations),
+        io.positionRotationsToMetres(inputs.positionRotations),
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }
