@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025;
 
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -50,9 +49,8 @@ import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIOComp;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 // import org.curtinfrc.frc2025.subsystems.popper.Popper;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
@@ -178,7 +176,7 @@ public class Robot extends LoggedRobot {
                 "ElevatorFollower",
                 EjectorConstants.motorId,
                 "Ejector",
-                IntakeConstants.intakeMotorId,
+                30,
                 "Intake")));
     // Start AdvantageKit logger
     Logger.start();
@@ -206,7 +204,7 @@ public class Robot extends LoggedRobot {
                   //   new VisionIO() {});
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
+          intake = new Intake(new IntakeIOComp());
           ejector = new Ejector(new EjectorIOKraken());
           //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIONeo());
@@ -228,11 +226,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
                   new VisionIO() {});
-          elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
+          elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIO() {});
           ejector = new Ejector(new EjectorIO() {});
           //   popper = new Popper(new PopperIO() {});
-          climber = new Climber(new ClimberIONeo());
+          climber = new Climber(new ClimberIO() {});
         }
 
         case SIMBOT -> {
@@ -382,10 +380,10 @@ public class Robot extends LoggedRobot {
     //     .and(elevator.algaePop.negate())
     //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
+    intake.setDefaultCommand(intake.intake());
     // intake.setDefaultCommand(intake.stop());
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
+    intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     // popper.setDefaultCommand(popper.stop());
@@ -476,7 +474,7 @@ public class Robot extends LoggedRobot {
     //     .rightBumper()
     //     .and(override)
     //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller.leftStick().whileTrue(intake.intake(-intakeVolts));
+    controller.leftStick().whileTrue(intake.intake(-3));
     controller
         .rightStick()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
@@ -843,7 +841,7 @@ public class Robot extends LoggedRobot {
                 Set.of(drive)));
 
     ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
-    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake());
 
     almostAtReefSetpoint
         .and(override.negate())

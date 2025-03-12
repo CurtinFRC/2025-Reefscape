@@ -1,21 +1,15 @@
 package org.curtinfrc.frc2025.subsystems.ejector;
 
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeBackSensorPort;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeMoi;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.motorReduction;
-
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO.EjectorIOInputs;
 
 public class EjectorIOSim implements EjectorIO {
-  private final DCMotor intakeMotor = DCMotor.getNEO(1);
-  private final DCMotorSim intakeMotorSim;
+  private final DCMotor ejectorMotor = DCMotor.getNEO(1);
+  private final DCMotorSim ejectorMotorSim;
   private final SimDevice frontImpl;
   private final SimBoolean frontSensor;
   private final SimDevice backImpl;
@@ -23,25 +17,23 @@ public class EjectorIOSim implements EjectorIO {
   private double volts = 0;
 
   public EjectorIOSim() {
-    intakeMotorSim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(intakeMotor, intakeMoi, motorReduction),
-            intakeMotor);
+    ejectorMotorSim =
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(ejectorMotor, 3, 1), ejectorMotor);
 
-    frontImpl = SimDevice.create("EjectorSensorFront", intakeFrontSensorPort);
+    frontImpl = SimDevice.create("EjectorSensorFront", 1);
     frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, true);
-    backImpl = SimDevice.create("EjectorSensorBack", intakeBackSensorPort);
+    backImpl = SimDevice.create("EjectorSensorBack", 2);
     backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, true);
   }
 
   @Override
   public void updateInputs(EjectorIOInputs inputs) {
-    intakeMotorSim.setInputVoltage(volts);
-    intakeMotorSim.update(0.02);
-    inputs.appliedVolts = intakeMotorSim.getInputVoltage();
-    inputs.currentAmps = intakeMotorSim.getCurrentDrawAmps();
-    inputs.positionRotations = intakeMotorSim.getAngularPositionRotations();
-    inputs.angularVelocityRotationsPerMinute = intakeMotorSim.getAngularVelocityRPM();
+    ejectorMotorSim.setInputVoltage(volts);
+    ejectorMotorSim.update(0.02);
+    inputs.appliedVolts = ejectorMotorSim.getInputVoltage();
+    inputs.currentAmps = ejectorMotorSim.getCurrentDrawAmps();
+    inputs.positionRotations = ejectorMotorSim.getAngularPositionRotations();
+    inputs.angularVelocityRotationsPerMinute = ejectorMotorSim.getAngularVelocityRPM();
     inputs.frontSensor = frontSensor.get();
     inputs.backSensor = backSensor.get();
   }
