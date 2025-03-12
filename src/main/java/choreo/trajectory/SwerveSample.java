@@ -12,6 +12,8 @@ import edu.wpi.first.util.struct.Struct;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.littletonrobotics.junction.Logger;
+
 /** A single swerve robot sample in a Trajectory. */
 public class SwerveSample implements TrajectorySample<SwerveSample> {
   private static final double[] EMPTY_MODULE_FORCES = new double[] {0, 0, 0, 0};

@@ -289,6 +289,11 @@ public class Robot extends LoggedRobot {
     autoChooser.addCmd("Test Auto", this::testAuto);
     autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
     autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
+    autoChooser.addCmd(
+        "Test Path",
+        () -> {
+          return factory.trajectoryCmd("Test Path");
+        });
 
     // Set up SysId routines
     autoChooser.addCmd(
