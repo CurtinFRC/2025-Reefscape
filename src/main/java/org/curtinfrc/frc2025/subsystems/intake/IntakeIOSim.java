@@ -1,10 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.intake;
 
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeBackSensorPort;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeFrontSensorPort;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeMoi;
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.motorReduction;
-
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
@@ -23,13 +18,11 @@ public class IntakeIOSim implements IntakeIO {
 
   public IntakeIOSim() {
     intakeMotorSim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(intakeMotor, intakeMoi, motorReduction),
-            intakeMotor);
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(intakeMotor, 3, 1), intakeMotor);
 
-    frontImpl = SimDevice.create("IntakeSensorFront", intakeFrontSensorPort);
+    frontImpl = SimDevice.create("IntakeSensorFront", 3);
     frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
-    backImpl = SimDevice.create("IntakeSensorBack", intakeBackSensorPort);
+    backImpl = SimDevice.create("IntakeSensorBack", 4);
     backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
   }
 
