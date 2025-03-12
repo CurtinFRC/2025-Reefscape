@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025;
 
-import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -18,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
@@ -30,7 +28,7 @@ import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOComp;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
@@ -40,20 +38,17 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
-import org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOKraken;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOComp;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIOComp;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 // import org.curtinfrc.frc2025.subsystems.popper.Popper;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
@@ -170,17 +165,7 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
-    Logger.registerURCL(
-        URCL.startExternal(
-            Map.of(
-                ElevatorConstants.leaderPort,
-                "ElevatorLeader",
-                ElevatorConstants.followerPort,
-                "ElevatorFollower",
-                EjectorConstants.motorId,
-                "Ejector",
-                IntakeConstants.intakeMotorId,
-                "Intake")));
+    Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
 
@@ -206,11 +191,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   //   new VisionIO() {});
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
-          elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
+          elevator = new Elevator(new ElevatorIOComp());
+          intake = new Intake(new IntakeIOComp());
           ejector = new Ejector(new EjectorIOKraken());
           //   popper = new Popper(new PopperIOKraken());
-          climber = new Climber(new ClimberIONeo());
+          climber = new Climber(new ClimberIOComp());
         }
 
         case DEVBOT -> {
@@ -229,11 +214,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
                   new VisionIO() {});
-          elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
+          elevator = new Elevator(new ElevatorIO() {});
+          intake = new Intake(new IntakeIO() {});
           ejector = new Ejector(new EjectorIO() {});
           //   popper = new Popper(new PopperIO() {});
-          climber = new Climber(new ClimberIONeo());
+          climber = new Climber(new ClimberIO() {});
         }
 
         case SIMBOT -> {
@@ -383,10 +368,10 @@ public class Robot extends LoggedRobot {
     //     .and(elevator.algaePop.negate())
     //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
+    intake.setDefaultCommand(intake.intake());
     // intake.setDefaultCommand(intake.stop());
 
-    intake.setDefaultCommand(intake.intake(intakeVolts));
+    intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     // popper.setDefaultCommand(popper.stop());
@@ -477,7 +462,7 @@ public class Robot extends LoggedRobot {
     //     .rightBumper()
     //     .and(override)
     //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller.leftStick().whileTrue(intake.intake(-intakeVolts));
+    controller.leftStick().whileTrue(intake.intake(-3));
     controller
         .rightStick()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
@@ -844,7 +829,7 @@ public class Robot extends LoggedRobot {
                 Set.of(drive)));
 
     ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
-    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake(intakeVolts));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake());
 
     almostAtReefSetpoint
         .and(override.negate())
