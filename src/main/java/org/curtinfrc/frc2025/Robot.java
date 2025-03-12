@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import java.util.Map;
 import java.util.Set;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
@@ -28,7 +27,7 @@ import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberIOComp;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
@@ -44,7 +43,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOComp;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
@@ -165,17 +164,7 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
-    Logger.registerURCL(
-        URCL.startExternal(
-            Map.of(
-                ElevatorConstants.leaderPort,
-                "ElevatorLeader",
-                ElevatorConstants.followerPort,
-                "ElevatorFollower",
-                EjectorConstants.motorId,
-                "Ejector",
-                30,
-                "Intake")));
+    Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
 
@@ -201,11 +190,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   //   new VisionIO() {});
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
-          elevator = new Elevator(new ElevatorIONEO());
+          elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
           ejector = new Ejector(new EjectorIOKraken());
           //   popper = new Popper(new PopperIOKraken());
-          climber = new Climber(new ClimberIONeo());
+          climber = new Climber(new ClimberIOComp());
         }
 
         case DEVBOT -> {
