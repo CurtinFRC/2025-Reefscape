@@ -3,6 +3,7 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
+import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -40,7 +41,6 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
-import org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOKraken;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
@@ -51,7 +51,6 @@ import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
@@ -99,6 +98,7 @@ public class Robot extends LoggedRobot {
 
   // Auto stuff
   private final AutoChooser autoChooser;
+  private final AutoFactory factory;
   // private final Autos autos;
 
   @AutoLogOutput(key = "Robot/ReefSetpoint")
@@ -176,11 +176,7 @@ public class Robot extends LoggedRobot {
                 ElevatorConstants.leaderPort,
                 "ElevatorLeader",
                 ElevatorConstants.followerPort,
-                "ElevatorFollower",
-                EjectorConstants.motorId,
-                "Ejector",
-                IntakeConstants.intakeMotorId,
-                "Intake")));
+                "ElevatorFollower")));
     // Start AdvantageKit logger
     Logger.start();
 
@@ -302,6 +298,14 @@ public class Robot extends LoggedRobot {
         drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
 
     autoChooser = new AutoChooser("Auto Chooser");
+    factory =
+        new AutoFactory(
+            drive::getPose,
+            drive::setPose,
+            drive::followTrajectoryVelocity,
+            true,
+            drive,
+            drive::logTrajectory);
 
     // autos = new Autos(drive, elevator, popper, ejector, intake);
 
@@ -311,6 +315,11 @@ public class Robot extends LoggedRobot {
     autoChooser.addCmd("Test Auto", this::testAuto);
     autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
     autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
+    autoChooser.addCmd(
+        "Test Path",
+        () -> {
+          return factory.trajectoryCmd("Test Path");
+        });
 
     // Set up SysId routines
     autoChooser.addCmd(
