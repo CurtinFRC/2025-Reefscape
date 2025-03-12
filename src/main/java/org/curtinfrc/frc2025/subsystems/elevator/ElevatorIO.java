@@ -18,4 +18,12 @@ public interface ElevatorIO {
   public default void setVoltage(double volts) {}
 
   public default void zero() {}
+
+  public default double positionRotationsToMetres(double rotations) {
+    return rotations;
+  }
+
+  public default double positionMetresToRotations(double metres) {
+    return metres;
+  }
 }
