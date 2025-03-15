@@ -62,4 +62,9 @@ public class PhoenixUtil {
   public static double phoenixToRobotTime(double timeSeconds) {
     return (RobotController.getTime() - Utils.getCurrentTimeSeconds()) + timeSeconds;
   }
+
+  /** Returns raw Phoenix time. Is *NOT* deterministic. */
+  public static double getTime() {
+    return Utils.getCurrentTimeSeconds();
+  }
 }
