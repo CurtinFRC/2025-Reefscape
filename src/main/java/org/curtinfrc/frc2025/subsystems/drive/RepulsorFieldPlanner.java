@@ -1,4 +1,4 @@
-package org.curtinfrc.frc2025.util;
+package org.curtinfrc.frc2025.subsystems.drive;
 
 import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.MathUtil;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import org.curtinfrc.frc2025.util.Force;
 import org.littletonrobotics.junction.Logger;
 
 public class RepulsorFieldPlanner {
