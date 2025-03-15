@@ -4,31 +4,23 @@ import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolt
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import com.ctre.phoenix6.SignalLogger;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-// import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
-// import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIONeo;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
@@ -55,9 +47,6 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeConstants;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
-// import org.curtinfrc.frc2025.subsystems.popper.Popper;
-// import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
-// import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -75,7 +64,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
-import org.photonvision.common.hardware.VisionLEDMode;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -90,8 +78,8 @@ public class Robot extends LoggedRobot {
   private Intake intake;
   private Elevator elevator;
   private Ejector ejector;
-  //   private Popper popper;
   private Climber climber;
+  private final Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -209,7 +197,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIOKraken());
-          //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -232,7 +219,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIONEO());
           intake = new Intake(new IntakeIONEO());
           ejector = new Ejector(new EjectorIO() {});
-          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIONeo());
         }
 
@@ -255,7 +241,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
         }
       }
@@ -279,263 +264,13 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
     }
 
-    PortForwarder.add(5820, "limelight-3.local", 1181);
-    PortForwarder.add(5830, "limelight-3g.local", 1181);
-    PortForwarder.add(5821, "limelight-3.local", 5800);
-    PortForwarder.add(5831, "limelight-3g.local", 5800);
+    superstructure = new Superstructure(intake, ejector, elevator, drive);
 
-    atReefSetpoint =
-        drive
-            .atSetpoint
-            .and(elevator.atSetpoint)
-            .and(new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
-
-    almostAtReefSetpoint =
-        drive.almostAtSetpoint.and(
-            new Trigger(() -> drive.setpoint.equals(reefSetpoint.driveSetpoint())));
-
-    atHpSetpoint =
-        drive.atSetpoint.and(new Trigger(() -> drive.setpoint.equals(hpSetpoint.driveSetpoint())));
-
-    autoChooser = new AutoChooser("Auto Chooser");
-
-    // autos = new Autos(drive, elevator, popper, ejector, intake);
-
-    // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
-
-    autoChooser.addCmd("One Piece", this::onePiece);
-    autoChooser.addCmd("Test Auto", this::testAuto);
-    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
-    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
-
-    // Set up SysId routines
-    autoChooser.addCmd(
-        "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
-    autoChooser.addCmd(
-        "Drive Simple FF Characterization", () -> drive.feedforwardCharacterization());
-
-    autoChooser.addCmd(
-        "Drive Translation SysId (Quasistatic Forward)",
-        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addCmd(
-        "Drive Translation SysId (Quasistatic Reverse)",
-        () -> drive.sysIdTranslationQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addCmd(
-        "Drive Translation SysId (Dynamic Forward)",
-        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addCmd(
-        "Drive Translation SysId (Dynamic Reverse)",
-        () -> drive.sysIdTranslationDynamic(SysIdRoutine.Direction.kReverse));
-
-    autoChooser.addCmd(
-        "Drive Steer SysId (Quasistatic Forward)",
-        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addCmd(
-        "Drive Steer SysId (Quasistatic Reverse)",
-        () -> drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addCmd(
-        "Drive Steer SysId (Dynamic Forward)",
-        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addCmd(
-        "Drive Steer SysId (Dynamic Reverse)",
-        () -> drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
-
-    RobotModeTriggers.autonomous()
-        .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
-
-    // Default command, normal field-relative drive
-    drive.setDefaultCommand(
-        drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
-
-    elevator
-        .isNotAtCollect
-        .and(atReefSetpoint)
-        .and(override.negate())
-        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-
-    climber.stalled.onTrue(
-        climber
-            .stop()
-            .andThen(
-                elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
-                    .withTimeout(0.5)
-                    .andThen(
-                        Commands.parallel(
-                            climber.engage(),
-                            elevator.goToClimberSetpoint(
-                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
-                    .until(elevator.atClimbSetpoint)
-                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
-
-    // elevator
-    //     .isNotAtCollect
-    //     .and(atReefSetpoint)
-    //     .and(elevator.atSetpoint)
-    //     .and(drive.atSetpoint)
-    //     .and(elevator.algaePop.negate())
-    //     .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
-
-    intake.setDefaultCommand(intake.intake(intakeVolts));
-    // intake.setDefaultCommand(intake.stop());
-
-    intake.setDefaultCommand(intake.intake(intakeVolts));
-    ejector.setDefaultCommand(
-        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    // popper.setDefaultCommand(popper.stop());
-    elevator.setDefaultCommand(
-        elevator
-            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    climber.setDefaultCommand(climber.stop());
-
-    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
-    intake
-        .backSensor
-        .and(elevator.isNotAtCollect.negate())
-        .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(8));
-
-    atHpSetpoint.whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kBlink)));
-    ejector
-        .frontSensor
-        .or(intake.frontSensor)
-        .or(intake.backSensor)
-        .or(ejector.backSensor)
-        .whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kOn)));
-    ejector
-        .frontSensor
-        .or(intake.frontSensor)
-        .or(intake.backSensor)
-        .or(ejector.backSensor)
-        .and(atHpSetpoint)
-        .negate()
-        .whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kOff)));
-
-    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
-
-    intake
-        .backSensor
-        .negate()
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor)
-        .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            ejector
-                .eject(-1)
-                .until(ejector.frontSensor)
-                .andThen(ejector.stop())
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-
-    ejector.backSensor.whileTrue(intake.stop());
-
-    // Reset gyro to 0° when B button is pressed
-    controller
-        .y()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
-                .ignoringDisable(true));
-
-    controller
-        .rightTrigger()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
-    controller
-        .rightBumper()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-
-    controller
-        .leftBumper()
-        .whileTrue(
-            Commands.parallel(
-                ejector.setVoltage(8),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
-
-    controller
-        .leftTrigger()
-        .whileTrue(
-            Commands.parallel(
-                ejector.setVoltage(8),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate())));
-    // controller
-    //     .leftBumper()
-    //     .and(override)
-    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
-    // controller
-    //     .rightBumper()
-    //     .and(override)
-    //     .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller.leftStick().whileTrue(intake.intake(-intakeVolts));
-    controller
-        .rightStick()
-        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    // controller.b().whileTrue(popper.setVoltage(3));
-
-    // elevator
-    //     .isNotAtCollect
-    //     .and(elevator.atSetpoint)
-    //     .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
-    // controller
-    //     .rightTrigger()
-    //     .whileTrue(Commands.race(popper.setVoltage(10), Commands.waitSeconds(1)));
-    // controller
-    //     .leftTrigger()
-    //     .whileTrue(
-    //         Commands.race(
-    //             popper.setVoltage(10),
-    //             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh),
-    //             Commands.waitSeconds(0.4)));
-    controller
-        .x()
-        .onTrue(
-            climber
-                .goToSetpoint(ClimberConstants.targetPositionRotationsIn)
-                .andThen(
-                    elevator.goToSetpoint(
-                        ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
-
-    controller // climb attempt
-        .a()
-        .and(() -> climber.climberDeployed)
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
-                .until(elevator.atSetpoint)
-                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
-                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
-                .andThen(
-                    new ScheduleCommand(
-                        elevator.goToSetpoint(
-                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
-
-    // controller
-    //     .povRight()
-    //     .whileTrue(
-    //         climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn).withTimeout(1.5));
-    // controller // test above first
-    //     .povUp()
-    //     .onTrue(
-    //         elevator
-    //             .goToSetpoint(ElevatorSetpoints.L2) // TODO: make actual setpoints for climb
-    //             .until(controller.povUp().negate())
-    //             .andThen(elevator.goToSetpoint(ElevatorSetpoints.L3).until(controller.povDown()))
-    //             .andThen(climber.goToSetpoint().withTimeout(1.5))
-    //
-    // .andThen(elevator.goToSetpoint(ElevatorSetpoints.BASE).until(elevator.atSetpoint)));
-
-    controller.b().whileTrue(climber.disengage()); // TODO always do for climb retry
+    superstructure.noGamepiece.whileTrue(superstructure.intake(() -> hpSetpoint));
+    superstructure.hasGamepiece.whileTrue(superstructure.autoScore(() -> reefSetpoint));
 
     board
         .coralAB()
