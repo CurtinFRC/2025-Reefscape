@@ -1,5 +1,7 @@
 package org.curtinfrc.frc2025;
 
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
+
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -16,6 +18,8 @@ public final class Constants {
   public static final RobotType robotType = RobotType.COMPBOT;
   public static final double ROBOT_X = 705; // mm
   public static final double ROBOT_Y = 730;
+  public static final double FIELD_LENGTH = aprilTagLayout.getFieldLength();
+  public static final double FIELD_WIDTH = aprilTagLayout.getFieldWidth();
   public static final boolean devmode = false;
 
   public static final Mode getMode() {
