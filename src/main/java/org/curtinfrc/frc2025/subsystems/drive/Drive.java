@@ -46,7 +46,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
@@ -777,58 +776,54 @@ public class Drive extends SubsystemBase {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
-    return autoAlign(
-        _setpoint, Optional.of(xSupplier), Optional.of(ySupplier), Optional.of(omegaSupplier));
+    return run(
+        () -> {
+          if (Math.abs(xSupplier.getAsDouble()) > 0.05
+              || Math.abs(ySupplier.getAsDouble()) > 0.05
+              || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
+            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
+            return;
+          }
+          autoAlign(_setpoint.get());
+        });
   }
 
-  public Command autoAlign(
-      Supplier<DriveSetpoints> _setpoint,
-      Optional<DoubleSupplier> xSupplier,
-      Optional<DoubleSupplier> ySupplier,
-      Optional<DoubleSupplier> omegaSupplier) {
-    return run(() -> {
-          if (xSupplier.isPresent() && ySupplier.isPresent() && omegaSupplier.isPresent()) {
-            if (Math.abs(xSupplier.get().getAsDouble()) > 0.05
-                || Math.abs(ySupplier.get().getAsDouble()) > 0.05
-                || Math.abs(omegaSupplier.get().getAsDouble()) > 0.05) {
-              joystickDrive(xSupplier.get(), ySupplier.get(), omegaSupplier.get()).execute();
-              return;
-            }
-          }
+  private void autoAlign(DriveSetpoints _setpoint) {
+    this.setpoint = _setpoint;
+    Logger.recordOutput("Drive/Setpoint", this.setpoint.getPose());
 
-          this.setpoint = _setpoint.get();
-          Logger.recordOutput("Drive/Setpoint", this.setpoint.getPose());
+    repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
 
-          repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
+    var robotPose = getPose();
+    SwerveSample cmd =
+        repulsorFieldPlanner.getCmd(
+            robotPose,
+            getChassisSpeeds(),
+            CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+            true);
 
-          var robotPose = getPose();
-          SwerveSample cmd =
-              repulsorFieldPlanner.getCmd(
-                  robotPose,
-                  getChassisSpeeds(),
-                  CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-                  true);
+    // Apply the trajectory with rotation adjustment
+    SwerveSample adjustedSample =
+        new SwerveSample(
+            cmd.t,
+            cmd.x,
+            cmd.y,
+            this.setpoint.getPose().getRotation().getRadians(),
+            cmd.vx,
+            cmd.vy,
+            0,
+            cmd.ax,
+            cmd.ay,
+            cmd.alpha,
+            cmd.moduleForcesX(),
+            cmd.moduleForcesY());
 
-          // Apply the trajectory with rotation adjustment
-          SwerveSample adjustedSample =
-              new SwerveSample(
-                  cmd.t,
-                  cmd.x,
-                  cmd.y,
-                  this.setpoint.getPose().getRotation().getRadians(),
-                  cmd.vx,
-                  cmd.vy,
-                  0,
-                  cmd.ax,
-                  cmd.ay,
-                  cmd.alpha,
-                  cmd.moduleForcesX(),
-                  cmd.moduleForcesY());
+    // Apply the adjusted sample
+    followTrajectory(adjustedSample);
+  }
 
-          // Apply the adjusted sample
-          followTrajectory(adjustedSample);
-        })
-        .withName("AutoAlign");
+  public Command autoAlign(Supplier<DriveSetpoints> _setpoint) {
+    return run(() -> autoAlign(_setpoint.get())).withName("AutoAlign");
   }
 
   public Pose3d findClosestTag(List<AprilTag> tags) {

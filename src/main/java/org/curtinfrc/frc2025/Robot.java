@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
 // import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
@@ -1008,7 +1007,7 @@ public class Robot extends LoggedRobot {
 
   public Command onePiece() {
     return drive
-        .autoAlign(() -> DriveSetpoints.C, Optional.empty(), Optional.empty(), Optional.empty())
+        .autoAlign(() -> DriveSetpoints.C)
         .until(drive.atSetpoint)
         .andThen(
             elevator
@@ -1047,27 +1046,18 @@ public class Robot extends LoggedRobot {
 
   private Command node(Setpoint point) {
     return drive
-        .autoAlign(
-            () -> point.driveSetpoint(), Optional.empty(), Optional.empty(), Optional.empty())
+        .autoAlign(() -> point.driveSetpoint())
         .until(drive.atSetpoint)
         .andThen(
             Commands.parallel(
-                drive.autoAlign(
-                    () -> point.driveSetpoint(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()),
+                drive.autoAlign(() -> point.driveSetpoint()),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("firststep")
         .until(elevator.atSetpoint)
         .withName("GetToAutoPosition")
         .andThen(
             Commands.parallel(
-                drive.autoAlign(
-                    () -> point.driveSetpoint(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()),
+                drive.autoAlign(() -> point.driveSetpoint()),
                 ejector.eject(15).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
@@ -1080,10 +1070,7 @@ public class Robot extends LoggedRobot {
     return elevator
         .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
         .until(elevator.atSetpoint)
-        .andThen(
-            drive
-                .autoAlign(() -> point, Optional.empty(), Optional.empty(), Optional.empty())
-                .until(intake.frontSensor))
+        .andThen(drive.autoAlign(() -> point).until(intake.frontSensor))
         .andThen(Commands.waitSeconds(1.5))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
