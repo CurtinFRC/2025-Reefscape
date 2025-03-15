@@ -122,7 +122,7 @@ public class Robot extends LoggedRobot {
   public final Trigger atHpSetpoint;
 
   @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = true;
+  private boolean overridden = false;
 
   @AutoLogOutput(key = "Robot/Overide")
   private final Trigger override = new Trigger(() -> overridden);

@@ -2,11 +2,9 @@ package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
-import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -19,7 +17,6 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -54,6 +51,7 @@ import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
+import org.curtinfrc.frc2025.subsystems.drive.RepulsorFieldPlanner.RepulsorSample;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -794,52 +792,18 @@ public class Drive extends SubsystemBase {
     repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
 
     var robotPose = getPose();
-    SwerveSample cmd =
-        repulsorFieldPlanner.getCmd(
-            robotPose,
-            getChassisSpeeds(),
-            CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-            true);
+    RepulsorSample sample =
+        repulsorFieldPlanner.calculate(
+            robotPose, getChassisSpeeds(), CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
-    // Apply the trajectory with rotation adjustment
-    SwerveSample adjustedSample =
-        new SwerveSample(
-            cmd.t,
-            cmd.x,
-            cmd.y,
-            this.setpoint.getPose().getRotation().getRadians(),
-            cmd.vx,
-            cmd.vy,
-            0,
-            cmd.ax,
-            cmd.ay,
-            cmd.alpha,
-            cmd.moduleForcesX(),
-            cmd.moduleForcesY());
+    var omega =
+        headingController.calculate(
+            getRotation().getRadians(), _setpoint.getPose().getRotation().getRadians());
 
-    // Apply the adjusted sample
-    followTrajectory(adjustedSample);
+    runVelocity(new ChassisSpeeds(-sample.vx(), -sample.vy(), omega));
   }
 
   public Command autoAlign(Supplier<DriveSetpoints> _setpoint) {
     return run(() -> autoAlign(_setpoint.get())).withName("AutoAlign");
-  }
-
-  public Pose3d findClosestTag(List<AprilTag> tags) {
-    Transform2d lowestTransform = null;
-    int closestTagId = 99;
-    for (var tag : tags) {
-      var transform = getPose().minus(tag.pose.toPose2d());
-      if (lowestTransform == null) {
-        lowestTransform = transform;
-        closestTagId = tag.ID;
-        break;
-      }
-      if (lowestTransform.getTranslation().getNorm() > transform.getTranslation().getNorm()) {
-        lowestTransform = transform;
-        closestTagId = tag.ID;
-      }
-    }
-    return aprilTagLayout.getTagPose(closestTagId).get();
   }
 }
