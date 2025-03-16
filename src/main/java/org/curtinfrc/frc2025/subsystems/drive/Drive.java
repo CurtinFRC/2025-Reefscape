@@ -634,7 +634,7 @@ public class Drive extends SubsystemBase {
         headingController.calculate(
             getRotation().getRadians(), _setpoint.getPose().getRotation().getRadians());
 
-    runVelocity(new ChassisSpeeds(-sample.vx(), -sample.vy(), omega));
+    runVelocity(new ChassisSpeeds(sample.vx(), sample.vy(), omega));
   }
 
   public Command autoAlign(Supplier<DriveSetpoints> _setpoint) {
