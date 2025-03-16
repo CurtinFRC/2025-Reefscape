@@ -20,7 +20,6 @@ public final class Constants {
   public static final double ROBOT_Y = 730;
   public static final double FIELD_LENGTH = aprilTagLayout.getFieldLength();
   public static final double FIELD_WIDTH = aprilTagLayout.getFieldWidth();
-  public static final boolean devmode = false;
 
   public static final Mode getMode() {
     return switch (robotType) {
