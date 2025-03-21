@@ -13,6 +13,7 @@
 
 package org.curtinfrc.frc2025.subsystems.drive;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -20,6 +21,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
@@ -154,5 +156,13 @@ public class Module {
   /** Returns the module velocity in rotations/sec (Phoenix native units). */
   public double getFFCharacterizationVelocity() {
     return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
+  }
+
+  public Optional<TalonFX> getDrive() {
+    return io.getDrive();
+  }
+
+  public Optional<TalonFX> getTurn() {
+    return io.getTurn();
   }
 }

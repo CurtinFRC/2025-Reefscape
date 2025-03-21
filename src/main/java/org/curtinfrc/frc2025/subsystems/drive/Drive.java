@@ -169,6 +169,10 @@ public class Drive extends SubsystemBase {
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
+  public Module[] getModules() {
+    return modules;
+  }
+
   @Override
   public void periodic() {
     odometryLock.lock(); // Prevents odometry updates while reading data

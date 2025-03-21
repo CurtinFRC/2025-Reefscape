@@ -1,6 +1,8 @@
 package org.curtinfrc.frc2025.subsystems.drive;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.geometry.Rotation2d;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ModuleIO {
@@ -41,4 +43,12 @@ public interface ModuleIO {
 
   /** Run the turn motor to the specified rotation. */
   public default void setTurnPosition(Rotation2d rotation) {}
+
+  public default Optional<TalonFX> getDrive() {
+    return Optional.empty();
+  }
+
+  public default Optional<TalonFX> getTurn() {
+    return Optional.empty();
+  }
 }

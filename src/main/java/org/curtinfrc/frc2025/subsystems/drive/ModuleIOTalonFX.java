@@ -28,6 +28,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import java.util.Optional;
 import java.util.Queue;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
@@ -259,5 +260,13 @@ public class ModuleIOTalonFX implements ModuleIO {
           case TorqueCurrentFOC -> positionTorqueCurrentRequest.withPosition(
               rotation.getRotations());
         });
+  }
+
+  public Optional<TalonFX> getDrive() {
+    return Optional.of(driveTalon);
+  }
+
+  public Optional<TalonFX> getTurn() {
+    return Optional.of(turnTalon);
   }
 }

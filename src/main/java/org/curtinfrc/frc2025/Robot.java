@@ -4,6 +4,9 @@ import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolt
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -16,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
+import java.util.Optional;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -54,6 +58,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.LoggedNetworkSetpoint;
+import org.curtinfrc.frc2025.util.TestUtil;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -79,6 +84,8 @@ public class Robot extends LoggedRobot {
   private Elevator elevator;
   private Ejector ejector;
   private Popper popper;
+
+  private TestUtil tests = new TestUtil();
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -259,6 +266,37 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
+    }
+
+    this.tests.addInput(this.tests.new DigitalSensor(3, "IntakeFront"));
+    this.tests.addInput(this.tests.new DigitalSensor(5, "IntakeBack"));
+    this.tests.addInput(this.tests.new DigitalSensor(4, "EjectorFront"));
+    this.tests.addInput(this.tests.new DigitalSensor(2, "EjectorBack"));
+
+    this.tests.addInput(
+        this.tests
+        .new Motor(
+            new SparkMax(EjectorConstants.motorId, MotorType.kBrushless), "EjectorSparkMax"));
+    this.tests.addInput(
+        this.tests
+        .new Motor(
+            new SparkMax(IntakeConstants.intakeMotorId, MotorType.kBrushless), "IntakeSparkMax"));
+    this.tests.addInput(this.tests.new Motor(new TalonFX(PopperIOKraken.ID), "PopperKraken"));
+
+    this.tests.addInput(
+        this.tests.new Motor(new TalonFX(ElevatorConstants.leaderPort), "ElevatorLead"));
+    this.tests.addInput(
+        this.tests.new Motor(new TalonFX(ElevatorConstants.followerPort), "ElevatorFollow"));
+
+    int i = 0;
+    for (org.curtinfrc.frc2025.subsystems.drive.Module mod : this.drive.getModules()) {
+      i++;
+      Optional<TalonFX> drive = mod.getDrive();
+      Optional<TalonFX> turn = mod.getTurn();
+      if (drive.isPresent() && turn.isPresent()) {
+        this.tests.addInput(this.tests.new Motor(drive.get(), "Module" + i + "Drive"));
+        this.tests.addInput(this.tests.new Motor(turn.get(), "Module" + i + "Turn"));
+      }
     }
 
     atReefSetpoint =
@@ -810,7 +848,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    tests.tick();
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override

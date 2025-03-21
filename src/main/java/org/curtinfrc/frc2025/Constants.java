@@ -13,7 +13,7 @@ import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpo
  * (log replay from a file).
  */
 public final class Constants {
-  public static final RobotType robotType = RobotType.COMPBOT;
+  public static final RobotType robotType = RobotType.SIMBOT;
   // TODO account for bumpers
   public static final double ROBOT_X = 705; // mm
   public static final double ROBOT_Y = 730;
