@@ -95,6 +95,9 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpointPose =
       new Trigger(() -> xSetpointController.atSetpoint() && ySetpointController.atSetpoint());
 
+  private boolean auto_overridden = false;
+  private boolean last_is_hp_setpoint = false;
+
   public DriveSetpoints setpoint = DriveSetpoints.A;
 
   @AutoLogOutput(key = "Drive/AngleDiff")
@@ -762,24 +765,31 @@ public class Drive extends SubsystemBase {
       Supplier<DriveSetpoints> _setpoint,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
+      DoubleSupplier omegaSupplier, boolean is_hp_setpoint) {
     return autoAlign(
-        _setpoint, Optional.of(xSupplier), Optional.of(ySupplier), Optional.of(omegaSupplier));
+        _setpoint, Optional.of(xSupplier), Optional.of(ySupplier), Optional.of(omegaSupplier), is_hp_setpoint);
   }
 
   public Command autoAlign(
       Supplier<DriveSetpoints> _setpoint,
       Optional<DoubleSupplier> xSupplier,
       Optional<DoubleSupplier> ySupplier,
-      Optional<DoubleSupplier> omegaSupplier) {
+      Optional<DoubleSupplier> omegaSupplier,
+      boolean is_hp_setpoint) {
     return run(() -> {
           if (xSupplier.isPresent() && ySupplier.isPresent() && omegaSupplier.isPresent()) {
             if (Math.abs(xSupplier.get().getAsDouble()) > 0.05
                 || Math.abs(ySupplier.get().getAsDouble()) > 0.05
                 || Math.abs(omegaSupplier.get().getAsDouble()) > 0.05) {
+              this.auto_overridden = true;
+              this.last_is_hp_setpoint = is_hp_setpoint;
               joystickDrive(xSupplier.get(), ySupplier.get(), omegaSupplier.get()).execute();
               return;
             }
+          }
+
+          if (is_hp_setpoint == last_is_hp_setpoint) {
+            return;
           }
 
           this.setpoint = _setpoint.get();
