@@ -16,7 +16,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 
-public class EjectorIOKraken implements EjectorIO {
+public class EjectorIOComp implements EjectorIO {
   private static final int ID = 46;
   private static final int FOLLOWER_ID = 46;
 
@@ -31,7 +31,7 @@ public class EjectorIOKraken implements EjectorIO {
   private final StatusSignal<Angle> position = motor.getPosition();
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
-  public EjectorIOKraken() {
+  public EjectorIOComp() {
     tryUntilOk(
         5,
         () ->

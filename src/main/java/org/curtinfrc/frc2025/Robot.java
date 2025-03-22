@@ -38,7 +38,7 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
-import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOKraken;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOComp;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
@@ -192,7 +192,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
-          ejector = new Ejector(new EjectorIOKraken());
+          ejector = new Ejector(new EjectorIOComp());
           //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIOComp());
         }
