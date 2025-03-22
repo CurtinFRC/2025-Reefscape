@@ -33,7 +33,7 @@ public class EjectorIOSim implements EjectorIO {
     inputs.appliedVolts = ejectorMotorSim.getInputVoltage();
     inputs.currentAmps = ejectorMotorSim.getCurrentDrawAmps();
     inputs.positionRotations = ejectorMotorSim.getAngularPositionRotations();
-    inputs.angularVelocityRotationsPerMinute = ejectorMotorSim.getAngularVelocityRPM();
+    // inputs.angu = ejectorMotorSim.getAngularVelocityRPM(); // TODO
     inputs.frontSensor = frontSensor.get();
     inputs.backSensor = backSensor.get();
   }
@@ -41,5 +41,10 @@ public class EjectorIOSim implements EjectorIO {
   @Override
   public void setVoltage(double volts) {
     this.volts = volts;
+  }
+
+  @Override
+  public void setVelocity(double speedRotationsPerSecond) {
+    ejectorMotorSim.setAngularVelocity(speedRotationsPerSecond * Math.PI);
   }
 }
