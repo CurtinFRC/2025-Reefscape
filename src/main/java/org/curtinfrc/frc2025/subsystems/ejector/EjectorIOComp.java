@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.ejector;
 
-import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.*;
 import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -23,8 +22,8 @@ public class EjectorIOComp implements EjectorIO {
   private final TalonFX motor = new TalonFX(ID);
   private final TalonFX follower = new TalonFX(FOLLOWER_ID);
 
-  private final DigitalInput frontSensor = new DigitalInput(frontSensorPort);
-  private final DigitalInput backSensor = new DigitalInput(backSensorPort);
+  private final DigitalInput frontSensor = new DigitalInput(4);
+  private final DigitalInput backSensor = new DigitalInput(2);
 
   private final StatusSignal<Voltage> voltage = motor.getMotorVoltage();
   private final StatusSignal<Current> current = motor.getStatorCurrent();

@@ -1,7 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.ejector;
 
-import static org.curtinfrc.frc2025.subsystems.ejector.EjectorConstants.*;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -10,6 +8,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.Logger;
 
 public class Ejector extends SubsystemBase {
+  private static final double kP = 0;
+  private static final double kD = 0;
+  private static final double kS = 0.8;
+  private static final double kV = 0.22;
+  private static final double kA = 0;
+
   private final EjectorIO io;
   private final EjectorIOInputsAutoLogged inputs = new EjectorIOInputsAutoLogged();
   private final PIDController pid = new PIDController(kP, 0, kD);
