@@ -1,17 +1,16 @@
 package org.curtinfrc.frc2025.subsystems.leds;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO.LEDsColour;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO.LEDsState;
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+public class LEDs extends SubsystemBase {
+  private final LEDsIO io;
+  private final LEDsIOInputsAutoLogged inputs = new LEDsIOInputsAutoLogged();
 
-public class LEDs extends SubsystemBase{
-    private final LEDsIO io;
-    private final LEDsIOInputsAutoLogged inputs = new LEDsIOInputsAutoLogged();
-    
-    public LEDs(LEDsIO io) {
+  public LEDs(LEDsIO io) {
     this.io = io;
   }
 
@@ -36,5 +35,4 @@ public class LEDs extends SubsystemBase{
   public Command setBlink() {
     return runOnce(() -> io.switchState(LEDsState.BLINK));
   }
-
 }
