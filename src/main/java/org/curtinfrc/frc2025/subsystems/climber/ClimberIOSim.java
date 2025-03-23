@@ -4,14 +4,17 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class ClimberIOSim implements ClimberIO {
   private DCMotorSim climberSim;
   private DCMotor grabberMotor = DCMotor.getNEO(1);
 
-  public ClimberIOSim() {
+  public ClimberIOSim(TestUtil tests) {
     climberSim =
         new DCMotorSim(LinearSystemId.createDCMotorSystem(grabberMotor, 0.025, 4.0), grabberMotor);
+
+    tests.addInput(tests.new Motor(climberSim, "ClimberNeo"));
   }
 
   private double voltage = 0.0;

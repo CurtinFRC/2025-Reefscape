@@ -30,6 +30,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import java.util.Queue;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -85,7 +86,9 @@ public class ModuleIOTalonFX implements ModuleIO {
 
   public ModuleIOTalonFX(
       SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-          constants) {
+          constants,
+      TestUtil tests,
+      String name) {
     this.constants = constants;
     driveTalon =
         new TalonFX(constants.DriveMotorId, CompTunerConstants.DrivetrainConstants.CANBusName);
@@ -175,6 +178,9 @@ public class ModuleIOTalonFX implements ModuleIO {
         turnAppliedVolts,
         turnCurrent);
     ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon);
+
+    tests.addInput(tests.new Motor(driveTalon, "Module-" + name + "-Drive"));
+    tests.addInput(tests.new Motor(turnTalon, "Module-" + name + "-Turn"));
   }
 
   @Override

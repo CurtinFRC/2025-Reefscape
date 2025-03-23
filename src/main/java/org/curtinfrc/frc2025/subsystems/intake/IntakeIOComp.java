@@ -13,6 +13,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class IntakeIOComp implements IntakeIO {
   private static final int ID = 46; // TODO
@@ -27,7 +28,7 @@ public class IntakeIOComp implements IntakeIO {
   private final StatusSignal<Angle> position = motor.getPosition();
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
-  public IntakeIOComp() {
+  public IntakeIOComp(TestUtil tests) {
     tryUntilOk(
         5,
         () ->
@@ -40,6 +41,11 @@ public class IntakeIOComp implements IntakeIO {
                                 .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "IntakeFront"));
+    tests.addInput(tests.new DigitalSensor(frontSensor, "IntakeBack"));
+
+    tests.addInput(tests.new Motor(motor, "IntakeKraken"));
   }
 
   @Override

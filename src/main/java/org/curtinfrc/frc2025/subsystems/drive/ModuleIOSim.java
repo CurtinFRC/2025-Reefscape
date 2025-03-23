@@ -22,6 +22,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 /**
  * Physics sim implementation of module IO. The sim models are configured using a set of module
@@ -51,7 +52,7 @@ public class ModuleIOSim implements ModuleIO {
   private double driveAppliedVolts = 0.0;
   private double turnAppliedVolts = 0.0;
 
-  public ModuleIOSim(SwerveModuleConstants constants) {
+  public ModuleIOSim(SwerveModuleConstants constants, TestUtil tests, String name) {
     // Create drive and turn sim models
     driveSim =
         new DCMotorSim(
@@ -66,6 +67,9 @@ public class ModuleIOSim implements ModuleIO {
 
     // Enable wrapping for turn PID
     turnController.enableContinuousInput(-Math.PI, Math.PI);
+
+    tests.addInput(tests.new Motor(driveSim, "Module-" + name + "-Drive"));
+    tests.addInput(tests.new Motor(turnSim, "Module-" + name + "-Turn"));
   }
 
   @Override

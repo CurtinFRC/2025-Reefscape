@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class EjectorIOComp implements EjectorIO {
   private static final int ID = 46;
@@ -30,7 +31,7 @@ public class EjectorIOComp implements EjectorIO {
   private final StatusSignal<Angle> position = motor.getPosition();
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
-  public EjectorIOComp() {
+  public EjectorIOComp(TestUtil tests) {
     tryUntilOk(
         5,
         () ->
@@ -53,6 +54,12 @@ public class EjectorIOComp implements EjectorIO {
                                 .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "IntakeFront"));
+    tests.addInput(tests.new DigitalSensor(backSensor, "IntakeBack"));
+
+    tests.addInput(tests.new Motor(motor, "IntakeLead"));
+    tests.addInput(tests.new Motor(follower, "IntakeFollow"));
   }
 
   @Override

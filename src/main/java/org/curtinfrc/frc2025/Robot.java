@@ -60,6 +60,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.LoggedNetworkSetpoint;
+import org.curtinfrc.frc2025.util.TestUtil;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -94,6 +95,8 @@ public class Robot extends LoggedRobot {
   // Auto stuff
   private final AutoChooser autoChooser;
   // private final Autos autos;
+
+  TestUtil tests = new TestUtil();
 
   @AutoLogOutput(key = "Robot/ReefSetpoint")
   private Setpoint reefSetpoint = new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A);
@@ -177,10 +180,10 @@ public class Robot extends LoggedRobot {
           drive =
               new Drive(
                   new GyroIOPigeon2(CompTunerConstants.DrivetrainConstants),
-                  new ModuleIOTalonFX(CompTunerConstants.FrontLeft),
-                  new ModuleIOTalonFX(CompTunerConstants.FrontRight),
-                  new ModuleIOTalonFX(CompTunerConstants.BackLeft),
-                  new ModuleIOTalonFX(CompTunerConstants.BackRight));
+                  new ModuleIOTalonFX(CompTunerConstants.FrontLeft, tests, "FrontLeft"),
+                  new ModuleIOTalonFX(CompTunerConstants.FrontRight, tests, "FrontRight"),
+                  new ModuleIOTalonFX(CompTunerConstants.BackLeft, tests, "BackLeft"),
+                  new ModuleIOTalonFX(CompTunerConstants.BackRight, tests, "BackRight"));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
@@ -190,11 +193,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   //   new VisionIO() {});
                   new VisionIOPhotonVision(camera2Name, robotToCamera3));
-          elevator = new Elevator(new ElevatorIOComp());
-          intake = new Intake(new IntakeIOComp());
-          ejector = new Ejector(new EjectorIOComp());
+          elevator = new Elevator(new ElevatorIOComp(tests));
+          intake = new Intake(new IntakeIOComp(tests));
+          ejector = new Ejector(new EjectorIOComp(tests));
           //   popper = new Popper(new PopperIOKraken());
-          climber = new Climber(new ClimberIOComp());
+          climber = new Climber(new ClimberIOComp(tests));
         }
 
         case DEVBOT -> {
@@ -202,10 +205,10 @@ public class Robot extends LoggedRobot {
           drive =
               new Drive(
                   new GyroIOPigeon2(DevTunerConstants.DrivetrainConstants),
-                  new ModuleIOTalonFX(DevTunerConstants.FrontLeft),
-                  new ModuleIOTalonFX(DevTunerConstants.FrontRight),
-                  new ModuleIOTalonFX(DevTunerConstants.BackLeft),
-                  new ModuleIOTalonFX(DevTunerConstants.BackRight));
+                  new ModuleIOTalonFX(DevTunerConstants.FrontLeft, tests, "FrontLeft"),
+                  new ModuleIOTalonFX(DevTunerConstants.FrontRight, tests, "FrontRight"),
+                  new ModuleIOTalonFX(DevTunerConstants.BackLeft, tests, "BackLeft"),
+                  new ModuleIOTalonFX(DevTunerConstants.BackRight, tests, "BackRight"));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
@@ -224,10 +227,10 @@ public class Robot extends LoggedRobot {
           drive =
               new Drive(
                   new GyroIO() {},
-                  new ModuleIOSim(CompTunerConstants.FrontLeft),
-                  new ModuleIOSim(CompTunerConstants.FrontRight),
-                  new ModuleIOSim(CompTunerConstants.BackLeft),
-                  new ModuleIOSim(CompTunerConstants.BackRight));
+                  new ModuleIOSim(CompTunerConstants.FrontLeft, tests, "FrontLeft"),
+                  new ModuleIOSim(CompTunerConstants.FrontRight, tests, "FrontRight"),
+                  new ModuleIOSim(CompTunerConstants.BackLeft, tests, "BackLeft"),
+                  new ModuleIOSim(CompTunerConstants.BackRight, tests, "BackRight"));
           vision =
               new Vision(
                   drive::addVisionMeasurement,
@@ -236,11 +239,11 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
                   new VisionIOPhotonVisionSim(camera3Name, robotToCamera3, drive::getPose));
 
-          elevator = new Elevator(new ElevatorIOSim());
-          intake = new Intake(new IntakeIOSim());
-          ejector = new Ejector(new EjectorIOSim());
+          elevator = new Elevator(new ElevatorIOSim(tests));
+          intake = new Intake(new IntakeIOSim(tests));
+          ejector = new Ejector(new EjectorIOSim(tests));
           //   popper = new Popper(new PopperIO() {});
-          climber = new Climber(new ClimberIOSim());
+          climber = new Climber(new ClimberIOSim(tests));
         }
       }
     } else {
@@ -980,7 +983,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    tests.tick();
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override

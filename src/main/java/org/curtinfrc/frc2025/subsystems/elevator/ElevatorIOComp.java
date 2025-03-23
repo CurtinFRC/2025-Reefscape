@@ -16,6 +16,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class ElevatorIOComp implements ElevatorIO {
   private static final double pulleyRadiusMeters = 0.03055;
@@ -35,7 +36,7 @@ public class ElevatorIOComp implements ElevatorIO {
   private final Follower followRequest = new Follower(ID, false);
   private final VoltageOut voltageRequest = new VoltageOut(0);
 
-  public ElevatorIOComp() {
+  public ElevatorIOComp(TestUtil tests) {
     tryUntilOk(
         5,
         () ->
@@ -58,6 +59,9 @@ public class ElevatorIOComp implements ElevatorIO {
                                 .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    tests.addInput(tests.new Motor(motor, "ElevatorLead"));
+    tests.addInput(tests.new Motor(follower, "ElevatorFollow"));
   }
 
   @Override
