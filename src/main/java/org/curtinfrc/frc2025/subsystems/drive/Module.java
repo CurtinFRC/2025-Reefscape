@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -70,32 +57,19 @@ public class Module {
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpoint(SwerveModuleState state) {
+  public void runSetpoint(SwerveModuleState state, double feedforwardAmps) {
     // Optimize velocity setpoint
     state.optimize(getAngle());
     state.cosineScale(inputs.turnPosition);
 
     // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
-    io.setTurnPosition(state.angle);
-  }
-
-  /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpointTorque(SwerveModuleState state) {
-    // Optimize velocity setpoint
-    state.optimize(getAngle());
-    state.cosineScale(inputs.turnPosition);
-
-    var currentAmps = state.speedMetersPerSecond; // lies
-
-    // Apply setpoints
-    io.setDriveCurrent(currentAmps);
+    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, feedforwardAmps);
     io.setTurnPosition(state.angle);
   }
 
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runSteerCharacterization(double output) {
-    io.setDriveVelocity(0);
+    io.setDriveVelocity(0, 0);
     io.setTurnOpenLoop(output);
   }
 

@@ -3,6 +3,7 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints.*;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
+import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -89,6 +90,7 @@ public class Robot extends LoggedRobot {
 
   // Auto stuff
   private final AutoChooser autoChooser;
+  private final AutoFactory factory;
   // private final Autos autos;
 
   private final List<Pose2d> leftSetpoints;
@@ -256,11 +258,20 @@ public class Robot extends LoggedRobot {
     PortForwarder.add(5831, "limelight-3g.local", 5800);
 
     autoChooser = new AutoChooser("Auto Chooser");
+    factory =
+        new AutoFactory(
+            drive::getPose,
+            drive::setPose,
+            drive::followTrajectory,
+            true,
+            drive,
+            drive::logTrajectory);
 
     // autos = new Autos(drive, elevator, popper, ejector, intake);
 
     // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
 
+    autoChooser.addCmd("Test Path", () -> factory.trajectoryCmd("Test Path"));
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
     autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
