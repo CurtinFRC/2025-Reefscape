@@ -11,6 +11,8 @@ import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.curtinfrc.frc2025.util.TestUtil;
+import org.curtinfrc.frc2025.util.TestUtil.DigitalSensor;
 
 public class IntakeIOSim implements IntakeIO {
   private final DCMotor intakeMotor = DCMotor.getNEO(1);
@@ -21,7 +23,7 @@ public class IntakeIOSim implements IntakeIO {
   private final SimBoolean backSensor;
   private double volts = 0;
 
-  public IntakeIOSim() {
+  public IntakeIOSim(TestUtil tests) {
     intakeMotorSim =
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(intakeMotor, intakeMoi, motorReduction),
@@ -31,6 +33,9 @@ public class IntakeIOSim implements IntakeIO {
     frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
     backImpl = SimDevice.create("IntakeSensorBack", intakeBackSensorPort);
     backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "IntakeFront"));
+    tests.addInput(tests.new DigitalSensor(backSensor, "IntakeBack"));
   }
 
   @Override

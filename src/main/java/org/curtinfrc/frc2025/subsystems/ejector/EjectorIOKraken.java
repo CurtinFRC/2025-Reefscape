@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class EjectorIOKraken implements EjectorIO {
   private static final int ID = 45;
@@ -27,7 +28,7 @@ public class EjectorIOKraken implements EjectorIO {
   private final StatusSignal<Angle> position = motor.getPosition();
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
-  public EjectorIOKraken() {
+  public EjectorIOKraken(TestUtil tests) {
     tryUntilOk(
         5,
         () ->
@@ -40,6 +41,9 @@ public class EjectorIOKraken implements EjectorIO {
                                 .withInverted(InvertedValue.Clockwise_Positive))));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "EjectorFront"));
+    tests.addInput(tests.new DigitalSensor(backSensor, "EjectorBack"));
   }
 
   @Override

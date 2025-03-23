@@ -8,22 +8,31 @@ import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.curtinfrc.frc2025.util.TestUtil;
 
 public class EjectorIOSim implements EjectorIO {
   private DCMotor intakeMotor = DCMotor.getNEO(1);
   private DCMotorSim intakeMotorSim;
-  private SimDevice sensorImpl;
+  private SimDevice sensorImplBack;
   private SimBoolean frontSensor;
+  private SimDevice sensorImplFront;
+  private SimBoolean backSensor;
   private double volts = 0;
 
-  public EjectorIOSim() {
+  public EjectorIOSim(TestUtil tests) {
     intakeMotorSim =
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(intakeMotor, ejectorMoi, ejectorReduction),
             intakeMotor);
 
-    sensorImpl = SimDevice.create("EjectorSensor", frontSensorPort);
-    frontSensor = sensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    sensorImplFront = SimDevice.create("EjectorFront", frontSensorPort);
+    frontSensor = sensorImplFront.createBoolean("IsTriggered", Direction.kInput, false);
+
+    sensorImplBack = SimDevice.create("EjectorBack", backSensorPort);
+    backSensor = sensorImplBack.createBoolean("IsTriggered", Direction.kInput, false);
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "EjectorFront"));
+    tests.addInput(tests.new DigitalSensor(backSensor, "EjectorBack"));
   }
 
   @Override

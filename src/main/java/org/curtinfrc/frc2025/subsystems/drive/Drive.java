@@ -765,9 +765,14 @@ public class Drive extends SubsystemBase {
       Supplier<DriveSetpoints> _setpoint,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier, boolean is_hp_setpoint) {
+      DoubleSupplier omegaSupplier,
+      boolean is_hp_setpoint) {
     return autoAlign(
-        _setpoint, Optional.of(xSupplier), Optional.of(ySupplier), Optional.of(omegaSupplier), is_hp_setpoint);
+        _setpoint,
+        Optional.of(xSupplier),
+        Optional.of(ySupplier),
+        Optional.of(omegaSupplier),
+        is_hp_setpoint);
   }
 
   public Command autoAlign(

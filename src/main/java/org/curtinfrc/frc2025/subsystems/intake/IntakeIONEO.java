@@ -10,13 +10,15 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.SparkUtil;
+import org.curtinfrc.frc2025.util.TestUtil;
+import org.curtinfrc.frc2025.util.TestUtil.DigitalSensor;
 
 public class IntakeIONEO implements IntakeIO {
   private final SparkMax intakeNeo = new SparkMax(intakeMotorId, MotorType.kBrushless);
   private final DigitalInput frontSensor = new DigitalInput(intakeFrontSensorPort);
   private final DigitalInput backSensor = new DigitalInput(intakeBackSensorPort);
 
-  public IntakeIONEO() {
+  public IntakeIONEO(TestUtil tests) {
     SparkMaxConfig config = new SparkMaxConfig();
     config.smartCurrentLimit(0, intakeCurrentLimit).idleMode(IdleMode.kCoast).inverted(true);
     SparkUtil.tryUntilOk(
@@ -24,6 +26,9 @@ public class IntakeIONEO implements IntakeIO {
         () ->
             intakeNeo.configure(
                 config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    tests.addInput(tests.new DigitalSensor(frontSensor, "IntakeFront"));
+    tests.addInput(tests.new DigitalSensor(backSensor, "IntakeBack"));
   }
 
   @Override

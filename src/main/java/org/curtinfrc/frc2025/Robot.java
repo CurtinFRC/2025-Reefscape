@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -198,8 +197,8 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera2Name, drive::getRotation),
                   new VisionIOPhotonVision(camera3Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
-          ejector = new Ejector(new EjectorIOKraken());
+          intake = new Intake(new IntakeIONEO(tests));
+          ejector = new Ejector(new EjectorIOKraken(tests));
           popper = new Popper(new PopperIOKraken());
         }
 
@@ -220,7 +219,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOLimelight(camera2Name, drive::getRotation),
                   new VisionIO() {});
           elevator = new Elevator(new ElevatorIONEO());
-          intake = new Intake(new IntakeIONEO());
+          intake = new Intake(new IntakeIONEO(tests));
           ejector = new Ejector(new EjectorIO() {});
           popper = new Popper(new PopperIO() {});
         }
@@ -242,8 +241,8 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSim());
-          intake = new Intake(new IntakeIOSim());
-          ejector = new Ejector(new EjectorIOSim());
+          intake = new Intake(new IntakeIOSim(tests));
+          ejector = new Ejector(new EjectorIOSim(tests));
           popper = new Popper(new PopperIO() {});
         }
       }
@@ -269,11 +268,6 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
       popper = new Popper(new PopperIO() {});
     }
-
-    this.tests.addInput(this.tests.new DigitalSensor(3, "IntakeFront"));
-    this.tests.addInput(this.tests.new DigitalSensor(5, "IntakeBack"));
-    this.tests.addInput(this.tests.new DigitalSensor(4, "EjectorFront"));
-    this.tests.addInput(this.tests.new DigitalSensor(2, "EjectorBack"));
 
     this.tests.addInput(
         this.tests
@@ -441,7 +435,6 @@ public class Robot extends LoggedRobot {
     //     .isNotAtCollect
     //     .and(elevator.atSetpoint)
     //     .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
-
 
     // RobotModeTriggers.teleop()
     //     .onTrue(

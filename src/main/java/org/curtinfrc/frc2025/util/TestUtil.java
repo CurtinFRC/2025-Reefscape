@@ -2,12 +2,16 @@ package org.curtinfrc.frc2025.util;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 public class TestUtil {
   static enum InputType {
@@ -32,23 +36,32 @@ public class TestUtil {
   }
 
   public class DigitalSensor extends Input<Boolean> {
-    private int _port;
-    private DigitalInput _sensor;
+    private BooleanSupplier _get;
 
     public DigitalSensor(int port, String name) {
       super("sensor/" + name);
-      this._port = port;
-      this._sensor = new DigitalInput(this._port);
+      DigitalInput in = new DigitalInput(port);
+      this._get = () -> in.get();
     }
 
     public DigitalSensor(int port) {
       super("sensor/" + port);
-      this._port = port;
-      this._sensor = new DigitalInput(this._port);
+      DigitalInput in = new DigitalInput(port);
+      this._get = () -> in.get();
+    }
+
+    public DigitalSensor(SimBoolean sim, String name) {
+      super("sensor/" + name);
+      this._get = () -> sim.get();
+    }
+
+    public DigitalSensor(DigitalInput in, String name) {
+      super("sensor/" + name);
+      this._get = () -> in.get();
     }
 
     public Boolean get() {
-      return this._sensor.get();
+      return _get.getAsBoolean();
     }
   }
 
@@ -109,16 +122,22 @@ public class TestUtil {
 
   public void tick() {
     this.inputs.forEach(
-        (input) -> {
+        input -> {
           Object value = input.get();
-          Object networkValue = getNetworkTableCompatibleValue(value);
-          this.inst.getEntry("Tests/" + input.path()).setValue(networkValue);
+          Map<String, Object> values = getNetworkTableCompatibleValues(value);
+
+          values.forEach(
+              (suffix, networkValue) -> {
+                this.inst.getEntry("Tests/" + input.path() + suffix).setValue(networkValue);
+              });
         });
   }
 
-  private Object getNetworkTableCompatibleValue(Object obj) {
+  private Map<String, Object> getNetworkTableCompatibleValues(Object obj) {
+    Map<String, Object> values = new HashMap<>();
+
     if (obj == null) {
-      return null;
+      return values;
     }
 
     Class<?> clazz = obj.getClass();
@@ -127,53 +146,44 @@ public class TestUtil {
         || obj instanceof String
         || obj instanceof Boolean
         || obj instanceof Number) {
-      return obj; // Directly compatible
+      values.put("", obj); // Store the main value under the base key
+      return values;
     }
 
     if (clazz.isArray()) {
       Object[] array = (Object[]) obj;
-      Object[] networkArray = new Object[array.length];
       for (int i = 0; i < array.length; i++) {
-        networkArray[i] = getNetworkTableCompatibleValue(array[i]);
+        values.put("/" + i, getNetworkTableCompatibleValues(array[i]));
       }
-      return networkArray;
+      return values;
     }
 
     if (obj instanceof Optional) {
       Optional<?> optional = (Optional<?>) obj;
       if (optional.isPresent()) {
-        return getNetworkTableCompatibleValue(optional.get());
+        return getNetworkTableCompatibleValues(optional.get());
       } else {
-        return null;
+        return values;
       }
     }
 
-    // Check if it's a record or a regular object and recursively handle fields.
-    if (clazz.isRecord() || !clazz.getPackageName().startsWith("java.")) {
+    if (clazz.isRecord()) {
       try {
         Field[] fields = clazz.getDeclaredFields();
-        if (fields.length == 1 && fields[0].getType() == boolean.class) {
-          try {
-            return clazz.getMethod(fields[0].getName()).invoke(obj);
-          } catch (Exception e) {
-            return false;
-          }
-        }
         for (Field field : fields) {
           field.setAccessible(true);
           Object fieldValue = field.get(obj);
-          Object networkFieldValue = getNetworkTableCompatibleValue(fieldValue);
-          if (networkFieldValue != null) {
-            return networkFieldValue;
+          Map<String, Object> subValues = getNetworkTableCompatibleValues(fieldValue);
+          for (Map.Entry<String, Object> entry : subValues.entrySet()) {
+            values.put("/" + field.getName() + entry.getKey(), entry.getValue());
           }
         }
-        return null;
       } catch (IllegalAccessException e) {
-        return null;
+        return values;
       }
     }
 
-    return null; // Not compatible
+    return values;
   }
 
   public void registerCommand() {}
