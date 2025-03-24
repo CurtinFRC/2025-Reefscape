@@ -5,12 +5,9 @@ import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
 
 public class ElevatorConstants {
-  public static int resetPort = 0;
-  public static final int currentLimit = 50;
-
   // TODO: TUNE PID and ff
   public static double tolerance = 0.021;
-  public static double kP = 25; // 50
+  public static double kP = 20;
   public static double kD = 0;
   public static double kV = 0;
   public static double kA = 0.01;
