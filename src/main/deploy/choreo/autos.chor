@@ -226,12 +226,12 @@
    }
   },
   "mass":{
-   "exp":"42.29 kg",
-   "val":42.29
+   "exp":"45 kg",
+   "val":45.0
   },
   "inertia":{
-   "exp":"3.61 kg m ^ 2",
-   "val":3.61
+   "exp":"4 kg m ^ 2",
+   "val":4.0
   },
   "gearing":{
    "exp":"5.9",
