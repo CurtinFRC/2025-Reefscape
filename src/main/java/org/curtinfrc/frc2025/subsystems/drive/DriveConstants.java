@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -42,11 +41,7 @@ public final class DriveConstants {
                   CompTunerConstants.BackLeft.LocationX, CompTunerConstants.BackLeft.LocationY),
               Math.hypot(
                   CompTunerConstants.BackRight.LocationX, CompTunerConstants.BackRight.LocationY)));
-  public static final double kT =
-      -DCMotor.getKrakenX60Foc(1).KtNMPerAmp
-          * CompTunerConstants.kDriveGearRatio; // TODO figure this out
 
-  // TODO
   public static enum DriveSetpoints implements StructSerializable {
     A(aprilTagLayout.getTagPose(18).get(), true),
     B(aprilTagLayout.getTagPose(18).get(), false),
@@ -60,7 +55,6 @@ public final class DriveConstants {
     J(aprilTagLayout.getTagPose(20).get(), false),
     K(aprilTagLayout.getTagPose(19).get(), true),
     L(aprilTagLayout.getTagPose(19).get(), false),
-    // PROCESSOR(Pose2d.kZero),
     LEFT_HP(
         new Pose2d(1.148711085319519, 7.199769020080566, Rotation2d.fromDegrees(125.989 + 180))),
     RIGHT_HP(
