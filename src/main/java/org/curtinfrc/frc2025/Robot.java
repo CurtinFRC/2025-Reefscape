@@ -117,7 +117,7 @@ public class Robot extends LoggedRobot {
   public final Trigger atHpSetpoint;
 
   @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = false;
+  private boolean overridden = true;
 
   @AutoLogOutput(key = "Robot/Overide")
   private final Trigger override = new Trigger(() -> overridden);
@@ -164,6 +164,7 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
+    SignalLogger.setPath("/U/logs");
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
@@ -332,15 +333,15 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
     elevator
         .isNotAtCollect
         .and(atReefSetpoint)
         .and(override.negate())
-        .whileTrue(ejector.eject(25).until(ejector.backSensor.negate()));
+        .whileTrue(ejector.eject(6).until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
         climber
@@ -383,7 +384,7 @@ public class Robot extends LoggedRobot {
         .backSensor
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(8));
+        .whileTrue(ejector.eject(12));
 
     atHpSetpoint.whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kBlink)));
     ejector
@@ -411,7 +412,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             ejector
-                .eject(-1)
+                .eject(-0.7)
                 .until(ejector.frontSensor)
                 .andThen(ejector.stop())
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
@@ -462,8 +463,10 @@ public class Robot extends LoggedRobot {
     controller.leftStick().whileTrue(intake.intake(-3));
     controller
         .rightStick()
-        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    // controller.b().whileTrue(popper.setVoltage(3));
+        .whileTrue(ejector.eject(22).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller
+        .povUp()
+        .whileTrue(ejector.eject(1.3).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     // elevator
     //     .isNotAtCollect
@@ -825,7 +828,7 @@ public class Robot extends LoggedRobot {
                             () -> -controller.getRightX()),
                 Set.of(drive)));
 
-    ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(8));
+    ejector.frontSensor.and(intake.backSensor).whileTrue(ejector.eject(3));
     ejector.frontSensor.and(intake.backSensor).whileTrue(intake.intake());
 
     almostAtReefSetpoint
@@ -999,7 +1002,7 @@ public class Robot extends LoggedRobot {
                 .andThen(
                     Commands.parallel(
                         elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
-                        ejector.eject(8))))
+                        ejector.eject(1.3))))
         .until(ejector.backSensor.negate());
   }
 
@@ -1041,7 +1044,7 @@ public class Robot extends LoggedRobot {
         .andThen(
             Commands.parallel(
                 drive.autoAlign(() -> point.driveSetpoint()),
-                ejector.eject(15).asProxy(),
+                ejector.eject(5).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
         .until(ejector.backSensor.negate())
