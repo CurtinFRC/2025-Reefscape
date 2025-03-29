@@ -77,9 +77,9 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(10, 0, 0);
-  private final PIDController yController = new PIDController(10, 0, 0);
-  private final PIDController headingController = new PIDController(7.5, 0, 0);
+  private final PIDController xController = new PIDController(0, 0, 0);
+  private final PIDController yController = new PIDController(0, 0, 0);
+  private final PIDController headingController = new PIDController(0, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -178,8 +178,7 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds.fromFieldRelativeSpeeds(
             xController.calculate(pose.getX(), sample.x) + sample.vx,
             yController.calculate(pose.getY(), sample.y) + sample.vy,
-            headingController.calculate(getRotation().getRadians(), sample.heading)
-                + sample.heading,
+            headingController.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
             getRotation());
 
     runVelocity(speeds, new double[4]);
