@@ -49,6 +49,9 @@ import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOComp;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
+import org.curtinfrc.frc2025.subsystems.leds.LEDs;
+import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
+import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
 // import org.curtinfrc.frc2025.subsystems.popper.Popper;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
@@ -82,6 +85,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
+  private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
   //   private Popper popper;
@@ -194,6 +198,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOComp());
           //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIOComp());
+          leds = new LEDs(new LEDsIOComp());
         }
 
         case DEVBOT -> {
@@ -217,6 +222,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIO() {});
           //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIO() {});
+          leds = new LEDs(new LEDsIO() {});
         }
 
         case SIMBOT -> {
@@ -240,6 +246,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOSim());
           //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
+          leds = new LEDs(new LEDsIO() {});
         }
       }
     } else {
@@ -264,6 +271,7 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
       //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
+      leds = new LEDs(new LEDsIO() {});
     }
 
     PortForwarder.add(5820, "limelight-3.local", 1181);
@@ -387,6 +395,17 @@ public class Robot extends LoggedRobot {
         .whileTrue(ejector.eject(12));
 
     atHpSetpoint.whileTrue(Commands.runOnce(() -> vision.setLEDMode(VisionLEDMode.kBlink)));
+
+    intake
+        .backSensor
+        .negate()
+        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor.negate())
+        .whileTrue(leds.setPink().andThen(leds.setStatic()))
+        .whileFalse(leds.setGreen().andThen(leds.setStatic()));
+    drive.atSetpoint.and(ejector.backSensor).whileTrue(leds.setBlink());
+
     ejector
         .frontSensor
         .or(intake.frontSensor)
