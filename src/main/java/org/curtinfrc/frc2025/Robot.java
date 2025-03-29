@@ -95,7 +95,7 @@ public class Robot extends LoggedRobot {
   private final List<Pose2d> rightSetpoints;
 
   @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = true;
+  private boolean overridden = false;
 
   @AutoLogOutput(key = "Robot/Overide")
   private final Trigger override = new Trigger(() -> overridden);
@@ -245,10 +245,10 @@ public class Robot extends LoggedRobot {
     }
 
     leftSetpoints =
-        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
+        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
 
     rightSetpoints =
-        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
+        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
 
     PortForwarder.add(5820, "limelight-3.local", 1181);
     PortForwarder.add(5830, "limelight-3g.local", 1181);
@@ -311,7 +311,7 @@ public class Robot extends LoggedRobot {
     drive
         .atSetpoint
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(15).until(ejector.frontSensor.negate()));
+        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
 
     controller
         .rightBumper()
@@ -319,14 +319,14 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.frontSensor.negate()));
+                .until(ejector.backSensor.negate()));
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.frontSensor.negate()));
+                .until(ejector.backSensor.negate()));
 
     controller
         .rightBumper()
@@ -334,8 +334,12 @@ public class Robot extends LoggedRobot {
         .and(override.negate())
         .whileTrue(
             drive
-                .autoAlign(() -> DriveSetpoints.closest(drive::getPose, rightSetpoints))
-                .until(ejector.frontSensor.negate()));
+                .autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(ejector.backSensor.negate()));
 
     controller
         .leftBumper()
@@ -343,8 +347,12 @@ public class Robot extends LoggedRobot {
         .and(override.negate())
         .whileTrue(
             drive
-                .autoAlign(() -> DriveSetpoints.closest(drive::getPose, leftSetpoints))
-                .until(ejector.frontSensor.negate()));
+                .autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
         climber
