@@ -245,10 +245,10 @@ public class Robot extends LoggedRobot {
     }
 
     leftSetpoints =
-        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
+        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
 
     rightSetpoints =
-        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
+        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
 
     PortForwarder.add(5820, "limelight-3.local", 1181);
     PortForwarder.add(5830, "limelight-3g.local", 1181);

@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 public class IntakeIOComp implements IntakeIO {
   private static final int ID = 20;
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(10).withStatorCurrentLimit(20);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
 
   private final TalonFX motor = new TalonFX(ID);
 
