@@ -93,12 +93,12 @@ public class Vision extends VirtualSubsystem {
       // Update disconnected alert
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
       var discardReef = false;
-      if (inputs[0].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
+      if (inputs[2].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
         lastHPMeasurement = 0;
       } else {
         lastHPMeasurement++;
       }
-      if (lastHPMeasurement < 7) {
+      if (lastHPMeasurement < 3) {
         discardReef = true;
       }
       // Initialize logging values
@@ -118,7 +118,7 @@ public class Vision extends VirtualSubsystem {
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
         if (discardReef) {
-          if (cameraIndex == 1 || cameraIndex == 2) {
+          if (cameraIndex == 0 || cameraIndex == 1) {
             continue;
           }
         }
