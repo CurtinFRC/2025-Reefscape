@@ -4,6 +4,7 @@ import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -17,6 +18,8 @@ import edu.wpi.first.wpilibj.DigitalInput;
 
 public class IntakeIOComp implements IntakeIO {
   private static final int ID = 20;
+  private static final CurrentLimitsConfigs currentLimits =
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
 
   private final TalonFX motor = new TalonFX(ID);
 
@@ -39,8 +42,8 @@ public class IntakeIOComp implements IntakeIO {
                 .apply(
                     new TalonFXConfiguration()
                         .withMotorOutput(
-                            new MotorOutputConfigs()
-                                .withInverted(InvertedValue.Clockwise_Positive))));
+                            new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
+                        .withCurrentLimits(currentLimits)));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
   }

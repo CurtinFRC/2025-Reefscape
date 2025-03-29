@@ -13,6 +13,8 @@ import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import java.util.List;
+import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
@@ -120,5 +122,46 @@ public final class DriveConstants {
 
     public static final Struct<DriveSetpoints> struct =
         StructGenerator.genEnum(DriveSetpoints.class);
+
+    public static DriveSetpoints closest(Supplier<Pose2d> currentPose, List<Pose2d> possible) {
+      var desiredPose = currentPose.get().nearest(possible);
+      if (desiredPose.equals(A.getPose())) {
+        return A;
+      }
+      if (desiredPose.equals(B.getPose())) {
+        return B;
+      }
+      if (desiredPose.equals(C.getPose())) {
+        return C;
+      }
+      if (desiredPose.equals(D.getPose())) {
+        return D;
+      }
+      if (desiredPose.equals(E.getPose())) {
+        return E;
+      }
+      if (desiredPose.equals(F.getPose())) {
+        return F;
+      }
+      if (desiredPose.equals(G.getPose())) {
+        return G;
+      }
+      if (desiredPose.equals(H.getPose())) {
+        return H;
+      }
+      if (desiredPose.equals(I.getPose())) {
+        return I;
+      }
+      if (desiredPose.equals(J.getPose())) {
+        return J;
+      }
+      if (desiredPose.equals(K.getPose())) {
+        return K;
+      }
+      if (desiredPose.equals(L.getPose())) {
+        return L;
+      }
+      throw new IllegalStateException("No matching setpoint found!");
+    }
   }
 }

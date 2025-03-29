@@ -49,7 +49,6 @@ import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
-import org.curtinfrc.frc2025.subsystems.drive.RepulsorFieldPlanner.RepulsorSample;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -75,6 +74,8 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
+  private final PIDController yController = new PIDController(2.5, 0, 0);
+  private final PIDController xController = new PIDController(2.5, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
@@ -84,9 +85,15 @@ public class Drive extends SubsystemBase {
   public Trigger atSetpoint =
       new Trigger(
           () ->
-              Math.abs(getPose().getX() - setpoint.getPose().getX()) <= 0.02
-                  && Math.abs(getPose().getY() - setpoint.getPose().getY()) <= 0.02
+              xController.atSetpoint()
+                  && yController.atSetpoint()
                   && headingController.atSetpoint());
+  // public Trigger atSetpoint =
+  //     new Trigger(
+  //         () ->
+  //             Math.abs(getPose().getX() - setpoint.getPose().getX()) <= 0.02
+  //                 && Math.abs(getPose().getY() - setpoint.getPose().getY()) <= 0.02
+  //                 && headingController.atSetpoint());
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =
@@ -137,6 +144,8 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
+    xController.setTolerance(0.02);
+    yController.setTolerance(0.02);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
@@ -197,6 +206,10 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
+
+    Logger.recordOutput("xPidAtSetpoint", xController.atSetpoint());
+    Logger.recordOutput("yPidAtSetpoint", yController.atSetpoint());
+    Logger.recordOutput("omegaPidAtSetpoint", headingController.atSetpoint());
   }
 
   /**
@@ -625,16 +638,32 @@ public class Drive extends SubsystemBase {
     this.setpoint = _setpoint;
     repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
 
+    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint.getPose());
     var robotPose = getPose();
-    RepulsorSample sample =
-        repulsorFieldPlanner.calculate(
-            robotPose, getChassisSpeeds(), CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
 
     var omega =
         headingController.calculate(
             getRotation().getRadians(), _setpoint.getPose().getRotation().getRadians());
 
-    runVelocity(new ChassisSpeeds(-sample.vx(), -sample.vy(), omega));
+    // if (Math.abs(robotPose.minus(_setpoint.getPose()).getTranslation().getNorm()) > 0.1) {
+    //   RepulsorSample sample =
+    //       repulsorFieldPlanner.calculate(
+    //           robotPose,
+    //           getChassisSpeeds(),
+    //           CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+    //
+    //   runVelocity(new ChassisSpeeds(sample.vx(), sample.vy(), omega));
+    // } else {
+
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    var x = xController.calculate(robotPose.getX(), _setpoint.getPose().getX());
+    var y = yController.calculate(robotPose.getY(), _setpoint.getPose().getY());
+    runVelocity(
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            x, y, omega, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
+    // }
   }
 
   public Command autoAlign(Supplier<DriveSetpoints> _setpoint) {

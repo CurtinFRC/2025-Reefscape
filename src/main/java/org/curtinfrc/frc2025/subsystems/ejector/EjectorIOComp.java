@@ -4,6 +4,7 @@ import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -21,13 +22,17 @@ import edu.wpi.first.wpilibj.DigitalInput;
 public class EjectorIOComp implements EjectorIO {
   private static final int ID = 53;
   private static final int FOLLOWER_ID = 46;
+  private static final CurrentLimitsConfigs currentLimits =
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
   private static final TalonFXConfiguration leaderConfig =
       new TalonFXConfiguration()
           .withMotorOutput(
               new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive))
-          .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33));
+          .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33))
+          .withCurrentLimits(currentLimits);
   private static final TalonFXConfiguration followerConfig =
       new TalonFXConfiguration()
+          .withCurrentLimits(currentLimits)
           .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
   private final TalonFX motor = new TalonFX(ID);
