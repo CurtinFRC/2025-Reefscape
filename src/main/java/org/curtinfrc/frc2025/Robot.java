@@ -333,8 +333,8 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     elevator
@@ -439,12 +439,7 @@ public class Robot extends LoggedRobot {
         .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
 
-    controller
-        .leftBumper()
-        .whileTrue(
-            Commands.parallel(
-                ejector.setVoltage(8),
-                elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())));
+    controller.leftBumper().whileTrue(ejector.setVoltage(8));
 
     controller
         .leftTrigger()
