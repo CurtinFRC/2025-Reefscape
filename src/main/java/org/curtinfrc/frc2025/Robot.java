@@ -379,6 +379,8 @@ public class Robot extends LoggedRobot {
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
+    controller.rightStick().whileTrue(ejector.eject(30));
+
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
         .backSensor
