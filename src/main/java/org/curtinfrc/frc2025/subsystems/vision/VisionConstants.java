@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -39,7 +26,7 @@ public class VisionConstants {
   public static Transform3d robotToCamera2 =
       new Transform3d(0.145943, 0.1723, 0.890575, new Rotation3d(0, -Math.PI / 4, Math.PI));
   public static Transform3d robotToCamera3 =
-      new Transform3d(0.145943, -3.1723, 0.890575, new Rotation3d(0, -Math.PI / 4, Math.PI));
+      new Transform3d(0.145943, -0.1723, 0.890575, new Rotation3d(0, -Math.PI / 4, Math.PI));
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.3;
