@@ -387,7 +387,29 @@ public class Robot extends LoggedRobot {
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
-    controller.rightStick().whileTrue(ejector.eject(30));
+    controller
+        .leftStick()
+        .whileTrue(
+            Commands.parallel(
+                ejector.eject(30),
+                drive.autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX()),
+                elevator.goToSetpoint(
+                    () -> {
+                      return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
+                        case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                        case C, D -> ElevatorSetpoints.AlgaePopLow;
+                        case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                        case G, H -> ElevatorSetpoints.AlgaePopLow;
+                        case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                        case K, L -> ElevatorSetpoints.AlgaePopLow;
+                        default -> ElevatorSetpoints.AlgaePopLow;
+                      };
+                    },
+                    intake.backSensor.negate())));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
