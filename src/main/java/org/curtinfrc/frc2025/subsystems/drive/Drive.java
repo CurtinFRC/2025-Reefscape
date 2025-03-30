@@ -147,6 +147,7 @@ public class Drive extends SubsystemBase {
 
     xController.setTolerance(0.02);
     yController.setTolerance(0.02);
+    headingController.setTolerance(0.02);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);

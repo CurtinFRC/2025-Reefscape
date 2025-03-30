@@ -281,6 +281,11 @@ public class Robot extends LoggedRobot {
             drive::logTrajectory);
 
     autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
+    autoChooser.addRoutine(
+        "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
+
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
     autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
@@ -331,6 +336,7 @@ public class Robot extends LoggedRobot {
     drive
         .atSetpoint
         .and(elevator.atSetpoint)
+        .and(elevator.isNotAtCollect)
         .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
 
     controller
