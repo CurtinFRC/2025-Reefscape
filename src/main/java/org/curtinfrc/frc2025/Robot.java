@@ -3,6 +3,7 @@ package org.curtinfrc.frc2025;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints.*;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
+import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -93,6 +94,7 @@ public class Robot extends LoggedRobot {
 
   // Auto stuff
   private final AutoChooser autoChooser;
+  private final AutoFactory factory;
   // private final Autos autos;
 
   private final List<Pose2d> leftSetpoints;
@@ -269,10 +271,20 @@ public class Robot extends LoggedRobot {
             FAR_RIGHT.getPose());
 
     autoChooser = new AutoChooser("Auto Chooser");
+    factory =
+        new AutoFactory(
+            drive::getPose,
+            drive::setPose,
+            drive::followTrajectory,
+            true,
+            drive,
+            drive::logTrajectory);
 
-    // autos = new Autos(drive, elevator, popper, ejector, intake);
-
-    // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
+    autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
+    autoChooser.addRoutine(
+        "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
 
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
@@ -324,6 +336,7 @@ public class Robot extends LoggedRobot {
     drive
         .atSetpoint
         .and(elevator.atSetpoint)
+        .and(elevator.isNotAtCollect)
         .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
 
     controller
@@ -566,7 +579,7 @@ public class Robot extends LoggedRobot {
 
   public Command onePiece() {
     return drive
-        .autoAlign(() -> DriveSetpoints.C)
+        .autoAlign(() -> DriveSetpoints.C.getPose())
         .until(drive.atSetpoint)
         .andThen(
             elevator
@@ -605,18 +618,18 @@ public class Robot extends LoggedRobot {
 
   private Command node(Setpoint point) {
     return drive
-        .autoAlign(() -> point.driveSetpoint())
+        .autoAlign(() -> point.driveSetpoint().getPose())
         .until(drive.atSetpoint)
         .andThen(
             Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint()),
+                drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("firststep")
         .until(elevator.atSetpoint)
         .withName("GetToAutoPosition")
         .andThen(
             Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint()),
+                drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 ejector.eject(15).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
@@ -629,7 +642,7 @@ public class Robot extends LoggedRobot {
     return elevator
         .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
         .until(elevator.atSetpoint)
-        .andThen(drive.autoAlign(() -> point).until(intake.frontSensor))
+        .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
         .andThen(Commands.waitSeconds(1.5))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
