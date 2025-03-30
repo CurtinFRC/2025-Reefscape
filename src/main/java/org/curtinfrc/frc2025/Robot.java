@@ -7,6 +7,8 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
@@ -19,8 +21,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.List;
-// import org.curtinfrc.frc2025.Autos.AlgaePoppedStates;
-// import org.curtinfrc.frc2025.Autos.AlgaePoppedStates.AlgaeLocations;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -52,9 +52,6 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.leds.LEDs;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
-// import org.curtinfrc.frc2025.subsystems.popper.Popper;
-// import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
-// import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -90,6 +87,8 @@ public class Robot extends LoggedRobot {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private final Alert controllerDisconnected =
+      new Alert("Driver controller disconnected!", AlertType.kError);
   private final ButtonBoard board = new ButtonBoard(1);
 
   // Auto stuff
@@ -177,7 +176,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
           ejector = new Ejector(new EjectorIOComp());
-          //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIOComp());
           leds = new LEDs(new LEDsIOComp());
         }
@@ -201,7 +199,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIO() {});
           ejector = new Ejector(new EjectorIO() {});
-          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIO() {});
           leds = new LEDs(new LEDsIO() {});
         }
@@ -225,7 +222,6 @@ public class Robot extends LoggedRobot {
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-          //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
           leds = new LEDs(new LEDsIO() {});
         }
@@ -250,7 +246,6 @@ public class Robot extends LoggedRobot {
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
     }
@@ -398,7 +393,6 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    // popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
         elevator
             .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
@@ -452,7 +446,6 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
-    // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
         .backSensor
         .and(elevator.isNotAtCollect.negate())
@@ -506,6 +499,8 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
+
+    controllerDisconnected.set(!controller.isConnected());
 
     // Runs the Scheduler. This is responsible for polling buttons, adding
     // newly-scheduled commands, running already-scheduled commands, removing
