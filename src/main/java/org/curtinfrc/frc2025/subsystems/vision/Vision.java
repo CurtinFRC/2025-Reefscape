@@ -26,6 +26,7 @@ public class Vision extends VirtualSubsystem {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
   private int lastHPMeasurement;
+  public boolean discardReef;
 
   public Vision(PoseEstimateConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -63,8 +64,8 @@ public class Vision extends VirtualSubsystem {
 
   public boolean hasTarget(int cameraIndex) {
     return inputs[cameraIndex].connected
-        && inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
-        && inputs[cameraIndex].latestTargetObservation.ty().equals(Rotation2d.kZero);
+        && !inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
+        && !inputs[cameraIndex].latestTargetObservation.ty().equals(Rotation2d.kZero);
   }
 
   @Override
@@ -92,7 +93,7 @@ public class Vision extends VirtualSubsystem {
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
-      var discardReef = false;
+      discardReef = false;
       if (inputs[2].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
         lastHPMeasurement = 0;
       } else {
