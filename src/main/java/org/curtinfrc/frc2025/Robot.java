@@ -392,7 +392,7 @@ public class Robot extends LoggedRobot {
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
-    ejector.backSensor.onTrue(
+    ejector.backSensor.onFalse(
         Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
             .withTimeout(0.5)
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
@@ -413,7 +413,7 @@ public class Robot extends LoggedRobot {
                 .until(drive.atSetpoint)
                 .andThen(
                     Commands.parallel(
-                        ejector.eject(30),
+                        ejector.eject(40),
                         elevator.goToSetpoint(
                             () -> {
                               return switch (DriveSetpoints.closest(
