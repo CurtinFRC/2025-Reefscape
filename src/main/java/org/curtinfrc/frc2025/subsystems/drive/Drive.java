@@ -77,9 +77,13 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(0, 0, 0);
-  private final PIDController yController = new PIDController(0, 0, 0);
-  private final PIDController headingController = new PIDController(0, 0, 0);
+  private final PIDController xController = new PIDController(2.5, 0, 0);
+  private final PIDController yController = new PIDController(2.5, 0, 0);
+  private final PIDController headingController = new PIDController(3.5, 0, 0);
+
+  private final PIDController xFollower = new PIDController(0, 0, 0);
+  private final PIDController yFollower = new PIDController(0, 0, 0);
+  private final PIDController headingFollower = new PIDController(0, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -150,6 +154,8 @@ public class Drive extends SubsystemBase {
     xController.setTolerance(0.02);
     yController.setTolerance(0.02);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    headingFollower.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   public void followTrajectory(SwerveSample sample) {
@@ -176,9 +182,9 @@ public class Drive extends SubsystemBase {
 
     var speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            xController.calculate(pose.getX(), sample.x) + sample.vx,
-            yController.calculate(pose.getY(), sample.y) + sample.vy,
-            headingController.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
+            xFollower.calculate(pose.getX(), sample.x) + sample.vx,
+            yFollower.calculate(pose.getY(), sample.y) + sample.vy,
+            headingFollower.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
             getRotation());
 
     runVelocity(speeds, new double[4]);
