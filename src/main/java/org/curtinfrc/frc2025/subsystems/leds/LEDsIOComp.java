@@ -8,41 +8,23 @@ import edu.wpi.first.wpilibj.motorcontrol.Spark;
 public class LEDsIOComp implements LEDsIO {
 
   LEDsColour currentColour = LEDsColour.PINK;
-  LEDsState currentState = LEDsState.STATIC;
 
-  private final Spark LEDController = new Spark(18);
+  private final Spark LEDController = new Spark(1);
 
   @Override
   public void updateInputs(LEDsIOInputs inputs) {
     inputs.currentColour = currentColour;
-    inputs.currentState = currentState;
     switch (currentColour) {
       case PINK:
-        switch (currentState) {
-          case STATIC:
-            LEDController.set(0.57);
-            break;
-
-          case BLINK:
-            LEDController.set(0.15);
-            break;
-          default:
-            break;
-        }
+        LEDController.set(0.57);
         break;
 
       case GREEN:
-        switch (currentState) {
-          case STATIC:
-            LEDController.set(0.77);
-            break;
+        LEDController.set(0.77);
+        break;
 
-          case BLINK:
-            LEDController.set(0.35);
-            break;
-          default:
-            break;
-        }
+      case BLUE:
+        LEDController.set(0.83);
         break;
 
       default:
@@ -53,10 +35,5 @@ public class LEDsIOComp implements LEDsIO {
   @Override
   public void switchColor(LEDsColour newColour) {
     currentColour = newColour;
-  }
-
-  @Override
-  public void switchState(LEDsState newState) {
-    currentState = newState;
   }
 }

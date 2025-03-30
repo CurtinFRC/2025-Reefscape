@@ -3,7 +3,6 @@ package org.curtinfrc.frc2025.subsystems.leds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO.LEDsColour;
-import org.curtinfrc.frc2025.subsystems.leds.LEDsIO.LEDsState;
 import org.littletonrobotics.junction.Logger;
 
 public class LEDs extends SubsystemBase {
@@ -28,11 +27,7 @@ public class LEDs extends SubsystemBase {
     return runOnce(() -> io.switchColor(LEDsColour.GREEN));
   }
 
-  public Command setStatic() {
-    return runOnce(() -> io.switchState(LEDsState.STATIC));
-  }
-
-  public Command setBlink() {
-    return runOnce(() -> io.switchState(LEDsState.BLINK));
+  public Command setBlue() {
+    return runOnce(() -> io.switchColor(LEDsColour.BLUE));
   }
 }

@@ -402,9 +402,8 @@ public class Robot extends LoggedRobot {
         .and(intake.frontSensor.negate())
         .and(ejector.frontSensor.negate())
         .and(ejector.backSensor.negate())
-        .whileTrue(leds.setPink().andThen(leds.setStatic()))
-        .whileFalse(leds.setGreen().andThen(leds.setStatic()));
-    drive.atSetpoint.and(ejector.backSensor).whileTrue(leds.setBlink());
+        .whileTrue(leds.setPink())
+        .whileFalse(leds.setGreen());
 
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
 
