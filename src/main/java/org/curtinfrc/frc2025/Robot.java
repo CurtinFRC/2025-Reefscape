@@ -48,6 +48,9 @@ import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOComp;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
+import org.curtinfrc.frc2025.subsystems.leds.LEDs;
+import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
+import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
 // import org.curtinfrc.frc2025.subsystems.popper.Popper;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
 // import org.curtinfrc.frc2025.subsystems.popper.PopperIOKraken;
@@ -79,6 +82,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
+  private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
   private Climber climber;
@@ -172,6 +176,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOComp());
           //   popper = new Popper(new PopperIOKraken());
           climber = new Climber(new ClimberIOComp());
+          leds = new LEDs(new LEDsIOComp());
         }
 
         case DEVBOT -> {
@@ -195,6 +200,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIO() {});
           //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIO() {});
+          leds = new LEDs(new LEDsIO() {});
         }
 
         case SIMBOT -> {
@@ -218,6 +224,7 @@ public class Robot extends LoggedRobot {
           ejector = new Ejector(new EjectorIOSim());
           //   popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIOSim());
+          leds = new LEDs(new LEDsIO() {});
         }
       }
     } else {
@@ -242,6 +249,7 @@ public class Robot extends LoggedRobot {
       ejector = new Ejector(new EjectorIO() {});
       //   popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
+      leds = new LEDs(new LEDsIO() {});
     }
 
     leftSetpoints =
@@ -387,6 +395,15 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
         .whileTrue(ejector.eject(8));
+
+    intake
+        .backSensor
+        .negate()
+        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor.negate())
+        .whileTrue(leds.setPink())
+        .whileFalse(leds.setGreen());
 
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
 

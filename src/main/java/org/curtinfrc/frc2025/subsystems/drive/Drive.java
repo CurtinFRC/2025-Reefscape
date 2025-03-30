@@ -88,12 +88,6 @@ public class Drive extends SubsystemBase {
               xController.atSetpoint()
                   && yController.atSetpoint()
                   && headingController.atSetpoint());
-  // public Trigger atSetpoint =
-  //     new Trigger(
-  //         () ->
-  //             Math.abs(getPose().getX() - setpoint.getPose().getX()) <= 0.02
-  //                 && Math.abs(getPose().getY() - setpoint.getPose().getY()) <= 0.02
-  //                 && headingController.atSetpoint());
 
   @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
   public Trigger almostAtSetpoint =
