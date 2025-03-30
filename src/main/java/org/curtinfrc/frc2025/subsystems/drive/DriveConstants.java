@@ -19,6 +19,8 @@ import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
 public final class DriveConstants {
+  public static final double coralOffset = 0.32 / 2;
+  public static final double algaeOffset = 0.145;
   public static final double DEADBAND = 0;
   public static final double ANGLE_KP = 5.0;
   public static final double ANGLE_KD = 0.4;
@@ -45,18 +47,24 @@ public final class DriveConstants {
                   CompTunerConstants.BackRight.LocationX, CompTunerConstants.BackRight.LocationY)));
 
   public static enum DriveSetpoints implements StructSerializable {
-    A(aprilTagLayout.getTagPose(18).get(), true),
-    B(aprilTagLayout.getTagPose(18).get(), false),
-    C(aprilTagLayout.getTagPose(17).get(), true),
-    D(aprilTagLayout.getTagPose(17).get(), false),
-    E(aprilTagLayout.getTagPose(22).get(), true),
-    F(aprilTagLayout.getTagPose(22).get(), false),
-    G(aprilTagLayout.getTagPose(21).get(), true),
-    H(aprilTagLayout.getTagPose(21).get(), false),
-    I(aprilTagLayout.getTagPose(20).get(), true),
-    J(aprilTagLayout.getTagPose(20).get(), false),
-    K(aprilTagLayout.getTagPose(19).get(), true),
-    L(aprilTagLayout.getTagPose(19).get(), false),
+    A(aprilTagLayout.getTagPose(18).get(), true, coralOffset),
+    B(aprilTagLayout.getTagPose(18).get(), false, coralOffset),
+    C(aprilTagLayout.getTagPose(17).get(), true, coralOffset),
+    D(aprilTagLayout.getTagPose(17).get(), false, coralOffset),
+    E(aprilTagLayout.getTagPose(22).get(), true, coralOffset),
+    F(aprilTagLayout.getTagPose(22).get(), false, coralOffset),
+    G(aprilTagLayout.getTagPose(21).get(), true, coralOffset),
+    H(aprilTagLayout.getTagPose(21).get(), false, coralOffset),
+    I(aprilTagLayout.getTagPose(20).get(), true, coralOffset),
+    J(aprilTagLayout.getTagPose(20).get(), false, coralOffset),
+    K(aprilTagLayout.getTagPose(19).get(), true, coralOffset),
+    L(aprilTagLayout.getTagPose(19).get(), false, coralOffset),
+    CLOSE(aprilTagLayout.getTagPose(18).get(), true, algaeOffset),
+    CLOSE_LEFT(aprilTagLayout.getTagPose(19).get(), true, algaeOffset),
+    CLOSE_RIGHT(aprilTagLayout.getTagPose(17).get(), true, algaeOffset),
+    FAR_RIGHT(aprilTagLayout.getTagPose(22).get(), true, algaeOffset),
+    FAR_LEFT(aprilTagLayout.getTagPose(20).get(), true, algaeOffset),
+    FAR(aprilTagLayout.getTagPose(21).get(), true, algaeOffset),
     LEFT_HP(
         new Pose2d(1.148711085319519, 7.199769020080566, Rotation2d.fromDegrees(125.989 + 180))),
     RIGHT_HP(
@@ -85,15 +93,13 @@ public final class DriveConstants {
     static Pose3d mapPose(Pose3d pose) {
       double angle = pose.getRotation().getAngle();
       return new Pose3d(
-          pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2000.0,
-          pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2000.0,
+          pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2,
+          pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
           0.0,
           pose.getRotation());
     }
 
-    DriveSetpoints(Pose3d tag, boolean side) {
-      double sideOffset = 0.32 / 2;
-
+    DriveSetpoints(Pose3d tag, boolean side, double sideOffset) {
       Pose3d mappedPose = mapPose(tag);
       Rotation3d rotation = mappedPose.getRotation();
       double baseAngle = rotation.getAngle();
@@ -160,6 +166,24 @@ public final class DriveConstants {
       }
       if (desiredPose.equals(L.getPose())) {
         return L;
+      }
+      if (desiredPose.equals(FAR.getPose())) {
+        return FAR;
+      }
+      if (desiredPose.equals(CLOSE.getPose())) {
+        return CLOSE;
+      }
+      if (desiredPose.equals(FAR_RIGHT.getPose())) {
+        return FAR_RIGHT;
+      }
+      if (desiredPose.equals(CLOSE_RIGHT.getPose())) {
+        return CLOSE_RIGHT;
+      }
+      if (desiredPose.equals(FAR_LEFT.getPose())) {
+        return FAR_LEFT;
+      }
+      if (desiredPose.equals(CLOSE_LEFT.getPose())) {
+        return CLOSE_LEFT;
       }
       throw new IllegalStateException("No matching setpoint found!");
     }
