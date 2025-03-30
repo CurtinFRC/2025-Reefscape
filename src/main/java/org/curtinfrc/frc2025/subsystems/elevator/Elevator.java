@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -50,6 +51,25 @@ public class Elevator extends SubsystemBase {
     if (inputs.hominSensor) {
       io.zero();
     }
+  }
+
+  public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {
+    return Commands.either(
+            run(
+                () -> {
+                  setpoint = point.get();
+                  var out =
+                      pid.calculate(
+                          io.positionRotationsToMetres(inputs.positionRotations),
+                          setpoint.setpoint);
+                  Logger.recordOutput("Elevator/Output", out);
+                  Logger.recordOutput("Elevator/Error", pid.getError());
+                  Logger.recordOutput("Elevator/ClimberPID", false);
+                  io.setVoltage(out);
+                }),
+            Commands.none(),
+            safe)
+        .withName("GoToSetpoint");
   }
 
   public Command goToSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {

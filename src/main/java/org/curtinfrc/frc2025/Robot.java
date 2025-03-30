@@ -6,8 +6,8 @@ import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -97,6 +97,7 @@ public class Robot extends LoggedRobot {
 
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
+  private final List<Pose2d> algaeSetpoints;
 
   @AutoLogOutput(key = "Robot/Overridden")
   private boolean overridden = false;
@@ -258,10 +259,14 @@ public class Robot extends LoggedRobot {
     rightSetpoints =
         List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
 
-    PortForwarder.add(5820, "limelight-3.local", 1181);
-    PortForwarder.add(5830, "limelight-3g.local", 1181);
-    PortForwarder.add(5821, "limelight-3.local", 5800);
-    PortForwarder.add(5831, "limelight-3g.local", 5800);
+    algaeSetpoints =
+        List.of(
+            CLOSE.getPose(),
+            FAR.getPose(),
+            CLOSE_LEFT.getPose(),
+            FAR_LEFT.getPose(),
+            CLOSE_RIGHT.getPose(),
+            FAR_RIGHT.getPose());
 
     autoChooser = new AutoChooser("Auto Chooser");
 
@@ -387,14 +392,59 @@ public class Robot extends LoggedRobot {
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
-    controller.rightStick().whileTrue(ejector.eject(30));
+    ejector.backSensor.onFalse(
+        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+    intake.frontSensor.onTrue(
+        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+
+    controller
+        .leftStick()
+        .whileTrue(
+            drive
+                .autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(drive.atSetpoint)
+                .andThen(
+                    Commands.parallel(
+                        ejector.eject(40),
+                        elevator.goToSetpoint(
+                            () -> {
+                              return switch (DriveSetpoints.closest(
+                                  drive::getPose, leftSetpoints)) {
+                                case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                                case C, D -> ElevatorSetpoints.AlgaePopLow;
+                                case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                                case G, H -> ElevatorSetpoints.AlgaePopLow;
+                                case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                                case K, L -> ElevatorSetpoints.AlgaePopLow;
+                                default -> ElevatorSetpoints.AlgaePopLow;
+                              };
+                            },
+                            intake.backSensor.negate())))
+                .withName("AlgaePop")
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller
+        .rightStick()
+        .whileTrue(
+            ejector
+                .eject(15)
+                .until(ejector.backSensor.negate())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller.povUp().whileTrue(intake.intake(-4));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
     intake
         .backSensor
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(8));
+        .whileTrue(ejector.eject(12));
 
     intake
         .backSensor
@@ -415,7 +465,7 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect.negate())
         .whileTrue(
             ejector
-                .eject(-1)
+                .eject(-2)
                 .until(ejector.frontSensor)
                 .andThen(ejector.stop())
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
