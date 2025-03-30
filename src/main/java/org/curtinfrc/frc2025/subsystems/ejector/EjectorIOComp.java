@@ -13,6 +13,7 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -27,7 +28,9 @@ public class EjectorIOComp implements EjectorIO {
   private static final TalonFXConfiguration leaderConfig =
       new TalonFXConfiguration()
           .withMotorOutput(
-              new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive))
+              new MotorOutputConfigs()
+                  .withInverted(InvertedValue.CounterClockwise_Positive)
+                  .withNeutralMode(NeutralModeValue.Brake))
           .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33))
           .withCurrentLimits(currentLimits);
   private static final TalonFXConfiguration followerConfig =

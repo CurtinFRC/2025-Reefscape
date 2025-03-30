@@ -7,6 +7,7 @@ import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -391,6 +392,15 @@ public class Robot extends LoggedRobot {
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
+    ejector.backSensor.onTrue(
+        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+    intake.frontSensor.onTrue(
+        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+
     controller
         .leftStick()
         .whileTrue(
@@ -420,7 +430,13 @@ public class Robot extends LoggedRobot {
                             intake.backSensor.negate())))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller.rightStick().whileTrue(ejector.eject(15));
+    controller
+        .rightStick()
+        .whileTrue(
+            ejector
+                .eject(15)
+                .until(ejector.backSensor.negate())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
     // ejector.backSensor.negate().whileTrue(elevator.goToSetpoint(ElevatorSetpoints.BASE));
