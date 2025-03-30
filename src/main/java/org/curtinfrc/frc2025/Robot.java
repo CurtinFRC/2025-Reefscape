@@ -267,11 +267,7 @@ public class Robot extends LoggedRobot {
             drive,
             drive::logTrajectory);
 
-    // autos = new Autos(drive, elevator, popper, ejector, intake);
-
-    // autoChooser.addCmd("Basic Auto", () -> autos.basicAuto());
-
-    autoChooser.addCmd("Test Path", () -> factory.trajectoryCmd("Test Path"));
+    autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
     autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
@@ -510,7 +506,7 @@ public class Robot extends LoggedRobot {
 
   public Command onePiece() {
     return drive
-        .autoAlign(() -> DriveSetpoints.C)
+        .autoAlign(() -> DriveSetpoints.C.getPose())
         .until(drive.atSetpoint)
         .andThen(
             elevator
@@ -549,18 +545,18 @@ public class Robot extends LoggedRobot {
 
   private Command node(Setpoint point) {
     return drive
-        .autoAlign(() -> point.driveSetpoint())
+        .autoAlign(() -> point.driveSetpoint().getPose())
         .until(drive.atSetpoint)
         .andThen(
             Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint()),
+                drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("firststep")
         .until(elevator.atSetpoint)
         .withName("GetToAutoPosition")
         .andThen(
             Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint()),
+                drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 ejector.eject(15).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("Eject")
@@ -573,7 +569,7 @@ public class Robot extends LoggedRobot {
     return elevator
         .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
         .until(elevator.atSetpoint)
-        .andThen(drive.autoAlign(() -> point).until(intake.frontSensor))
+        .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
         .andThen(Commands.waitSeconds(1.5))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }

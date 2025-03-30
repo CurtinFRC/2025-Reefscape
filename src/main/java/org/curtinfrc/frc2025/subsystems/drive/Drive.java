@@ -81,9 +81,9 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(2.5, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
-  private final PIDController xFollower = new PIDController(0, 0, 0);
-  private final PIDController yFollower = new PIDController(0, 0, 0);
-  private final PIDController headingFollower = new PIDController(0, 0, 0);
+  private final PIDController xFollower = new PIDController(2, 0, 0);
+  private final PIDController yFollower = new PIDController(2, 0, 0);
+  private final PIDController headingFollower = new PIDController(3, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -668,26 +668,26 @@ public class Drive extends SubsystemBase {
       DoubleSupplier omegaSupplier) {
     return run(
         () -> {
+          this.setpoint = _setpoint.get();
           if (Math.abs(xSupplier.getAsDouble()) > 0.05
               || Math.abs(ySupplier.getAsDouble()) > 0.05
               || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
             joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
             return;
           }
-          autoAlign(_setpoint.get());
+          autoAlign(_setpoint.get().getPose());
         });
   }
 
-  private void autoAlign(DriveSetpoints _setpoint) {
-    this.setpoint = _setpoint;
+  private void autoAlign(Pose2d _setpoint) {
     repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
 
-    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint.getPose());
+    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint);
     var robotPose = getPose();
 
     var omega =
         headingController.calculate(
-            getRotation().getRadians(), _setpoint.getPose().getRotation().getRadians());
+            getRotation().getRadians(), _setpoint.getRotation().getRadians());
 
     // if (Math.abs(robotPose.minus(_setpoint.getPose()).getTranslation().getNorm()) > 0.1) {
     //   RepulsorSample sample =
@@ -702,16 +702,15 @@ public class Drive extends SubsystemBase {
     boolean isFlipped =
         DriverStation.getAlliance().isPresent()
             && DriverStation.getAlliance().get() == Alliance.Red;
-    var x = xController.calculate(robotPose.getX(), _setpoint.getPose().getX());
-    var y = yController.calculate(robotPose.getY(), _setpoint.getPose().getY());
+    var x = xController.calculate(robotPose.getX(), _setpoint.getX());
+    var y = yController.calculate(robotPose.getY(), _setpoint.getY());
     runVelocity(
         ChassisSpeeds.fromFieldRelativeSpeeds(
             x, y, omega, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()),
         new double[4]);
-    // }
   }
 
-  public Command autoAlign(Supplier<DriveSetpoints> _setpoint) {
+  public Command autoAlign(Supplier<Pose2d> _setpoint) {
     return run(() -> autoAlign(_setpoint.get())).withName("AutoAlign");
   }
 }
