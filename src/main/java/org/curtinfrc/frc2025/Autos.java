@@ -1,9 +1,10 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
-import edu.wpi.first.wpilibj2.command.Commands;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
@@ -40,7 +41,7 @@ public class Autos {
                         .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
                         .until(elevator.atSetpoint)
                         .andThen(
-                            Commands.parallel(ejector.eject(15)),
+                            parallel(ejector.eject(15)),
                             elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()))
                         .until(ejector.backSensor.negate()))
                 .andThen(
@@ -48,8 +49,7 @@ public class Autos {
                         .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
                         .until(elevator.atSetpoint))
                 .andThen(
-                    Commands.parallel(
-                            drive.autoAlign(() -> DriveSetpoints.FAR.getPose()), ejector.eject(30))
+                    parallel(drive.autoAlign(() -> DriveSetpoints.FAR.getPose()), ejector.eject(30))
                         .withTimeout(1))
                 .withName("autoScore")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
@@ -72,6 +72,34 @@ public class Autos {
     trajectory
         .atTime("FirstElevatorRaise")
         .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    return routine;
+  }
+
+  public static AutoRoutine twoPieceLeft(
+      AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
+    var routine = factory.newRoutine("onePieceLeft");
+    var startToFirst = routine.trajectory("onePieceLeft");
+    var firstToHP = routine.trajectory("firstToHP");
+    var hpToSecond = routine.trajectory("hpToSecond");
+
+    routine.active().onTrue(startToFirst.cmd());
+
+    startToFirst
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> startToFirst.getFinalPose().get())
+                .until(drive.atSetpoint)
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate())
+                .andThen(firstToHP.cmd()));
+
+    startToFirst
+        .atTime("RaiseElevator")
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+
+    firstToHP.done().onTrue(waitUntil(intake.frontSensor).andThen(hpToSecond.cmd()));
+
     return routine;
   }
 }
