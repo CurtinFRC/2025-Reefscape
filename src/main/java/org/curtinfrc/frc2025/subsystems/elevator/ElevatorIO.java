@@ -1,5 +1,7 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
+import org.curtinfrc.frc2025.Constants.Setpoint;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ElevatorIO {
@@ -18,6 +20,8 @@ public interface ElevatorIO {
   public default void setVoltage(double volts) {}
 
   public default void zero() {}
+
+  public default void goToSetpoint(ElevatorSetpoints point) {}
 
   public default double positionRotationsToMetres(double rotations) {
     return rotations;

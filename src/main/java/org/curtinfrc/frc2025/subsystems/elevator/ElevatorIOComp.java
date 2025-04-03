@@ -2,12 +2,17 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 
 import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
+import org.curtinfrc.frc2025.Constants.Setpoint;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -46,10 +51,25 @@ public class ElevatorIOComp implements ElevatorIO {
   private final Follower followRequest = new Follower(ID, false);
 
   public ElevatorIOComp() {
-    tryUntilOk(5, () -> motor.getConfigurator().apply(config));
-    tryUntilOk(5, () -> follower.getConfigurator().apply(config));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    var slot0Configs = config.Slot0;
+    slot0Configs.kS = 0; 
+    slot0Configs.kV = ElevatorConstants.kV; 
+    slot0Configs.kA = ElevatorConstants.kA; 
+    slot0Configs.kP = ElevatorConstants.kP; 
+    slot0Configs.kI = 0; 
+    slot0Configs.kD = ElevatorConstants.kD; 
+    slot0Configs.kG = ElevatorConstants.kG;
+
+    var motionMagicConfigs = config.MotionMagic;
+    motionMagicConfigs.MotionMagicCruiseVelocity = positionMetresToRotations(3.54); 
+    motionMagicConfigs.MotionMagicAcceleration = positionMetresToRotations(55.7); 
+    motionMagicConfigs.MotionMagicJerk = 1; 
+
+    tryUntilOk(5, () -> motor.getConfigurator().apply(config));
+    tryUntilOk(5, () -> follower.getConfigurator().apply(config));
   }
 
   @Override
@@ -82,5 +102,11 @@ public class ElevatorIOComp implements ElevatorIO {
   @Override
   public double positionMetresToRotations(double metres) {
     return metres / (Math.PI * 2 * pulleyRadiusMeters) * gearing;
+  }
+
+  @Override
+  public void goToSetpoint(ElevatorSetpoints point) {
+    final MotionMagicVoltage req = new MotionMagicVoltage(0);
+    motor.setControl(req.withPosition(point.setpoint));
   }
 }

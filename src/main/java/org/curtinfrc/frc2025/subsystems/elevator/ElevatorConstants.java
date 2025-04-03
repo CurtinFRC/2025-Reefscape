@@ -9,9 +9,9 @@ public class ElevatorConstants {
   public static double tolerance = 0.021;
   public static double kP = 20;
   public static double kD = 0;
-  public static double kV = 0;
-  public static double kA = 0.01;
-  public static double kG = 0;
+  public static double kV = 3.35;
+  public static double kA = 0.02;
+  public static double kG = 0.13;
 
   public static double climbkP = 45;
   public static double climbkI = 0;

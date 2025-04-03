@@ -58,14 +58,7 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point.get();
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
-                  Logger.recordOutput("Elevator/Output", out);
-                  Logger.recordOutput("Elevator/Error", pid.getError());
-                  Logger.recordOutput("Elevator/ClimberPID", false);
-                  io.setVoltage(out);
+                  io.goToSetpoint(point.get());
                 }),
             Commands.none(),
             safe)
@@ -77,14 +70,7 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point;
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
-                  Logger.recordOutput("Elevator/Output", out);
-                  Logger.recordOutput("Elevator/Error", pid.getError());
-                  Logger.recordOutput("Elevator/ClimberPID", false);
-                  io.setVoltage(out);
+                  io.goToSetpoint(point);
                 }),
             Commands.none(),
             safe)
