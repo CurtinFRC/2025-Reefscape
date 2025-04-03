@@ -360,7 +360,13 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftY(),
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
+                .until(ejector.backSensor.negate())
+                .andThen(
+                    drive.autoAlignWithRepulse(
+                        () -> DriveSetpoints.BETWEEN,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX())));
 
     controller
         .leftBumper()
@@ -373,8 +379,13 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftY(),
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
+                .until(ejector.backSensor.negate())
+                .andThen(
+                    drive.autoAlignWithRepulse(
+                        () -> DriveSetpoints.BETWEEN,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX())));
     climber.stalled.onTrue(
         climber
             .stop()

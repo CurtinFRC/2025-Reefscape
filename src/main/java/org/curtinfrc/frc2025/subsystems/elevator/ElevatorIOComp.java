@@ -2,15 +2,11 @@ package org.curtinfrc.frc2025.subsystems.elevator;
 
 import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
-import org.curtinfrc.frc2025.Constants.Setpoint;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -22,6 +18,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 
 public class ElevatorIOComp implements ElevatorIO {
   private static final double pulleyRadiusMeters = 0.03055;
@@ -55,18 +52,18 @@ public class ElevatorIOComp implements ElevatorIO {
     motor.optimizeBusUtilization();
 
     var slot0Configs = config.Slot0;
-    slot0Configs.kS = 0; 
-    slot0Configs.kV = ElevatorConstants.kV; 
-    slot0Configs.kA = ElevatorConstants.kA; 
-    slot0Configs.kP = ElevatorConstants.kP; 
-    slot0Configs.kI = 0; 
-    slot0Configs.kD = ElevatorConstants.kD; 
+    slot0Configs.kS = 0;
+    slot0Configs.kV = ElevatorConstants.kV;
+    slot0Configs.kA = ElevatorConstants.kA;
+    slot0Configs.kP = ElevatorConstants.kP;
+    slot0Configs.kI = 0;
+    slot0Configs.kD = ElevatorConstants.kD;
     slot0Configs.kG = ElevatorConstants.kG;
 
     var motionMagicConfigs = config.MotionMagic;
-    motionMagicConfigs.MotionMagicCruiseVelocity = positionMetresToRotations(3.54); 
-    motionMagicConfigs.MotionMagicAcceleration = positionMetresToRotations(55.7); 
-    motionMagicConfigs.MotionMagicJerk = 1; 
+    motionMagicConfigs.MotionMagicCruiseVelocity = positionMetresToRotations(3.54);
+    motionMagicConfigs.MotionMagicAcceleration = positionMetresToRotations(55.7);
+    motionMagicConfigs.MotionMagicJerk = 1;
 
     tryUntilOk(5, () -> motor.getConfigurator().apply(config));
     tryUntilOk(5, () -> follower.getConfigurator().apply(config));

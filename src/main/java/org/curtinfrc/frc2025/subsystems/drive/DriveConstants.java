@@ -71,7 +71,8 @@ public final class DriveConstants {
         new Pose2d(
             0.9220133423805237,
             0.9964936375617981,
-            Rotation2d.fromDegrees(125.989 + 180).unaryMinus()));
+            Rotation2d.fromDegrees(125.989 + 180).unaryMinus())),
+    BETWEEN((new Pose2d(1.6845422983169556, 4.067217826843262, Rotation2d.fromDegrees(0))));
 
     private final Pose2d pose;
 

@@ -1,6 +1,5 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLog;
 

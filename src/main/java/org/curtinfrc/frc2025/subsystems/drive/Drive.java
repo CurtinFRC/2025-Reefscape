@@ -52,6 +52,7 @@ import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
+import org.curtinfrc.frc2025.subsystems.drive.RepulsorFieldPlanner.RepulsorSample;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -151,6 +152,108 @@ public class Drive extends SubsystemBase {
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);
+  }
+
+  public void followTrajectoryRepulsor(RepulsorSample sample, double rot) {
+
+    // Get the current pose of the robot
+
+    Pose2d pose = getPose();
+
+    Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+
+    Logger.recordOutput("Drive/PID/error", headingController.getError());
+
+    // Logger.recordOutput("Drive/PID/out", out);
+
+    Logger.recordOutput("Drive/sample", sample);
+
+    var err =
+        new Transform2d(
+            sample.goal().getX() - pose.getX(),
+            sample.goal().getY() - pose.getY(),
+            new Rotation2d());
+
+    var dist = Math.hypot(err.getX(), err.getY());
+
+    Logger.recordOutput("Drive/dist", dist);
+
+    var target_pose =
+        (DriverStation.getAlliance().get() == Alliance.Blue
+            ? new Pose2d(4.476, 4.026, new Rotation2d())
+            : new Pose2d(13.071, 4.026, new Rotation2d()));
+
+    var transform = target_pose.relativeTo(pose).rotateBy(pose.getRotation());
+
+    Logger.recordOutput("Drive/targetpose", target_pose);
+
+    Logger.recordOutput("Drive/transform", transform);
+
+    Logger.recordOutput("Drive/theta", Math.atan2(transform.getY(), transform.getX()));
+
+    Logger.recordOutput(
+        "Drive/projected",
+        new Pose2d(
+            pose.getX(),
+            pose.getY(),
+            new Rotation2d(Math.atan2(transform.getY(), transform.getX()))));
+
+    // Generate the next speeds for the robot
+
+    xController.setSetpoint(sample.goal().getX());
+
+    yController.setSetpoint(sample.goal().getY());
+
+    headingController.setSetpoint(rot);
+
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+
+    ChassisSpeeds speeds;
+
+    if (isFlipped) {
+
+      speeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              sample.vx()
+                  + (sample.vx() != 0
+                      ? 0
+                      : xController.calculate(pose.getX(), sample.goal().getX())),
+              sample.vy()
+                  + (sample.vy() != 0
+                      ? 0
+                      : yController.calculate(pose.getY(), sample.goal().getY())),
+              dist < 0.5
+                  ? headingController.calculate(pose.getRotation().getRadians(), rot)
+                  : headingController.calculate(
+                      pose.getRotation().getRadians(),
+                      Math.atan2(transform.getY(), transform.getX())),
+              getRotation()); // Apply the generated speeds
+
+    } else {
+
+      speeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              sample.vx()
+                  + (sample.vx() != 0
+                      ? 0
+                      : xController.calculate(pose.getX(), sample.goal().getX())),
+              sample.vy()
+                  + (sample.vy() != 0
+                      ? 0
+                      : yController.calculate(pose.getY(), sample.goal().getY())),
+              dist < 0.5
+                  ? headingController.calculate(pose.getRotation().getRadians(), rot)
+                  : headingController.calculate(
+                      pose.getRotation().getRadians(),
+                      Math.atan2(transform.getY(), transform.getX())),
+              getRotation()); // Apply the generated speeds
+    }
+
+    Logger.recordOutput("Drive/ChassisSpeeds1", speeds);
+
+    runVelocity(speeds, new double[4]);
   }
 
   public void followTrajectory(SwerveSample sample) {
@@ -672,6 +775,46 @@ public class Drive extends SubsystemBase {
           }
           autoAlign(_setpoint.get().getPose());
         });
+  }
+
+  public Command autoAlignWithRepulse(
+      Supplier<DriveSetpoints> _setpoint,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return run(
+        () -> {
+          this.setpoint = _setpoint.get();
+          if (Math.abs(xSupplier.getAsDouble()) > 0.05
+              || Math.abs(ySupplier.getAsDouble()) > 0.05
+              || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
+            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
+            return;
+          }
+          autoAlignRepulse(_setpoint.get());
+        });
+  }
+
+  public Command autoAlignRepulse(DriveSetpoints _setpoint) {
+
+    return run(() -> {
+          this.setpoint = _setpoint;
+
+          Logger.recordOutput("Drive/Setpoint", this.setpoint.getPose());
+
+          repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
+
+          var robotPose = getPose();
+
+          RepulsorSample cmd =
+              repulsorFieldPlanner.calculate(
+                  robotPose,
+                  getChassisSpeeds(),
+                  CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
+
+          followTrajectoryRepulsor(cmd, _setpoint.getPose().getRotation().getDegrees());
+        })
+        .withName("AutoAlign");
   }
 
   private void autoAlign(Pose2d _setpoint) {
