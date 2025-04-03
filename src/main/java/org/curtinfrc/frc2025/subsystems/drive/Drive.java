@@ -179,7 +179,7 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds.fromFieldRelativeSpeeds(
             xFollower.calculate(pose.getX(), sample.x) + sample.vx,
             yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
+            headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
             getRotation());
 
     runVelocity(speeds, new double[4]);

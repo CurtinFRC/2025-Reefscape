@@ -79,7 +79,7 @@ public class Autos {
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
     var routine = factory.newRoutine("onePieceLeft");
     var startToFirst = routine.trajectory("onePieceLeft");
-    var firstToHP = routine.trajectory("firstToHP");
+    var firstToHP = routine.trajectory("firstToHp");
     var hpToSecond = routine.trajectory("hpToSecond");
 
     routine.active().onTrue(startToFirst.cmd());
@@ -92,13 +92,20 @@ public class Autos {
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
-                .andThen(firstToHP.cmd()));
+                .andThen(firstToHP.cmd())
+                .withName("StartToFirstAlign"));
 
     startToFirst
         .atTime("RaiseElevator")
         .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
 
-    firstToHP.done().onTrue(waitUntil(intake.frontSensor).andThen(hpToSecond.cmd()));
+    firstToHP
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> firstToHP.getFinalPose().get())
+                .until(drive.atSetpoint)
+                .andThen(waitUntil(intake.frontSensor).andThen(hpToSecond.cmd())));
 
     return routine;
   }

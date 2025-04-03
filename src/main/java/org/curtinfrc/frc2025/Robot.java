@@ -284,6 +284,8 @@ public class Robot extends LoggedRobot {
         "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
         "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Two Piece Left", () -> Autos.twoPieceLeft(factory, drive, ejector, elevator, intake));
 
     autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
@@ -505,7 +507,7 @@ public class Robot extends LoggedRobot {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
 
-    Logger.recordOutput("Setpoint", DriveSetpoints.L.getPose());
+    Logger.recordOutput("Setpoint", DriveSetpoints.F.getPose());
 
     controllerDisconnected.set(!controller.isConnected());
 
