@@ -7,9 +7,11 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -249,6 +251,8 @@ public class Robot extends LoggedRobot {
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
     }
+
+    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
     leftSetpoints =
         List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
