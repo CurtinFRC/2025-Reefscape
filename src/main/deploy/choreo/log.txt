@@ -1,0 +1,18 @@
+choreo v2025.0.3
+  built with rustc 1.84.1 (e71f9a9a9 2025-01-27)
+  on x86_64-unknown-linux-gnu for x86_64-unknown-linux-gnu
+  at Fri, 7 Feb 2025 04:34:06 +0000
+  with features: ["CUSTOM_PROTOCOL"]
+  in profile release
+  in ci
+  from commit fe1f4fc on branch unknown
+INFO | 14:07:50.494| gui/src/tauri.rs:153            | Starting Choreo 2025.0.3 x86_64-unknown-linux-gnu
+TRACE| 14:07:50.494| unknown                         | registering event source with poller: token=Token(1), interests=READABLE
+TRACE| 14:07:50.971| unknown                         | registering event source with poller: token=Token(1), interests=READABLE
+DEBUG| 14:07:51.277| core/src/file_management/mod.rs:159| Setting deploy path to 
+INFO | 14:07:51.539| tauri@                          | Attempting to open: /home/jadey/Documents/frc/2025-Reefscape/src/main/deploy/choreo/autos
+DEBUG| 14:07:51.543| core/src/file_management/mod.rs:159| Setting deploy path to /home/jadey/Documents/frc/2025-Reefscape/src/main/deploy/choreo
+INFO | 14:07:51.543| core/src/file_management/mod.rs:308| Opening project autos.chor at /home/jadey/Documents/frc/2025-Reefscape/src/main/deploy/choreo
+DEBUG| 14:07:51.543| core/src/file_management/mod.rs:341| Found 5 trajectory files in /home/jadey/Documents/frc/2025-Reefscape/src/main/deploy/choreo
+DEBUG| 14:07:56.635| gui/src/api.rs:207              | Opening diagnostic file
+DEBUG| 14:07:56.635| core/src/file_management/diagnostics.rs:66| Looking for log files in /home/jadey/.local/share/choreo/log
