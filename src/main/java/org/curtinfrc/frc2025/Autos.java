@@ -70,14 +70,14 @@ public class Autos {
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate()));
     trajectory
-        .atTime("FirstElevatorRaise")
+        .atTime("RaiseElevator")
         .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     return routine;
   }
 
   public static AutoRoutine twoPieceLeft(
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
-    var routine = factory.newRoutine("onePieceLeft");
+    var routine = factory.newRoutine("twoPieceLeft");
     var startToFirst = routine.trajectory("onePieceLeft");
     var firstToHP = routine.trajectory("firstToHp");
     var hpToSecond = routine.trajectory("hpToSecond");
@@ -92,8 +92,7 @@ public class Autos {
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
-                .andThen(firstToHP.cmd())
-                .withName("StartToFirstAlign"));
+                .andThen(firstToHP.cmd()));
 
     startToFirst
         .atTime("RaiseElevator")
@@ -107,6 +106,22 @@ public class Autos {
                 .until(drive.atSetpoint)
                 .andThen(waitUntil(intake.frontSensor).andThen(hpToSecond.cmd())));
 
+    hpToSecond
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> hpToSecond.getFinalPose().get())
+                .until(drive.atSetpoint)
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate()));
+
+    hpToSecond
+        .atTime("RaiseElevator")
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+
+    startToFirst
+        .atTime("RaiseElevator")
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
     return routine;
   }
 }

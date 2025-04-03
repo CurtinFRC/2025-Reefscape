@@ -62,5 +62,5 @@
   "splits":[0]
  },
  "events":[
-   {"name":"FirstElevatorRaise", "from":{"target":2, "targetTimestamp":0.91081, "offset":{"exp":"-0.4 s", "val":-0.4}}, "event":null}]
+   {"name":"RaiseElevator", "from":{"target":2, "targetTimestamp":0.91081, "offset":{"exp":"-0.4 s", "val":-0.4}}, "event":null}]
 }
