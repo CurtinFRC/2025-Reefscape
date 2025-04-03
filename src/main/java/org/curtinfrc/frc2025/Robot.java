@@ -415,12 +415,13 @@ public class Robot extends LoggedRobot {
     controller
         .leftStick()
         .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+            Commands.parallel(
+                    drive.autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                    ejector.eject(40))
                 .until(drive.atSetpoint)
                 .andThen(
                     Commands.parallel(
