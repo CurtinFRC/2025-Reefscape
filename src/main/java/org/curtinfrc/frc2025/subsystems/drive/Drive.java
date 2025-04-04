@@ -791,7 +791,7 @@ public class Drive extends SubsystemBase {
             joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
             return;
           }
-          autoAlignRepulse(_setpoint.get());
+          autoAlignRepulse(_setpoint.get()).execute();
         });
   }
 

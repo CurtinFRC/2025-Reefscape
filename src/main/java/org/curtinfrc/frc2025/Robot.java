@@ -362,11 +362,17 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getRightX())
                 .until(ejector.backSensor.negate())
                 .andThen(
-                    drive.autoAlignWithRepulse(
-                        () -> DriveSetpoints.BETWEEN,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX())));
+                    drive
+                        .autoAlignWithRepulse(
+                            () -> DriveSetpoints.BETWEEN,
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> -controller.getRightX())
+                        .until(
+                            () ->
+                                Math.abs(controller.getLeftY()) > 0.05
+                                    || Math.abs(controller.getLeftX()) > 0.05
+                                    || Math.abs(controller.getRightX()) > 0.05)));
 
     controller
         .leftBumper()
@@ -379,13 +385,25 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftY(),
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX())
-                .until(ejector.backSensor.negate())
-                .andThen(
-                    drive.autoAlignWithRepulse(
-                        () -> DriveSetpoints.BETWEEN,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX())));
+                .until(ejector.backSensor.negate()));
+
+    ejector
+        .backSensor
+        .negate()
+        .or(intake.frontSensor)
+        .onTrue(
+            drive
+                .autoAlignWithRepulse(
+                    () -> DriveSetpoints.BETWEEN,
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(
+                    () ->
+                        Math.abs(controller.getLeftY()) > 0.05
+                            || Math.abs(controller.getLeftX()) > 0.05
+                            || Math.abs(controller.getRightX()) > 0.05));
+
     climber.stalled.onTrue(
         climber
             .stop()
