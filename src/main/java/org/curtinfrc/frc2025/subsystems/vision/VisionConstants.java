@@ -1,3 +1,16 @@
+// Copyright 2021-2024 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// version 3 as published by the Free Software Foundation or
+// available in the root directory of this project.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+
 package org.curtinfrc.frc2025.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -12,21 +25,18 @@ public class VisionConstants {
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Camera names, must match names configured on coprocessor
-  public static String camera0Name = "front-left";
-  public static String camera1Name = "front-right";
-  public static String camera2Name = "back-left";
-  public static String camera3Name = "back-right";
+  public static String camera0Name = "limelight-back";
+  public static String camera1Name = "limelight-left";
+  public static String camera2Name = "limelight-right";
 
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)
   public static Transform3d robotToCamera0 =
-      new Transform3d(0.1655, -0.2008, 0.299, Rotation3d.kZero);
+      new Transform3d(0.01, 0.06, 0.360, new Rotation3d(0, -Math.PI / 6, Math.PI));
   public static Transform3d robotToCamera1 =
-      new Transform3d(0.1655, 0.2008, 0.299, Rotation3d.kZero);
+      new Transform3d(0.17061, 0.2105, 0.30815, Rotation3d.kZero);
   public static Transform3d robotToCamera2 =
-      new Transform3d(0.145943, -0.1723, 0.890575, new Rotation3d(0, -Math.PI / 4, Math.PI));
-  public static Transform3d robotToCamera3 =
-      new Transform3d(0.145943, 0.1723, 0.890575, new Rotation3d(0, -Math.PI / 4, Math.PI));
+      new Transform3d(0.17061, -0.2105, 0.30815, Rotation3d.kZero);
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.3;
@@ -34,7 +44,7 @@ public class VisionConstants {
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
-  public static double linearStdDevBaseline = 0.07; // Meters
+  public static double linearStdDevBaseline = 0.03; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
 
   // Standard deviation multipliers for each camera
@@ -42,9 +52,8 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
-        0.8, // Camera 1
-        0.8, // Camera 2
-        1.0 // Camera 3
+        1.5, // Camera 1
+        1.5, // Camera 2
       };
 
   // Multipliers to apply for MegaTag 2 observations

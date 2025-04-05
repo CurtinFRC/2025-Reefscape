@@ -1,38 +1,24 @@
 package org.curtinfrc.frc2025;
 
-import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints.*;
+import static org.curtinfrc.frc2025.subsystems.intake.IntakeConstants.intakeVolts;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
 import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.net.WebServer;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import java.util.List;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoint;
+import org.curtinfrc.frc2025.Constants.Setpoints;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
-import org.curtinfrc.frc2025.subsystems.climber.Climber;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberIOComp;
-import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
-import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIO;
 import org.curtinfrc.frc2025.subsystems.drive.GyroIOPigeon2;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIO;
@@ -40,29 +26,26 @@ import org.curtinfrc.frc2025.subsystems.drive.ModuleIOSim;
 import org.curtinfrc.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
-import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOComp;
+import org.curtinfrc.frc2025.subsystems.ejector.EjectorIONEO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOComp;
+import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIONEO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIO;
-import org.curtinfrc.frc2025.subsystems.intake.IntakeIOComp;
+import org.curtinfrc.frc2025.subsystems.intake.IntakeIONEO;
 import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
-import org.curtinfrc.frc2025.subsystems.leds.LEDs;
-import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
-import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
+import org.curtinfrc.frc2025.subsystems.popper.Popper;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIOComp;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
-import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -82,31 +65,18 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
-  private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
-  private Climber climber;
+  private Popper popper;
+  private Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-  private final Alert controllerDisconnected =
-      new Alert("Driver controller disconnected!", AlertType.kError);
-  private final ButtonBoard board = new ButtonBoard(1);
-
+  private final ButtonBoard buttonBoard = new ButtonBoard(1);
   // Auto stuff
   private final AutoChooser autoChooser;
-  private final AutoFactory factory;
-  // private final Autos autos;
-
-  private final List<Pose2d> leftSetpoints;
-  private final List<Pose2d> rightSetpoints;
-  private final List<Pose2d> algaeSetpoints;
-
-  @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = false;
-
-  @AutoLogOutput(key = "Robot/Overide")
-  private final Trigger override = new Trigger(() -> overridden);
+  private final AutoFactory autoFactory;
+  private final Autos autos;
 
   public Robot() {
     // Record metadata
@@ -150,7 +120,6 @@ public class Robot extends LoggedRobot {
     }
 
     SignalLogger.start();
-    SignalLogger.setPath("/U/logs");
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
@@ -171,15 +140,13 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                  new VisionIOPhotonVision(camera1Name, robotToCamera1),
-                  new VisionIOPhotonVision(camera2Name, robotToCamera2),
-                  new VisionIOPhotonVision(camera3Name, robotToCamera3));
-          elevator = new Elevator(new ElevatorIOComp());
-          intake = new Intake(new IntakeIOComp());
-          ejector = new Ejector(new EjectorIOComp());
-          climber = new Climber(new ClimberIOComp());
-          leds = new LEDs(new LEDsIOComp());
+                  new VisionIO() {},
+                  new VisionIOLimelight(camera1Name, drive::getRotation),
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
+          elevator = new Elevator(new ElevatorIONEO());
+          intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
+          popper = new Popper(new PopperIOComp());
         }
 
         case DEVBOT -> {
@@ -196,16 +163,15 @@ public class Robot extends LoggedRobot {
                   drive::addVisionMeasurement,
                   new VisionIO() {},
                   new VisionIOLimelight(camera1Name, drive::getRotation),
-                  new VisionIOLimelight(camera2Name, drive::getRotation),
-                  new VisionIO() {});
-          elevator = new Elevator(new ElevatorIO() {});
-          intake = new Intake(new IntakeIO() {});
-          ejector = new Ejector(new EjectorIO() {});
-          climber = new Climber(new ClimberIO() {});
-          leds = new LEDs(new LEDsIO() {});
+                  new VisionIOLimelight(camera2Name, drive::getRotation));
+          elevator = new Elevator(new ElevatorIONEO());
+          intake = new Intake(new IntakeIONEO());
+          ejector = new Ejector(new EjectorIONEO());
+          popper = new Popper(new PopperIO() {});
         }
 
         case SIMBOT -> {
+          // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
                   new GyroIO() {},
@@ -218,14 +184,12 @@ public class Robot extends LoggedRobot {
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera3Name, robotToCamera3, drive::getPose));
+                  new VisionIO() {});
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
           ejector = new Ejector(new EjectorIOSim());
-          climber = new Climber(new ClimberIOSim());
-          leds = new LEDs(new LEDsIO() {});
+          popper = new Popper(new PopperIO() {});
         }
       }
     } else {
@@ -239,56 +203,30 @@ public class Robot extends LoggedRobot {
 
       vision =
           new Vision(
-              drive::addVisionMeasurement,
-              new VisionIO() {},
-              new VisionIO() {},
-              new VisionIO() {},
-              new VisionIO() {});
+              drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
 
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      climber = new Climber(new ClimberIO() {});
-      leds = new LEDs(new LEDsIO() {});
+      popper = new Popper(new PopperIO() {});
     }
 
-    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+    superstructure = new Superstructure(drive, elevator);
 
-    leftSetpoints =
-        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
-
-    rightSetpoints =
-        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
-
-    algaeSetpoints =
-        List.of(
-            CLOSE.getPose(),
-            FAR.getPose(),
-            CLOSE_LEFT.getPose(),
-            FAR_LEFT.getPose(),
-            CLOSE_RIGHT.getPose(),
-            FAR_RIGHT.getPose());
-
-    autoChooser = new AutoChooser("Auto Chooser");
-    factory =
+    autoFactory =
         new AutoFactory(
             drive::getPose,
             drive::setPose,
-            drive::followTrajectory,
+            drive::followTrajectoryVelocity,
             true,
             drive,
             drive::logTrajectory);
 
-    autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
-    autoChooser.addRoutine(
-        "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser = new AutoChooser("Auto Chooser");
 
-    autoChooser.addCmd("One Piece", this::onePiece);
-    autoChooser.addCmd("Test Auto", this::testAuto);
-    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
-    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
+    autos = new Autos(autoFactory);
+
+    autoChooser.addRoutine("Follow Test Path", () -> autos.followPath("Test Path"));
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -330,157 +268,44 @@ public class Robot extends LoggedRobot {
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getRightX()));
 
-    drive
-        .atSetpoint
+    elevator
+        .isNotAtCollect
         .and(elevator.atSetpoint)
-        .and(elevator.isNotAtCollect)
-        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
+        // .and(drive.atSetpoint)
+        .whileTrue(ejector.eject(100).until(ejector.backSensor.negate()));
 
-    controller
-        .rightBumper()
-        .or(controller.leftBumper())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .or(controller.leftTrigger())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-
-    controller
-        .rightBumper()
-        .or(controller.rightTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    controller
-        .leftBumper()
-        .or(controller.leftTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    climber.stalled.onTrue(
-        climber
-            .stop()
-            .andThen(
-                elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
-                    .withTimeout(0.5)
-                    .andThen(
-                        Commands.parallel(
-                            climber.engage(),
-                            elevator.goToClimberSetpoint(
-                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
-                    .until(elevator.atClimbSetpoint)
-                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
-
-    intake.setDefaultCommand(intake.intake());
-    ejector.setDefaultCommand(
-        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    elevator.setDefaultCommand(
-        elevator
-            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    climber.setDefaultCommand(climber.stop());
-
-    ejector.backSensor.onFalse(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-    intake.frontSensor.onTrue(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-
-    controller
-        .leftStick()
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(drive.atSetpoint)
-                .andThen(
-                    Commands.parallel(
-                        ejector.eject(40),
-                        elevator.goToSetpoint(
-                            () -> {
-                              return switch (DriveSetpoints.closest(
-                                  drive::getPose, leftSetpoints)) {
-                                case A, B -> ElevatorSetpoints.AlgaePopHigh;
-                                case C, D -> ElevatorSetpoints.AlgaePopLow;
-                                case E, F -> ElevatorSetpoints.AlgaePopHigh;
-                                case G, H -> ElevatorSetpoints.AlgaePopLow;
-                                case I, J -> ElevatorSetpoints.AlgaePopHigh;
-                                case K, L -> ElevatorSetpoints.AlgaePopLow;
-                                default -> ElevatorSetpoints.AlgaePopLow;
-                              };
-                            },
-                            intake.backSensor.negate())))
-                .withName("AlgaePop")
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller
-        .rightStick()
-        .whileTrue(
-            ejector
-                .eject(15)
-                .until(ejector.backSensor.negate())
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller.povUp().whileTrue(intake.intake(-4));
+    intake.setDefaultCommand(intake.intake(intakeVolts));
+    ejector.setDefaultCommand(ejector.stop());
+    popper.setDefaultCommand(popper.stop());
+    elevator.setDefaultCommand(elevator.goToSetpoint(Setpoints.COLLECT));
 
     intake
         .backSensor
+        .and(ejector.frontSensor.negate())
         .and(elevator.isNotAtCollect.negate())
-        .and(elevator.atSetpoint)
+        .whileTrue(Commands.parallel(intake.intake(intakeVolts), ejector.eject(12)));
+    intake
+        .backSensor
+        .and(ejector.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
         .whileTrue(ejector.eject(12));
-
     intake
         .backSensor
-        .negate()
-        .and(intake.frontSensor.negate())
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor.negate())
-        .whileTrue(leds.setPink())
-        .whileFalse(leds.setGreen());
-
-    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
-
-    intake
-        .backSensor
-        .negate()
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor)
+        .and(ejector.frontSensor)
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            ejector
-                .eject(-2)
-                .until(ejector.frontSensor)
-                .andThen(ejector.stop())
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        .whileTrue(intake.intake(intakeVolts));
+    intake
+        .backSensor
+        .negate()
+        .and(ejector.frontSensor)
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(ejector.stop());
 
     ejector.backSensor.whileTrue(intake.stop());
+
+    controller.b().onTrue(elevator.zero().ignoringDisable(true));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -493,9 +318,10 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    controller.x().onTrue(Commands.runOnce(() -> overridden = !overridden));
-
-    new Trigger(this::isEnabled).onTrue(climber.disengage());
+    controller.x().whileTrue(ejector.eject(20));
+    controller.a().whileTrue(popper.setVoltage(-8));
+    controller.rightBumper().whileTrue(elevator.goToSetpoint(Setpoints.L3));
+    controller.leftBumper().whileTrue(elevator.goToSetpoint(Setpoints.L2));
   }
 
   /** This function is called periodically during all modes. */
@@ -503,8 +329,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
-
-    controllerDisconnected.set(!controller.isConnected());
 
     // Runs the Scheduler. This is responsible for polling buttons, adding
     // newly-scheduled commands, running already-scheduled commands, removing
@@ -516,17 +340,18 @@ public class Robot extends LoggedRobot {
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
 
-    // Runs LoggedNetork items
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
     autoChooser.periodic();
 
-    if (drive.getCurrentCommand() != null) {
-      Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
-    }
     if (elevator.getCurrentCommand() != null) {
-      Logger.recordOutput("Elevator/Command", elevator.getCurrentCommand().getName());
-    }
-    if (ejector.getCurrentCommand() != null) {
-      Logger.recordOutput("Ejector/Command", ejector.getCurrentCommand().getName());
+      Logger.recordOutput("ElevatorCommand", elevator.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("ElevatorCommand", "null");
     }
 
     // Return to normal thread priority
@@ -555,7 +380,25 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (ejector.getCurrentCommand() != null) {
+      Logger.recordOutput("EjectorCommand", ejector.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("EjectorCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("IntakeCommand", intake.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("IntakeCommand", "null");
+    }
+
+    if (intake.getCurrentCommand() != null) {
+      Logger.recordOutput("DriveCommand", drive.getCurrentCommand().getName());
+    } else {
+      Logger.recordOutput("DriveCommand", "null");
+    }
+  }
 
   /** This function is called once when test mode is enabled. */
   @Override
@@ -575,74 +418,4 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
-
-  public Command onePiece() {
-    return drive
-        .autoAlign(() -> DriveSetpoints.C.getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(elevator.atSetpoint)
-                .andThen(
-                    Commands.parallel(
-                        elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
-                        ejector.eject(8))))
-        .until(ejector.backSensor.negate());
-  }
-
-  public Command testAuto() {
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
-  }
-
-  public Command threeCoralRight() {
-    // E F B
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP));
-  }
-
-  public Command threeCoralLeft() {
-    // I J A
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)))
-        .andThen(intake(DriveSetpoints.LEFT_HP));
-  }
-
-  private Command node(Setpoint point) {
-    return drive
-        .autoAlign(() -> point.driveSetpoint().getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("firststep")
-        .until(elevator.atSetpoint)
-        .withName("GetToAutoPosition")
-        .andThen(
-            Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                ejector.eject(15).asProxy(),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("Eject")
-        .until(ejector.backSensor.negate())
-        .withName("Eject")
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
-
-  private Command intake(DriveSetpoints point) {
-    return elevator
-        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-        .until(elevator.atSetpoint)
-        .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
-        .andThen(Commands.waitSeconds(1.5))
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
 }

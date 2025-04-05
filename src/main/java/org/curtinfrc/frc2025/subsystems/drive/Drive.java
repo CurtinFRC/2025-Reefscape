@@ -2,9 +2,11 @@ package org.curtinfrc.frc2025.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.*;
+import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -17,6 +19,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -27,7 +30,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
@@ -51,7 +53,7 @@ import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
-import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
+import org.curtinfrc.frc2025.util.RepulsorFieldPlanner;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -77,33 +79,32 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(2.5, 0, 0);
-  private final PIDController yController = new PIDController(2.5, 0, 0);
-  private final PIDController headingController = new PIDController(3.5, 0, 0);
+  private double p = 6;
+  private double d = 0.2;
+  private double i = 0.03;
 
-  private final PIDController xFollower = new PIDController(2, 0, 0);
-  private final PIDController yFollower = new PIDController(2, 0, 0);
-  private final PIDController headingFollower = new PIDController(3, 0, 0);
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.1);
+  private final PIDController headingController = new PIDController(p, i, d);
 
-  @AutoLogOutput(key = "Drive/Setpoint")
-  public DriveSetpoints setpoint = DriveSetpoints.A;
+  private final PIDController xSetpointController = new PIDController(25.0, 0.0, 0.1);
+  private final PIDController ySetpointController = new PIDController(25.0, 0.0, 0.1);
 
-  @AutoLogOutput(key = "Drive/AtSetpoint")
+  public Trigger atSetpointPose =
+      new Trigger(() -> xController.atSetpoint() && yController.atSetpoint());
+
+  public Pose3d setpoint = Pose3d.kZero;
+
   public Trigger atSetpoint =
       new Trigger(
           () ->
-              xController.atSetpoint()
-                  && yController.atSetpoint()
-                  && headingController.atSetpoint());
+              Math.abs(getPose().getX() - setpoint.getX()) < 0.1
+                  && Math.abs(getPose().getY() - setpoint.getY()) < 0.1);
 
-  @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
-  public Trigger almostAtSetpoint =
-      new Trigger(
-          () -> {
-            return getPose().minus(setpoint.getPose()).getTranslation().getNorm() < 1;
-          });
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(7);
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(7);
 
-  private final RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
+  RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   public Drive(
       GyroIO gyroIO,
@@ -145,44 +146,7 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
-    xController.setTolerance(0.02);
-    yController.setTolerance(0.02);
-    headingController.setTolerance(0.02);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
-
-    headingFollower.enableContinuousInput(-Math.PI, Math.PI);
-  }
-
-  public void followTrajectory(SwerveSample sample) {
-    Logger.recordOutput("Odometry/Sample", sample);
-    Logger.recordOutput("Odometry/TargetPose", sample.getPose());
-    var pose = getPose();
-    var feedforwards = new double[4];
-    var forcesX = sample.moduleForcesX();
-    var forcesY = sample.moduleForcesY();
-    // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius vector,
-    // and F be the module force vector
-    // τ=Kt
-    // τ=r×F
-    // K_ti=r×F
-    // i =(r×F)/K_t
-    var kT = DCMotor.getKrakenX60Foc(1).KtNMPerAmp * 5.99;
-    var wheelRadius = VecBuilder.fill(0, 0, 0.0508);
-    for (var i = 0; i < forcesX.length; i++) {
-      var translation = new Translation2d(forcesX[i], forcesY[i]);
-      var rotated = translation.rotateBy(getRotation().unaryMinus());
-      var force = VecBuilder.fill(rotated.getX(), rotated.getY(), 0);
-      feedforwards[i] = Vector.cross(wheelRadius, force).div(kT).norm();
-    }
-
-    var speeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            xFollower.calculate(pose.getX(), sample.x) + sample.vx,
-            yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
-            getRotation());
-
-    runVelocity(speeds, new double[4]);
   }
 
   @Override
@@ -240,12 +204,16 @@ public class Drive extends SubsystemBase {
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
 
+    Logger.recordOutput("Drive/xPID/setpoint", xController.getSetpoint());
+    Logger.recordOutput("Drive/xPID/error", xController.getError());
+    Logger.recordOutput("Drive/xPID/atSetpoint", xController.atSetpoint());
+
+    Logger.recordOutput("Drive/yPID/setpoint", yController.getSetpoint());
+    Logger.recordOutput("Drive/yPID/error", yController.getError());
+    Logger.recordOutput("Drive/yPID/atSetpoint", yController.atSetpoint());
+
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
-
-    Logger.recordOutput("xPidAtSetpoint", xController.atSetpoint());
-    Logger.recordOutput("yPidAtSetpoint", yController.atSetpoint());
-    Logger.recordOutput("omegaPidAtSetpoint", headingController.atSetpoint());
   }
 
   /**
@@ -253,7 +221,10 @@ public class Drive extends SubsystemBase {
    *
    * @param speeds Speeds in meters/sec
    */
-  private void runVelocity(ChassisSpeeds speeds, double[] feedforwardAmps) {
+  private void runVelocity(ChassisSpeeds speeds) {
+    speeds.vxMetersPerSecond = xLimiter.calculate(speeds.vxMetersPerSecond);
+    speeds.vyMetersPerSecond = yLimiter.calculate(speeds.vyMetersPerSecond);
+
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02));
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, CompTunerConstants.kSpeedAt12Volts);
@@ -261,15 +232,27 @@ public class Drive extends SubsystemBase {
     // Log unoptimized setpoints and setpoint speeds
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveChassisSpeeds/Setpoints", speeds);
-    Logger.recordOutput("SwerveChassisSpeeds/FeedForwardsAmps", feedforwardAmps);
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
-      modules[i].runSetpoint(setpointStates[i], feedforwardAmps[i]);
+      modules[i].runSetpoint(setpointStates[i]);
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  private void runCurrentStates(SwerveModuleState[] states) {
+    // Log unoptimized setpoints and setpoint speeds
+    Logger.recordOutput("SwerveStates/TorqueSetpoints", states);
+
+    // Send setpoints to modules
+    for (int i = 0; i < 4; i++) {
+      modules[i].runSetpointTorque(states[i]);
+    }
+
+    // Log optimized setpoints (runSetpoint mutates each state)
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", states);
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -333,7 +316,8 @@ public class Drive extends SubsystemBase {
    */
   public Command joystickDrive(
       DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
-    return run(() -> {
+    return run(
+        () -> {
           double xSpeed = xSupplier.getAsDouble();
 
           double ySpeed = ySupplier.getAsDouble();
@@ -360,10 +344,8 @@ public class Drive extends SubsystemBase {
 
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
-                  speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()),
-              new double[4]);
-        })
-        .withName("JoystickDrive");
+                  speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
+        });
   }
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
@@ -404,11 +386,87 @@ public class Drive extends SubsystemBase {
                   && DriverStation.getAlliance().get() == Alliance.Red;
           runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
-                  speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()),
-              new double[4]);
+                  speeds, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()));
         })
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(getRotation().getRadians()));
+  }
+
+  /** Follows the provided swerve sample. */
+  public void followTrajectory(SwerveSample sample) {
+    // Get the current pose of the robot
+    Pose2d pose = getPose();
+    Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
+    Logger.recordOutput("Drive/PID/error", headingController.getError());
+    var out = headingController.calculate(pose.getRotation().getRadians(), sample.heading);
+    Logger.recordOutput("Drive/PID/out", out);
+
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            sample.vx + sample.vx != 0
+                ? xSetpointController.calculate(pose.getX(), sample.x)
+                : xController.calculate(pose.getX(), sample.x),
+            sample.vy + sample.vy != 0
+                ? ySetpointController.calculate(pose.getY(), sample.y)
+                : yController.calculate(pose.getY(), sample.y),
+            sample.omega
+                + headingController.calculate(pose.getRotation().getRadians(), sample.heading),
+            getRotation()); // Apply the generated speeds
+
+    runVelocity(speeds);
+  }
+
+  public void followTrajectoryVelocity(SwerveSample sample) {
+    var rotationController = new PIDController(7.5, 0, 0);
+    Logger.recordOutput("Odometry/Sample", sample);
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
+
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            sample.vx,
+            sample.vy,
+            sample.omega + rotationController.calculate(getRotation().getRadians(), sample.heading),
+            rotation); // Apply the generated speeds
+
+    runVelocity(speeds);
+  }
+
+  public void followTrajectoryTorque(SwerveSample sample) {
+    Logger.recordOutput("Odometry/Sample", sample);
+    var states = new SwerveModuleState[4];
+
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    Rotation2d rotation = isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation();
+    Logger.recordOutput("Drive/Kt", kT);
+
+    for (var i = 0; i < 4; i++) {
+      states[i] = new SwerveModuleState();
+      var state = states[i];
+      Translation2d f = new Translation2d(sample.moduleForcesX()[i], sample.moduleForcesY()[i]);
+      Translation2d f_fieldRelative = f.rotateBy(rotation);
+
+      // Let torque be τ, current be i, Kt be the motor torque constant, r be the wheel radius
+      // vector,
+      // and F be the module force vector.
+      // τ=Kti
+      // τ=r×F
+      // Kti=r×F
+      // i=(r×F)/Kt
+      Vector<N3> F = VecBuilder.fill(f_fieldRelative.getX(), f_fieldRelative.getY(), 0);
+      Vector<N3> radius = VecBuilder.fill(0, 0, Units.inchesToMeters(-2));
+      var current = Vector.cross(radius, F).div(kT);
+      state.speedMetersPerSecond = Math.hypot(current.get(0), current.get(1));
+      state.angle = Rotation2d.fromRadians(Math.atan2(current.get(1), current.get(0)));
+    }
+
+    runCurrentStates(states);
   }
 
   public void logTrajectory(Trajectory<SwerveSample> traj, boolean isFinished) {
@@ -495,11 +553,11 @@ public class Drive extends SubsystemBase {
                 }),
 
             // Turn in place, accelerating up to full speed
-            run(() -> {
+            run(
+                () -> {
                   double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
-                  runVelocity(new ChassisSpeeds(0.0, 0.0, speed), new double[4]);
-                })
-                .withTimeout(5),
+                  runVelocity(new ChassisSpeeds(0.0, 0.0, speed));
+                }),
 
             // Measurement sequence
             Commands.sequence(
@@ -518,14 +576,7 @@ public class Drive extends SubsystemBase {
                 run(() -> {
                       var rotation = getRotation();
                       state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
-                      double[] positions = getWheelRadiusCharacterizationPositions();
-                      double wheelDelta = 0.0;
-                      for (int i = 0; i < 4; i++) {
-                        wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
-                      }
                       state.lastAngle = rotation;
-                      double wheelRadius = (state.gyroDelta * DRIVE_BASE_RADIUS) / wheelDelta;
-                      Logger.recordOutput("WheelRadius", wheelRadius);
                     })
 
                     // When cancelled, calculate and print results
@@ -656,56 +707,59 @@ public class Drive extends SubsystemBase {
     };
   }
 
-  public Command autoAlignWithOverride(
-      Supplier<DriveSetpoints> _setpoint,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
+  public Command autoAlign(Pose3d _setpoint) {
+    this.setpoint = _setpoint;
+
     return run(
         () -> {
-          this.setpoint = _setpoint.get();
-          if (Math.abs(xSupplier.getAsDouble()) > 0.05
-              || Math.abs(ySupplier.getAsDouble()) > 0.05
-              || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
-            joystickDrive(xSupplier, ySupplier, omegaSupplier).execute();
-            return;
-          }
-          autoAlign(_setpoint.get().getPose());
+          Logger.recordOutput("Drive/Setpoint", _setpoint);
+
+          repulsorFieldPlanner.setGoal(_setpoint.toPose2d().getTranslation());
+
+          var robotPose = getPose();
+          SwerveSample cmd =
+              repulsorFieldPlanner.getCmd(
+                  robotPose,
+                  getChassisSpeeds(),
+                  CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                  true);
+
+          // Apply the trajectory with rotation adjustment
+          SwerveSample adjustedSample =
+              new SwerveSample(
+                  cmd.t,
+                  cmd.x,
+                  cmd.y,
+                  _setpoint.toPose2d().getRotation().getRadians(),
+                  cmd.vx,
+                  cmd.vy,
+                  0,
+                  cmd.ax,
+                  cmd.ay,
+                  cmd.alpha,
+                  cmd.moduleForcesX(),
+                  cmd.moduleForcesY());
+
+          // Apply the adjusted sample
+          followTrajectory(adjustedSample);
         });
   }
 
-  private void autoAlign(Pose2d _setpoint) {
-    repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
-
-    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint);
-    var robotPose = getPose();
-
-    var omega =
-        headingController.calculate(
-            getRotation().getRadians(), _setpoint.getRotation().getRadians());
-
-    // if (Math.abs(robotPose.minus(_setpoint.getPose()).getTranslation().getNorm()) > 0.1) {
-    //   RepulsorSample sample =
-    //       repulsorFieldPlanner.calculate(
-    //           robotPose,
-    //           getChassisSpeeds(),
-    //           CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
-    //
-    //   runVelocity(new ChassisSpeeds(sample.vx(), sample.vy(), omega));
-    // } else {
-
-    boolean isFlipped =
-        DriverStation.getAlliance().isPresent()
-            && DriverStation.getAlliance().get() == Alliance.Red;
-    var x = xController.calculate(robotPose.getX(), _setpoint.getX());
-    var y = yController.calculate(robotPose.getY(), _setpoint.getY());
-    runVelocity(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            x, y, omega, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()),
-        new double[4]);
-  }
-
-  public Command autoAlign(Supplier<Pose2d> _setpoint) {
-    return run(() -> autoAlign(_setpoint.get())).withName("AutoAlign");
+  public Pose3d findClosestTag(List<AprilTag> tags) {
+    Transform2d lowestTransform = null;
+    int closestTagId = 99;
+    for (var tag : tags) {
+      var transform = getPose().minus(tag.pose.toPose2d());
+      if (lowestTransform == null) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+        break;
+      }
+      if (lowestTransform.getTranslation().getNorm() > transform.getTranslation().getNorm()) {
+        lowestTransform = transform;
+        closestTagId = tag.ID;
+      }
+    }
+    return aprilTagLayout.getTagPose(closestTagId).get();
   }
 }
