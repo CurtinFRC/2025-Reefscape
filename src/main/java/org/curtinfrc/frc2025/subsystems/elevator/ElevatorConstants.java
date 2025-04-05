@@ -17,12 +17,11 @@ public class ElevatorConstants {
   public static double climbkI = 0;
   public static double climbkD = 0;
 
-  // TODO
   public static enum ElevatorSetpoints implements StructSerializable {
     L1(0),
-    L2(0.2),
+    L2(0.221),
     AlgaePopLow(0),
-    L3(0.59),
+    L3(0.611),
     AlgaePopHigh(0.38),
     BASE(0.01),
     climbPrep(0.4),

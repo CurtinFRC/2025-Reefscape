@@ -93,7 +93,7 @@ public final class DriveConstants {
     static Pose3d mapPose(Pose3d pose) {
       double angle = pose.getRotation().getAngle();
       return new Pose3d(
-          pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2,
+          pose.getX() + Math.cos(angle) * (Constants.ROBOT_X / 2 + 3),
           pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
           0.0,
           pose.getRotation());

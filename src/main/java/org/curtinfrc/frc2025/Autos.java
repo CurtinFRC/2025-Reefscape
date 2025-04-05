@@ -233,12 +233,13 @@ public class Autos {
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
     var routine = factory.newRoutine("twoPieceLeft");
     var startToI = routine.trajectory("startToI");
-    var jToHP = routine.trajectory("jToHp");
-    var hpToJ = routine.trajectory("hpToJ");
     var iToHp = routine.trajectory("iToHp");
+    var hpToJ = routine.trajectory("hpToJ");
+    var jToHp = routine.trajectory("jToHp");
     var hpToL = routine.trajectory("hpToL");
     var lToHp = routine.trajectory("lToHp");
     var hpToK = routine.trajectory("hpToK");
+    var kToHp = routine.trajectory("kToHp");
 
     routine.active().onTrue(startToI.cmd());
 
@@ -274,19 +275,19 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToJ.getFinalPose().get())
-                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
-                .andThen(jToHP.cmd())
+                .andThen(jToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
-    jToHP
+    jToHp
         .done()
         .onTrue(
             drive
-                .autoAlign(() -> jToHP.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(waitUntil(intake.frontSensor).andThen(hpToL.cmd()))
+                .autoAlign(() -> jToHp.getFinalPose().get())
+                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .andThen(hpToL.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToJ
@@ -301,7 +302,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToL.getFinalPose().get())
-                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(lToHp.cmd())
@@ -326,11 +327,20 @@ public class Autos {
     hpToK
         .done()
         .onTrue(
-            drive
-                .autoAlign(() -> hpToK.getFinalPose().get())
-                .until(drive.atSetpoint.and(elevator.atSetpoint))
-                .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate())
+            sequence(
+                    drive
+                        .autoAlign(() -> hpToK.getFinalPose().get())
+                        .until(drive.atSetpoint.and(elevator.atSetpoint)),
+                    ejector.eject(20).until(ejector.backSensor.negate()),
+                    parallel(
+                            drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
+                            elevator
+                                .goToSetpoint(
+                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
+                                .asProxy(),
+                            ejector.eject(30))
+                        .withTimeout(1),
+                    kToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToK

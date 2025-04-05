@@ -101,7 +101,7 @@ public class Elevator extends SubsystemBase {
               var out =
                   climbPID.calculate(
                       io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-              io.setVoltage(MathUtil.clamp(out, -3, 3));
+              io.setVoltage(MathUtil.clamp(out, -4, 4));
             }),
         Commands.none(),
         safe);

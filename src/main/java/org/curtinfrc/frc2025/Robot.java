@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -28,6 +29,7 @@ import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOComp;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
@@ -498,8 +500,29 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+    controller
+        .x()
+        .onTrue(
+            Commands.sequence(
+                climber.disengage(),
+                climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
+                elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
 
-    controller.x().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller // climb attempt
+        .a()
+        .and(() -> climber.climberDeployed)
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
+                .until(elevator.atSetpoint)
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
+                .andThen(
+                    new ScheduleCommand(
+                        elevator.goToSetpoint(
+                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
+
+    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
