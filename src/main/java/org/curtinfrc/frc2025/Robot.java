@@ -341,6 +341,8 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect)
         .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
 
+    drive.atSetpoint.whileTrue(leds.setBlue());
+
     controller
         .rightBumper()
         .or(controller.leftBumper())

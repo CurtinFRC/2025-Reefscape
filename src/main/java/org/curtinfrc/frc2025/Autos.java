@@ -66,7 +66,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> trajectory.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate()));
     trajectory
@@ -92,7 +92,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> startToFirst.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(firstToHP.cmd())
@@ -119,7 +119,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToSecond.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
@@ -150,7 +150,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> startToFirst.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(firstToHP.cmd())
@@ -168,8 +168,8 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> firstToHP.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(waitUntil(intake.frontSensor).andThen(hpToSecond.cmd()))
+                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .andThen(hpToSecond.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToSecond
@@ -188,8 +188,8 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> secondToHp.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(waitUntil(intake.frontSensor).andThen(hpToThird.cmd()))
+                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .andThen(hpToThird.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToSecond
@@ -202,11 +202,17 @@ public class Autos {
     hpToThird
         .done()
         .onTrue(
-            drive
-                .autoAlign(() -> hpToThird.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate())
+            sequence(
+                    drive
+                        .autoAlign(() -> hpToThird.getFinalPose().get())
+                        .until(drive.atSetpoint.and(elevator.atSetpoint)),
+                    ejector.eject(20).until(ejector.backSensor.negate()),
+                    parallel(
+                        drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
+                        elevator
+                            .goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
+                            .asProxy(),
+                        ejector.eject(30)))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToThird
@@ -237,7 +243,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> startToI.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(iToHp.cmd())
@@ -255,8 +261,8 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> iToHp.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(waitUntil(intake.frontSensor).andThen(hpToJ.cmd()))
+                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .andThen(hpToJ.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToJ
@@ -264,7 +270,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToJ.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(jToHP.cmd())
@@ -291,7 +297,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToL.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(lToHp.cmd())
@@ -302,8 +308,8 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> lToHp.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(waitUntil(intake.frontSensor).andThen(hpToK.cmd()))
+                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .andThen(hpToK.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToL
@@ -318,7 +324,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> hpToK.getFinalPose().get())
-                .until(drive.atSetpoint)
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
