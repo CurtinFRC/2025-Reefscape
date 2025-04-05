@@ -142,6 +142,7 @@ public class Autos {
     var hpToSecond = routine.trajectory("hpToL");
     var secondToHp = routine.trajectory("lToHp");
     var hpToThird = routine.trajectory("hpToK");
+    var kToHp = routine.trajectory("kToHp");
 
     routine.active().onTrue(startToFirst.cmd());
 
@@ -208,11 +209,14 @@ public class Autos {
                         .until(drive.atSetpoint.and(elevator.atSetpoint)),
                     ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
-                        drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
-                        elevator
-                            .goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
-                            .asProxy(),
-                        ejector.eject(30)))
+                            drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
+                            elevator
+                                .goToSetpoint(
+                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
+                                .asProxy(),
+                            ejector.eject(30))
+                        .withTimeout(1),
+                    kToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     hpToThird
