@@ -286,11 +286,12 @@ public class Robot extends LoggedRobot {
         "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
         "Two Piece Left", () -> Autos.twoPieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Three Piece Left", () -> Autos.threePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Four Piece Left", () -> Autos.fourPieceLeft(factory, drive, ejector, elevator, intake));
 
-    autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
-    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
-    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -506,8 +507,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
-
-    Logger.recordOutput("Setpoint", DriveSetpoints.F.getPose());
 
     controllerDisconnected.set(!controller.isConnected());
 

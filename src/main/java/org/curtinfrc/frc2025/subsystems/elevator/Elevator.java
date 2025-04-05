@@ -69,6 +69,7 @@ public class Elevator extends SubsystemBase {
                 }),
             Commands.none(),
             safe)
+        .repeatedly()
         .withName("GoToSetpoint");
   }
 
@@ -88,6 +89,7 @@ public class Elevator extends SubsystemBase {
                 }),
             Commands.none(),
             safe)
+        .repeatedly()
         .withName("GoToSetpoint");
   }
 
@@ -99,9 +101,6 @@ public class Elevator extends SubsystemBase {
               var out =
                   climbPID.calculate(
                       io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-              Logger.recordOutput("Elevator/ClimberOutput", out);
-              Logger.recordOutput("Elevator/ClimberError", pid.getError());
-              Logger.recordOutput("Elevator/ClimberPID", true);
               io.setVoltage(MathUtil.clamp(out, -3, 3));
             }),
         Commands.none(),
