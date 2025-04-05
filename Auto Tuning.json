@@ -1,0 +1,199 @@
+{
+  "hubs": [
+    {
+      "x": 0,
+      "y": 69,
+      "width": 2400,
+      "height": 1531,
+      "state": {
+        "sidebar": {
+          "width": 300,
+          "expanded": [
+            "/RealOutputs/SwerveChassisSpeeds/FeedForwardsAmps",
+            "/NT",
+            "/NT/Pose",
+            "/NT/Vision",
+            "/NT/Vision/EleFrontCam",
+            "/NT/Robot",
+            "/NT/Robot/Swerve",
+            "/Robot",
+            "/Drive/Module0",
+            "/Drive/Module1",
+            "/Drive/Module2",
+            "/Drive/Module3",
+            "/RealOutputs/Odometry",
+            "/RealOutputs/Elevator/setpoint",
+            "/Vision/Camera3/LatestTargetObservation",
+            "/Vision/Camera3/PoseObservations",
+            "/Vision/Camera3/PoseObservations/0",
+            "/Vision/Camera3/PoseObservations/1",
+            "/RealOutputs/Vision/Camera2",
+            "/RealOutputs/Vision/Camera2/RobotPosesAccepted",
+            "/RealOutputs/Vision/Camera3",
+            "/RealOutputs/Vision/Camera1/RobotPosesAccepted",
+            "/Vision/Camera1/PoseObservations",
+            "/RealOutputs/Vision/Camera0/RobotPosesAccepted",
+            "/RealOutputs/Vision/Camera3/RobotPosesAccepted",
+            "/Vision/Camera2/PoseObservations",
+            "/RealOutputs/Drive",
+            "/RealOutputs",
+            "/RealOutputs/Ejector",
+            "/DriverStation",
+            "/DriverStation/Joystick0",
+            "/DriverStation/Joystick0/AxisValues",
+            "/RealOutputs/Drive/AllSetPoints",
+            "/RealOutputs/Drive/AllSetPoints/A",
+            "/RealOutputs/Drive/AllSetPoints/A/translation",
+            "/RealOutputs/Drive/AllSetPoints/A/rotation",
+            "/RealOutputs/Drive/AllSetPoints/B",
+            "/RealOutputs/Drive/AllSetPoints/B/rotation",
+            "/RealOutputs/Drive/AllSetPoints/B/translation",
+            "/RealOutputs/Drive/AllSetPoints/C",
+            "/RealOutputs/Drive/AllSetPoints/C/rotation",
+            "/RealOutputs/Drive/AllSetPoints/C/translation",
+            "/RealOutputs/Drive/AllSetPoints/D",
+            "/RealOutputs/Drive/AllSetPoints/D/rotation",
+            "/RealOutputs/Drive/AllSetPoints/D/translation",
+            "/RealOutputs/Drive/AllSetPoints/E",
+            "/RealOutputs/Drive/AllSetPoints/E/rotation",
+            "/RealOutputs/Drive/AllSetPoints/E/translation",
+            "/RealOutputs/Drive/AllSetPoints/F",
+            "/RealOutputs/Drive/AllSetPoints/F/rotation",
+            "/RealOutputs/Drive/AllSetPoints/F/translation",
+            "/RealOutputs/Drive/AllSetPoints/G",
+            "/RealOutputs/Drive/AllSetPoints/G/rotation",
+            "/RealOutputs/Drive/AllSetPoints/G/translation",
+            "/RealOutputs/Drive/AllSetPoints/H",
+            "/RealOutputs/Drive/AllSetPoints/H/rotation",
+            "/RealOutputs/Drive/AllSetPoints/H/translation",
+            "/RealOutputs/Drive/AllSetPoints/I",
+            "/RealOutputs/Drive/AllSetPoints/I/rotation",
+            "/RealOutputs/Drive/AllSetPoints/I/translation",
+            "/RealOutputs/Drive/AllSetPoints/J",
+            "/RealOutputs/Drive/AllSetPoints/J/rotation",
+            "/RealOutputs/Drive/AllSetPoints/J/translation",
+            "/RealOutputs/Drive/AllSetPoints/K",
+            "/RealOutputs/Drive/AllSetPoints/K/rotation",
+            "/RealOutputs/Drive/AllSetPoints/K/translation",
+            "/RealOutputs/Drive/AllSetPoints/L",
+            "/RealOutputs/Drive/AllSetPoints/L/rotation",
+            "/RealOutputs/Drive/AllSetPoints/L/translation",
+            "/RealOutputs/SwerveStates"
+          ]
+        },
+        "tabs": {
+          "selected": 3,
+          "tabs": [
+            {
+              "type": 0,
+              "title": "",
+              "controller": null,
+              "controllerUUID": "bifcorcr6z92swht00s88m0bynvrh7wq",
+              "renderer": "#/",
+              "controlsHeight": 0
+            },
+            {
+              "type": 2,
+              "title": "Odometry",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "/RealOutputs/Odometry/Robot",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "vision",
+                    "logKey": "/RealOutputs/Vision/Summary/TagPoses",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "size": "normal"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/RealOutputs/Odometry/TargetPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "trajectory",
+                    "logKey": "/RealOutputs/Odometry/Trajectory",
+                    "logType": "SwerveSample[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "game": "2025 Field (Welded)",
+                "bumpers": "auto",
+                "origin": "blue",
+                "orientation": 0,
+                "size": 24
+              },
+              "controllerUUID": "g2bmgmxpgejx3nh1lkf7c0piy5c1be5c",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 9,
+              "title": "Swerve",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "states",
+                    "logKey": "/RealOutputs/SwerveStates/Measured",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff0000",
+                      "arrangement": "0,1,2,3"
+                    }
+                  },
+                  {
+                    "type": "states",
+                    "logKey": "/RealOutputs/SwerveStates/SetpointsOptimized",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ffff",
+                      "arrangement": "0,1,2,3"
+                    }
+                  }
+                ],
+                "maxSpeed": 5,
+                "sizeX": 0.65,
+                "sizeY": 0.65,
+                "orientation": 1
+              },
+              "controllerUUID": "0g4yj8abmr8chmeeask7tjzebno020nt",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 5,
+              "title": "Console",
+              "controller": "/RealOutputs/Console",
+              "controllerUUID": "76ck7rvwwp6qdk3uoo33ezfb70x14d9c",
+              "renderer": {
+                "highlight": false
+              },
+              "controlsHeight": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "satellites": [],
+  "version": "4.1.5"
+}

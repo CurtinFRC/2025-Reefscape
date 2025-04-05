@@ -48,9 +48,11 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final CANcoder cancoder;
 
   // Voltage control requests
-  private final VoltageOut voltageRequest = new VoltageOut(0);
-  private final PositionVoltage positionVoltageRequest = new PositionVoltage(0.0);
-  private final VelocityVoltage velocityVoltageRequest = new VelocityVoltage(0.0);
+  private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(true);
+  private final PositionVoltage positionVoltageRequest =
+      new PositionVoltage(0.0).withEnableFOC(true);
+  private final VelocityVoltage velocityVoltageRequest =
+      new VelocityVoltage(0.0).withEnableFOC(true);
 
   // Torque-current control requests
   private final TorqueCurrentFOC torqueCurrentRequest = new TorqueCurrentFOC(0);
@@ -58,7 +60,6 @@ public class ModuleIOTalonFX implements ModuleIO {
       new PositionTorqueCurrentFOC(0.0);
   private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
       new VelocityTorqueCurrentFOC(0.0);
-  private final TorqueCurrentFOC currentTorqueCurrentRequest = new TorqueCurrentFOC(0);
 
   // Timestamp inputs from Phoenix thread
   private final Queue<Double> timestampQueue;
@@ -237,18 +238,15 @@ public class ModuleIOTalonFX implements ModuleIO {
   }
 
   @Override
-  public void setDriveVelocity(double velocityRadPerSec) {
+  public void setDriveVelocity(double velocityRadPerSec, double feedforward) {
     double velocityRotPerSec = Units.radiansToRotations(velocityRadPerSec);
     driveTalon.setControl(
         switch (constants.DriveMotorClosedLoopOutput) {
           case Voltage -> velocityVoltageRequest.withVelocity(velocityRotPerSec);
-          case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
+          case TorqueCurrentFOC -> velocityTorqueCurrentRequest
+              .withVelocity(velocityRotPerSec)
+              .withFeedForward(feedforward);
         });
-  }
-
-  @Override
-  public void setDriveCurrent(double currentAmps) {
-    driveTalon.setControl(currentTorqueCurrentRequest.withOutput(currentAmps));
   }
 
   @Override

@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.vision;
 
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
@@ -22,19 +9,21 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import java.util.LinkedList;
 import java.util.List;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends VirtualSubsystem {
   private final PoseEstimateConsumer consumer;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
-  private final Alert[] disconnectedAlerts;
+  private int lastHPMeasurement;
+  public boolean discardReef;
 
   public Vision(PoseEstimateConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -44,14 +33,6 @@ public class Vision extends VirtualSubsystem {
     this.inputs = new VisionIOInputsAutoLogged[io.length];
     for (int i = 0; i < inputs.length; i++) {
       inputs[i] = new VisionIOInputsAutoLogged();
-    }
-
-    // Initialize disconnected alerts
-    this.disconnectedAlerts = new Alert[io.length];
-    for (int i = 0; i < inputs.length; i++) {
-      disconnectedAlerts[i] =
-          new Alert(
-              "Vision camera " + Integer.toString(i) + " is disconnected.", AlertType.kWarning);
     }
   }
 
@@ -64,10 +45,16 @@ public class Vision extends VirtualSubsystem {
     return inputs[cameraIndex].latestTargetObservation.tx();
   }
 
+  public void setLEDMode(VisionLEDMode mode) {
+    for (var i : io) {
+      i.setLEDMode(mode);
+    }
+  }
+
   public boolean hasTarget(int cameraIndex) {
     return inputs[cameraIndex].connected
-        && inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
-        && inputs[cameraIndex].latestTargetObservation.ty().equals(Rotation2d.kZero);
+        && !inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
+        && !inputs[cameraIndex].latestTargetObservation.ty().equals(Rotation2d.kZero);
   }
 
   @Override
@@ -75,6 +62,14 @@ public class Vision extends VirtualSubsystem {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
+      boolean red =
+          DriverStation.getAlliance().isPresent()
+              && DriverStation.getAlliance().get() == Alliance.Red;
+      if (red) {
+        io[i].allowTags(new long[] {6, 7, 8, 9, 10, 11});
+      } else {
+        io[i].allowTags(new long[] {17, 18, 19, 20, 21, 22});
+      }
     }
 
     // Initialize logging values
@@ -86,8 +81,15 @@ public class Vision extends VirtualSubsystem {
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
-      disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
-
+      discardReef = false;
+      if (inputs[2].poseObservations.length > 0 || inputs[3].poseObservations.length > 0) {
+        lastHPMeasurement = 0;
+      } else {
+        lastHPMeasurement++;
+      }
+      if (lastHPMeasurement < 3) {
+        discardReef = true;
+      }
       // Initialize logging values
       List<Pose3d> tagPoses = new LinkedList<>();
       List<Pose3d> robotPoses = new LinkedList<>();
@@ -104,6 +106,11 @@ public class Vision extends VirtualSubsystem {
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
+        if (discardReef) {
+          if (cameraIndex == 0 || cameraIndex == 1) {
+            continue;
+          }
+        }
         // Check whether to reject pose
         boolean rejectPose =
             observation.tagCount() == 0 // Must have at least one tag

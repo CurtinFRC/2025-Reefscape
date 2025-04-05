@@ -16,6 +16,7 @@ package org.curtinfrc.frc2025.subsystems.vision;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
+import org.photonvision.common.hardware.VisionLEDMode;
 
 public interface VisionIO {
   @AutoLog
@@ -25,6 +26,7 @@ public interface VisionIO {
         new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
+    public long[] allowedTags = new long[0];
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */
@@ -47,4 +49,8 @@ public interface VisionIO {
   }
 
   public default void updateInputs(VisionIOInputs inputs) {}
+
+  public default void allowTags(long[] ids) {}
+
+  public default void setLEDMode(VisionLEDMode mode) {}
 }
