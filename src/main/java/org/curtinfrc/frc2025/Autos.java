@@ -169,7 +169,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> firstToHP.getFinalPose().get())
-                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .until(intake.frontSensor)
                 .andThen(hpToSecond.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -189,7 +189,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> secondToHp.getFinalPose().get())
-                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .until(intake.frontSensor)
                 .andThen(hpToThird.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -266,7 +266,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> iToHp.getFinalPose().get())
-                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .until(intake.frontSensor)
                 .andThen(hpToJ.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -286,7 +286,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> jToHp.getFinalPose().get())
-                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .until(intake.frontSensor)
                 .andThen(hpToL.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -294,7 +294,7 @@ public class Autos {
         .atTime("RaiseElevator")
         .onTrue(
             elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
                 .until(ejector.backSensor.negate()));
 
     hpToL
@@ -313,7 +313,7 @@ public class Autos {
         .onTrue(
             drive
                 .autoAlign(() -> lToHp.getFinalPose().get())
-                .until(drive.atSetpoint.and(intake.frontSensor.or(ejector.backSensor)))
+                .until(intake.frontSensor)
                 .andThen(hpToK.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -349,6 +349,158 @@ public class Autos {
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
                 .until(ejector.backSensor.negate()));
+
+    return routine;
+  }
+
+  public static AutoRoutine fivePieceLeft(
+      AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
+    var routine = factory.newRoutine("twoPieceLeft");
+    var startToI = routine.trajectory("startToI");
+    var iToHp = routine.trajectory("iToHp");
+    var hpToJ = routine.trajectory("hpToJ");
+    var jToHp = routine.trajectory("jToHp");
+    var hpToL = routine.trajectory("hpToL");
+    var lToHp = routine.trajectory("lToHp");
+    var hpToK = routine.trajectory("hpToK");
+    var hpToK2 = routine.trajectory("hpToK2");
+    var kToHp = routine.trajectory("kToHp");
+
+    routine.active().onTrue(startToI.cmd());
+
+    startToI
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> startToI.getFinalPose().get())
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate())
+                .andThen(iToHp.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    startToI
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    iToHp
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> iToHp.getFinalPose().get())
+                .until(intake.frontSensor)
+                .andThen(hpToJ.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    hpToJ
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> hpToJ.getFinalPose().get())
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate())
+                .andThen(jToHp.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    jToHp
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> jToHp.getFinalPose().get())
+                .until(intake.frontSensor)
+                .andThen(hpToL.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    hpToJ
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    hpToL
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> hpToL.getFinalPose().get())
+                .until(drive.atSetpoint)
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate())
+                .andThen(lToHp.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    lToHp
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> lToHp.getFinalPose().get())
+                .until(intake.frontSensor)
+                .andThen(hpToK.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    hpToL
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    hpToK
+        .done()
+        .onTrue(
+            sequence(
+                    drive
+                        .autoAlign(() -> hpToK.getFinalPose().get())
+                        .until(drive.atSetpoint.and(elevator.atSetpoint)),
+                    ejector.eject(20).until(ejector.backSensor.negate()),
+                    parallel(
+                            drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
+                            elevator
+                                .goToSetpoint(
+                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
+                                .asProxy(),
+                            ejector.eject(30))
+                        .withTimeout(1),
+                    kToHp.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    hpToK
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    kToHp
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> kToHp.getFinalPose().get())
+                .until(intake.frontSensor)
+                .andThen(hpToK2.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    hpToK2
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    hpToK2
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> hpToK2.getFinalPose().get())
+                .until(drive.atSetpoint)
+                .andThen(ejector.eject(20))
+                .until(ejector.backSensor.negate())
+                .andThen(kToHp.cmd())
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     return routine;
   }
