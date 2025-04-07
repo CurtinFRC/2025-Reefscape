@@ -430,25 +430,20 @@ public class Robot extends LoggedRobot {
                         () -> -controller.getLeftY(),
                         () -> -controller.getLeftX(),
                         () -> -controller.getRightX()),
-                    ejector.eject(40))
-                .until(drive.atSetpoint)
-                .andThen(
-                    Commands.parallel(
-                        ejector.eject(40),
-                        elevator.goToSetpoint(
-                            () -> {
-                              return switch (DriveSetpoints.closest(
-                                  drive::getPose, leftSetpoints)) {
-                                case A, B -> ElevatorSetpoints.AlgaePopHigh;
-                                case C, D -> ElevatorSetpoints.AlgaePopLow;
-                                case E, F -> ElevatorSetpoints.AlgaePopHigh;
-                                case G, H -> ElevatorSetpoints.AlgaePopLow;
-                                case I, J -> ElevatorSetpoints.AlgaePopHigh;
-                                case K, L -> ElevatorSetpoints.AlgaePopLow;
-                                default -> ElevatorSetpoints.AlgaePopLow;
-                              };
-                            },
-                            intake.backSensor.negate())))
+                    ejector.eject(40),
+                    elevator.goToSetpoint(
+                        () -> {
+                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
+                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                            case C, D -> ElevatorSetpoints.AlgaePopLow;
+                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                            case G, H -> ElevatorSetpoints.AlgaePopLow;
+                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                            case K, L -> ElevatorSetpoints.AlgaePopLow;
+                            default -> ElevatorSetpoints.AlgaePopLow;
+                          };
+                        },
+                        intake.backSensor.negate()))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller
