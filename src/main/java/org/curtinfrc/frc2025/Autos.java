@@ -50,7 +50,7 @@ public class Autos {
                         .until(elevator.atSetpoint))
                 .andThen(
                     parallel(drive.autoAlign(() -> DriveSetpoints.FAR.getPose()), ejector.eject(30))
-                        .withTimeout(1))
+                        .withTimeout(0.5))
                 .withName("autoScore")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     return routine;
@@ -464,7 +464,7 @@ public class Autos {
                                     ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
                                 .asProxy(),
                             ejector.eject(30))
-                        .withTimeout(1),
+                        .withTimeout(0.5),
                     kToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
