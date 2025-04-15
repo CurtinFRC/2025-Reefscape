@@ -524,13 +524,14 @@ public class Autos {
     var hpToC2 = routine.trajectory("hpToC2");
     var cToHp = routine.trajectory("cToHP");
 
-    routine
-        .active()
-        .onTrue(
-            drive
-                .autoAlign(() -> startToF.getInitialPose().get())
-                .until(drive.atSetpoint)
-                .andThen(startToF.cmd()));
+    // routine
+    //     .active()
+    //     .onTrue(
+    //         drive
+    //             .autoAlign(() -> startToF.getInitialPose().get())
+    //             .until(drive.atSetpoint)
+    //             .andThen(startToF.cmd()));
+    routine.active().onTrue(startToF.cmd());
 
     startToF
         .done()

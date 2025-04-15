@@ -48,9 +48,9 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
 
-    if (inputs.hominSensor) {
-      io.zero();
-    }
+    // if (inputs.hominSensor) {
+    //   io.zero();
+    // }
   }
 
   public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {
