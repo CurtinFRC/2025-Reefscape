@@ -369,15 +369,29 @@ public class Autos {
     routine
         .active()
         .onTrue(
-            parallel(
-                    drive
-                        .autoAlign(() -> startToI.getFinalPose().get())
-                        .until(drive.atSetpoint)
-                        .andThen(ejector.eject(20)),
-                    elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()))
+            drive
+                .autoAlign(() -> startToI.getInitialPose().get())
+                .until(drive.atSetpoint)
+                .andThen(startToI.cmd()));
+
+    startToI
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> startToI.getFinalPose().get())
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(iToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    startToI
+        .atTime("RaiseElevator")
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
     iToHp
         .done()
         .onTrue(
@@ -513,12 +527,18 @@ public class Autos {
     routine
         .active()
         .onTrue(
-            parallel(
-                    drive
-                        .autoAlign(() -> startToF.getFinalPose().get())
-                        .until(drive.atSetpoint)
-                        .andThen(ejector.eject(20)),
-                    elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()))
+            drive
+                .autoAlign(() -> startToF.getInitialPose().get())
+                .until(drive.atSetpoint)
+                .andThen(startToF.cmd()));
+
+    startToF
+        .done()
+        .onTrue(
+            drive
+                .autoAlign(() -> startToF.getFinalPose().get())
+                .until(drive.atSetpoint.and(elevator.atSetpoint))
+                .andThen(ejector.eject(20))
                 .until(ejector.backSensor.negate())
                 .andThen(fToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
