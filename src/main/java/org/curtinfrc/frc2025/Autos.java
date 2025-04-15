@@ -470,7 +470,7 @@ public class Autos {
                                     ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
                                 .asProxy(),
                             ejector.eject(30))
-                        .withTimeout(1),
+                        .withTimeout(0.5),
                     kToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -515,14 +515,14 @@ public class Autos {
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
     var routine = factory.newRoutine("fivePieceRight");
     var startToF = routine.trajectory("startToF");
-    var fToHp = routine.trajectory("fToHp");
+    var fToHp = routine.trajectory("fToHP");
     var hpToE = routine.trajectory("hpToE");
     var eToHp = routine.trajectory("eToHp");
     var hpToD = routine.trajectory("hpToD");
-    var dToHp = routine.trajectory("dToHp");
+    var dToHp = routine.trajectory("dToHP");
     var hpToC = routine.trajectory("hpToC");
     var hpToC2 = routine.trajectory("hpToC2");
-    var cToHp = routine.trajectory("cToHp");
+    var cToHp = routine.trajectory("cToHP");
 
     routine
         .active()
@@ -628,7 +628,7 @@ public class Autos {
                                     ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
                                 .asProxy(),
                             ejector.eject(30))
-                        .withTimeout(1),
+                        .withTimeout(0.5),
                     cToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
