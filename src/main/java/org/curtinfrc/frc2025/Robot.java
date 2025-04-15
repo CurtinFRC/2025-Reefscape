@@ -294,6 +294,8 @@ public class Robot extends LoggedRobot {
         "Four Piece Left", () -> Autos.fourPieceLeft(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
         "Five Piece Left", () -> Autos.fivePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Five Piece Right", () -> Autos.fivePieceRight(factory, drive, ejector, elevator, intake));
 
     autoChooser.addCmd("Test Auto", this::testAuto);
 
