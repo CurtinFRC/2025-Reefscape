@@ -448,7 +448,7 @@ public class Robot extends LoggedRobot {
     controller
         .leftStick()
         .and(override.negate())
-            .whileTrue(
+        .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
                         () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
@@ -473,10 +473,7 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller
         .rightStick()
-        .whileTrue(
-            ejector
-                .eject(15)
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
     intake
