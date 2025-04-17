@@ -29,30 +29,53 @@ public class Autos {
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
     var routine = factory.newRoutine("onePieceCentre");
     var trajectory = routine.trajectory("onePieceCentre");
-    routine.active().onTrue(trajectory.cmd());
-    trajectory
-        .done()
+    routine
+        .active()
         .onTrue(
-            drive
-                .autoAlign(() -> trajectory.getFinalPose().get())
-                .until(drive.atSetpoint)
-                .andThen(
-                    elevator
-                        .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                        .until(elevator.atSetpoint)
-                        .andThen(
-                            parallel(ejector.eject(15)),
-                            elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()))
-                        .until(ejector.backSensor.negate()))
-                .andThen(
-                    elevator
-                        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-                        .until(elevator.atSetpoint))
-                .andThen(
-                    parallel(drive.autoAlign(() -> DriveSetpoints.FAR.getPose()), ejector.eject(30))
-                        .withTimeout(1))
-                .withName("autoScore")
+            sequence(
+                    waitSeconds(1),
+                    drive.autoAlign(() -> DriveSetpoints.G.getPose()).until(drive.atSetpoint),
+                    parallel(
+                            drive.autoAlign(() -> DriveSetpoints.G.getPose()),
+                            elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true))
+                        .until(elevator.atSetpoint),
+                    parallel(
+                            drive.autoAlign(() -> DriveSetpoints.G.getPose()),
+                            elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true),
+                            ejector.eject(30))
+                        .until(ejector.backSensor.negate()),
+                    parallel(
+                            drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
+                            ejector.eject(40),
+                            elevator.goToSetpoint(
+                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()))
+                        .withName("AlgaePop"))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    // trajectory
+    //     .done()
+    //     .onTrue(
+    //         drive
+    //             .autoAlign(() -> trajectory.getFinalPose().get())
+    //             .until(drive.atSetpoint)
+    //             .andThen(
+    //                 elevator
+    //                     .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+    //                     .until(elevator.atSetpoint)
+    //                     .andThen(
+    //                         parallel(ejector.eject(15)),
+    //                         elevator.goToSetpoint(ElevatorSetpoints.L3,
+    // intake.backSensor.negate()))
+    //                     .until(ejector.backSensor.negate()))
+    //             .andThen(
+    //                 elevator
+    //                     .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+    //                     .until(elevator.atSetpoint))
+    //             .andThen(
+    //                 parallel(drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
+    // ejector.eject(30))
+    //                     .withTimeout(1))
+    //             .withName("autoScore")
+    //             .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     return routine;
   }
 
