@@ -4,8 +4,11 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
+import choreo.util.ChoreoAllianceFlipUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
@@ -36,11 +39,10 @@ public class Autos {
         .onTrue(
             sequence(
                     waitSeconds(1),
-                    drive.autoAlign(() -> DriveSetpoints.G.getPose()).until(drive.atSetpoint),
                     parallel(
                             drive.autoAlign(() -> DriveSetpoints.G.getPose()),
                             elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true))
-                        .until(elevator.atSetpoint),
+                        .until(elevator.atSetpoint.and(drive.atSetpoint)),
                     parallel(
                             drive.autoAlign(() -> DriveSetpoints.G.getPose()),
                             elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true),
@@ -53,7 +55,18 @@ public class Autos {
                                 () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()))
                         .withTimeout(2)
                         .withName("AlgaePop"),
-                    drive.autoAlign(() -> new Pose2d(6.6, 3.866, Rotation2d.kPi)).withTimeout(1))
+                    drive
+                        .autoAlign(
+                            () -> {
+                              if (DriverStation.getAlliance().isPresent()
+                                  && DriverStation.getAlliance().get() == Alliance.Red) {
+                                return ChoreoAllianceFlipUtil.flip(
+                                    new Pose2d(6.3, 3.866, Rotation2d.kPi));
+                              } else {
+                                return new Pose2d(6.3, 3.866, Rotation2d.kPi);
+                              }
+                            })
+                        .withTimeout(1))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // trajectory
     //     .done()
