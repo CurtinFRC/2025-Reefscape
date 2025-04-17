@@ -50,9 +50,10 @@ public class Autos {
                             drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
                             ejector.eject(40),
                             elevator.goToSetpoint(
-                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())).withTimeout(2)
+                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()))
+                        .withTimeout(2)
                         .withName("AlgaePop"),
-                    drive.autoAlign(() -> new Pose2d(6.6, 3.866, Rotation2d.kPi)))
+                    drive.autoAlign(() -> new Pose2d(6.6, 3.866, Rotation2d.kPi)).withTimeout(1))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // trajectory
     //     .done()
