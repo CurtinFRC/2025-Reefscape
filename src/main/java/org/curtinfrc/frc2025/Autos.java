@@ -4,6 +4,8 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
@@ -48,8 +50,9 @@ public class Autos {
                             drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
                             ejector.eject(40),
                             elevator.goToSetpoint(
-                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()))
-                        .withName("AlgaePop"))
+                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())).withTimeout(2)
+                        .withName("AlgaePop"),
+                    drive.autoAlign(() -> new Pose2d(6.6, 3.866, Rotation2d.kPi)))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     // trajectory
     //     .done()
