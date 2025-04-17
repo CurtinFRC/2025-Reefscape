@@ -81,8 +81,8 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(3.5, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
-  private final PIDController xFollower = new PIDController(1.1, 0, 0);
-  private final PIDController yFollower = new PIDController(1.1, 0, 0);
+  private final PIDController xFollower = new PIDController(1, 0, 0);
+  private final PIDController yFollower = new PIDController(1, 0, 0);
   private final PIDController headingFollower = new PIDController(1.3, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
