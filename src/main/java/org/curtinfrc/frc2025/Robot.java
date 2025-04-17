@@ -377,6 +377,12 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
+                controller
+                .leftBumper()
+                .or(controller.leftTrigger())
+                .and(override)
+                .whileTrue(ejector.eject(30));
+
     controller
         .leftBumper()
         .or(controller.leftTrigger())
