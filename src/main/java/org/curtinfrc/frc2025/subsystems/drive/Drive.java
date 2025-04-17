@@ -83,7 +83,7 @@ public class Drive extends SubsystemBase {
 
   private final PIDController xFollower = new PIDController(1, 0, 0);
   private final PIDController yFollower = new PIDController(1, 0, 0);
-  private final PIDController headingFollower = new PIDController(1.3, 0, 0);
+  private final PIDController headingFollower = new PIDController(1.5, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
