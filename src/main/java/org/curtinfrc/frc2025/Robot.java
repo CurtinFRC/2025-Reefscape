@@ -446,8 +446,9 @@ public class Robot extends LoggedRobot {
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
     controller
-        .leftStick().and(override.negate())
-        .whileTrue(
+        .leftStick()
+        .and(override.negate())
+            .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
                         () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
@@ -475,7 +476,6 @@ public class Robot extends LoggedRobot {
         .whileTrue(
             ejector
                 .eject(15)
-                .until(ejector.backSensor.negate())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
