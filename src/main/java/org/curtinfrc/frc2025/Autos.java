@@ -381,7 +381,7 @@ public class Autos {
                 .autoAlign(() -> startToI.getFinalPose().get())
                 .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(iToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -408,7 +408,7 @@ public class Autos {
                 .autoAlign(() -> hpToJ.getFinalPose().get())
                 .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(jToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -435,7 +435,7 @@ public class Autos {
                 .autoAlign(() -> hpToL.getFinalPose().get())
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(lToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -462,7 +462,7 @@ public class Autos {
                     drive
                         .autoAlign(() -> hpToK.getFinalPose().get())
                         .until(drive.atSetpoint.and(elevator.atSetpoint)),
-                    ejector.eject(20).until(ejector.backSensor.negate()).withTimeout(0.5),
+                    ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
                             elevator
@@ -504,7 +504,7 @@ public class Autos {
                 .autoAlign(() -> hpToK2.getFinalPose().get())
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(kToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -540,7 +540,7 @@ public class Autos {
                 .autoAlign(() -> startToF.getFinalPose().get())
                 .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(fToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -567,7 +567,7 @@ public class Autos {
                 .autoAlign(() -> hpToE.getFinalPose().get())
                 .until(drive.atSetpoint.and(elevator.atSetpoint))
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(eToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -594,7 +594,7 @@ public class Autos {
                 .autoAlign(() -> hpToD.getFinalPose().get())
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(dToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -621,7 +621,7 @@ public class Autos {
                     drive
                         .autoAlign(() -> hpToC.getFinalPose().get())
                         .until(drive.atSetpoint.and(elevator.atSetpoint)),
-                    ejector.eject(20).until(ejector.backSensor.negate()).withTimeout(0.5),
+                    ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_RIGHT::getPose),
                             elevator
@@ -663,7 +663,7 @@ public class Autos {
                 .autoAlign(() -> hpToC2.getFinalPose().get())
                 .until(drive.atSetpoint)
                 .andThen(ejector.eject(20))
-                .until(ejector.backSensor.negate()).withTimeout(0.5)
+                .until(ejector.backSensor.negate())
                 .andThen(cToHp.cmd())
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
