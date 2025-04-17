@@ -380,10 +380,24 @@ public class Robot extends LoggedRobot {
                 .until(ejector.backSensor.negate()));
 
     controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
-    controller.leftBumper().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
-    controller.leftTrigger().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller.rightBumper().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller.rightTrigger().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+    controller
+        .leftBumper()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+    controller
+        .leftTrigger()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
+    controller
+        .rightBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
 
     controller
         .leftBumper()
@@ -432,7 +446,7 @@ public class Robot extends LoggedRobot {
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
     controller
-        .leftStick()
+        .leftStick().and(override.negate())
         .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
