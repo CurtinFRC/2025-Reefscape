@@ -368,17 +368,6 @@ public class Robot extends LoggedRobot {
 
     controller
         .rightBumper()
-        .or(controller.leftBumper())
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .or(controller.leftTrigger())
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-
-    controller
-        .rightBumper()
         .or(controller.rightTrigger())
         .and(override.negate())
         .whileTrue(
@@ -391,6 +380,10 @@ public class Robot extends LoggedRobot {
                 .until(ejector.backSensor.negate()));
 
     controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
+    controller.leftBumper().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+    controller.leftTrigger().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
+    controller.rightBumper().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller.rightTrigger().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
 
     controller
         .leftBumper()
