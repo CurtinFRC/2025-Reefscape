@@ -351,34 +351,31 @@ public class Robot extends LoggedRobot {
 
     controller
         .rightBumper()
-        .or(controller.leftBumper()).and(override.negate())
+        .or(controller.leftBumper())
+        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
                 .until(ejector.backSensor.negate()));
     controller
         .rightTrigger()
-        .or(controller.leftTrigger()).and(override.negate())
+        .or(controller.leftTrigger())
+        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
                 .until(ejector.backSensor.negate()));
 
-                controller
-                .rightBumper()
-                .or(controller.leftBumper()).and(override)
-                .whileTrue(
-                    elevator
-                        .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                        );
-            controller
-                .rightTrigger()
-                .or(controller.leftTrigger()).and(override)
-                .whileTrue(
-                    elevator
-                        .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                        );
-        
+    controller
+        .rightBumper()
+        .or(controller.leftBumper())
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .or(controller.leftTrigger())
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
 
     controller
         .rightBumper()
