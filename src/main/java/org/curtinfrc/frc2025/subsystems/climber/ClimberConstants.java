@@ -9,7 +9,7 @@ public class ClimberConstants {
 
   // motor stall thingy
   public static double stallingRPM = 15; // RPM
-  public static double stallingCurrent = 50; // Amps
+  public static double stallingCurrent = 60; // Amps
 
   public static double kP = 0.1;
   public static double kI = 0.0;
