@@ -12,8 +12,6 @@ import edu.wpi.first.util.struct.Struct;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.littletonrobotics.junction.Logger;
-
 /** A single swerve robot sample in a Trajectory. */
 public class SwerveSample implements TrajectorySample<SwerveSample> {
   private static final double[] EMPTY_MODULE_FORCES = new double[] {0, 0, 0, 0};
@@ -157,39 +155,35 @@ public class SwerveSample implements TrajectorySample<SwerveSample> {
           MathUtil.interpolate(this.moduleForcesY()[i], endValue.moduleForcesY()[i], scale);
     }
 
-    // Integrate our input (acceleration) to find velocity and position.
-    double lerpedTimestamp = timestamp;
-    double lerpedXVel = vx;
-    double lerpedYVel = vy;
-    double lerpedXPos = x;
-    double lerpedYPos = y;
-    double intTime = t + 0.01;
-
-    double intT = (intTime - getTimestamp()) / (lerpedTimestamp - getTimestamp());
-    double intAX = MathUtil.interpolate(ax, endValue.ax, intT);
-    double intAY = MathUtil.interpolate(ay, endValue.ax, intT);
-    double dt = lerpedTimestamp - intTime;
-
-    // vₖ₊₁ = vₖ + aₖt
-    lerpedXVel += intAX * dt;
-    lerpedYVel += intAY * dt;
-    // xₖ₊₁ = xₖ + vₖt + 0.5aₖt²
-    lerpedXPos += lerpedXVel * dt + 0.5 * intAX * t * t;
-    lerpedYPos += lerpedYVel * dt + 0.5 * intAY * t * t;
-
-    intTime += 0.01;
-
+    // Integrate the field speeds to get the pose for this interpolated state, since linearly
+    // interpolating the pose gives an inaccurate result if the speeds are changing between states
+    //
+    //   Δt = tₖ₊₁ − tₖ
+    //   τ = timestamp − tₖ
+    //
+    //   x(τ) = xₖ + vₖτ + 1/2 aₖτ² + 1/6 jₖτ³
+    //   v(τ) = vₖ + aₖτ + 1/2 jₖτ²
+    //   a(τ) = aₖ + jₖτ
+    //
+    // where jₖ = (aₖ₊₁ − aₖ)/Δt
+    double dt = endValue.t - this.t;
+    double τ = timestamp - this.t;
+    double τ2 = τ * τ;
+    double τ3 = τ * τ * τ;
+    double jx = (endValue.ax - this.ax) / dt;
+    double jy = (endValue.ay - this.ay) / dt;
+    double η = (endValue.alpha - this.alpha) / dt;
     return new SwerveSample(
-        MathUtil.interpolate(this.t, endValue.t, scale),
-        lerpedXPos,
-        lerpedYPos,
-        MathUtil.interpolate(heading, endValue.heading, t),
-        lerpedXVel,
-        lerpedYVel,
-        MathUtil.interpolate(this.omega, endValue.omega, scale),
-        MathUtil.interpolate(this.ax, endValue.ax, scale),
-        MathUtil.interpolate(this.ay, endValue.ay, scale),
-        MathUtil.interpolate(this.alpha, endValue.alpha, scale),
+        timestamp,
+        this.x + this.vx * τ + 0.5 * this.ax * τ2 + 1.0 / 6.0 * jx * τ3,
+        this.y + this.vy * τ + 0.5 * this.ay * τ2 + 1.0 / 6.0 * jy * τ3,
+        this.heading + this.omega * τ + 0.5 * this.alpha * τ2 + 1.0 / 6.0 * η * τ3,
+        this.vx + this.ax * τ + 0.5 * jx * τ2,
+        this.vy + this.ay * τ + 0.5 * jy * τ2,
+        this.omega + this.alpha * τ + 0.5 * η * τ2,
+        this.ax + jx * τ,
+        this.ay + jy * τ,
+        this.alpha + η * τ,
         interp_fx,
         interp_fy);
   }

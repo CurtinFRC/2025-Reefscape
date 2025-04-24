@@ -279,7 +279,7 @@ public class Robot extends LoggedRobot {
             drive,
             drive::logTrajectory);
 
-    autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
+    autoChooser.addRoutine("Test Path", () -> Autos.path("LeftHpToH", factory, drive));
     autoChooser.addRoutine(
         "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
