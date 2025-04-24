@@ -77,13 +77,13 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(2.5, 0, 0);
-  private final PIDController yController = new PIDController(2.5, 0, 0);
+  private final PIDController xController = new PIDController(3.5, 0, 0);
+  private final PIDController yController = new PIDController(3.5, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
-  private final PIDController xFollower = new PIDController(2, 0, 0);
-  private final PIDController yFollower = new PIDController(2, 0, 0);
-  private final PIDController headingFollower = new PIDController(3, 0, 0);
+  private final PIDController xFollower = new PIDController(1, 0, 0);
+  private final PIDController yFollower = new PIDController(1, 0, 0);
+  private final PIDController headingFollower = new PIDController(1.5, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -179,7 +179,7 @@ public class Drive extends SubsystemBase {
         ChassisSpeeds.fromFieldRelativeSpeeds(
             xFollower.calculate(pose.getX(), sample.x) + sample.vx,
             yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) - sample.omega,
+            headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
             getRotation());
 
     runVelocity(speeds, new double[4]);
@@ -675,34 +675,15 @@ public class Drive extends SubsystemBase {
   }
 
   private void autoAlign(Pose2d _setpoint) {
-    repulsorFieldPlanner.setGoal(this.setpoint.getPose().getTranslation());
-
     Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint);
     var robotPose = getPose();
 
     var omega =
         headingController.calculate(
             getRotation().getRadians(), _setpoint.getRotation().getRadians());
-
-    // if (Math.abs(robotPose.minus(_setpoint.getPose()).getTranslation().getNorm()) > 0.1) {
-    //   RepulsorSample sample =
-    //       repulsorFieldPlanner.calculate(
-    //           robotPose,
-    //           getChassisSpeeds(),
-    //           CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond));
-    //
-    //   runVelocity(new ChassisSpeeds(sample.vx(), sample.vy(), omega));
-    // } else {
-
-    boolean isFlipped =
-        DriverStation.getAlliance().isPresent()
-            && DriverStation.getAlliance().get() == Alliance.Red;
     var x = xController.calculate(robotPose.getX(), _setpoint.getX());
     var y = yController.calculate(robotPose.getY(), _setpoint.getY());
-    runVelocity(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            x, y, omega, isFlipped ? getRotation().plus(Rotation2d.kPi) : getRotation()),
-        new double[4]);
+    runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(x, y, omega, getRotation()), new double[4]);
   }
 
   public Command autoAlign(Supplier<Pose2d> _setpoint) {

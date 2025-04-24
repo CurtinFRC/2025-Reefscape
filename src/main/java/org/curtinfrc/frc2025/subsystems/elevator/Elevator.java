@@ -48,9 +48,9 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
     Logger.recordOutput("Elevator/ActualError", pid.getError());
 
-    if (inputs.hominSensor) {
-      io.zero();
-    }
+    // if (inputs.hominSensor) {
+    //   io.zero();
+    // }
   }
 
   public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {
@@ -69,6 +69,7 @@ public class Elevator extends SubsystemBase {
                 }),
             Commands.none(),
             safe)
+        .repeatedly()
         .withName("GoToSetpoint");
   }
 
@@ -88,6 +89,7 @@ public class Elevator extends SubsystemBase {
                 }),
             Commands.none(),
             safe)
+        .repeatedly()
         .withName("GoToSetpoint");
   }
 
@@ -99,10 +101,7 @@ public class Elevator extends SubsystemBase {
               var out =
                   climbPID.calculate(
                       io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
-              Logger.recordOutput("Elevator/ClimberOutput", out);
-              Logger.recordOutput("Elevator/ClimberError", pid.getError());
-              Logger.recordOutput("Elevator/ClimberPID", true);
-              io.setVoltage(MathUtil.clamp(out, -3, 3));
+              io.setVoltage(MathUtil.clamp(out, -4, 4));
             }),
         Commands.none(),
         safe);

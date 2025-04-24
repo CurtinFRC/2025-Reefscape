@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -28,6 +29,7 @@ import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
+import org.curtinfrc.frc2025.subsystems.climber.ClimberConstants;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIO;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOComp;
 import org.curtinfrc.frc2025.subsystems.climber.ClimberIOSim;
@@ -284,11 +286,18 @@ public class Robot extends LoggedRobot {
         "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
         "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Two Piece Left", () -> Autos.twoPieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Three Piece Left", () -> Autos.threePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Four Piece Left", () -> Autos.fourPieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Five Piece Left", () -> Autos.fivePieceLeft(factory, drive, ejector, elevator, intake));
+    autoChooser.addRoutine(
+        "Five Piece Right", () -> Autos.fivePieceRight(factory, drive, ejector, elevator, intake));
 
-    autoChooser.addCmd("One Piece", this::onePiece);
     autoChooser.addCmd("Test Auto", this::testAuto);
-    autoChooser.addCmd("Three Coral Right", this::threeCoralRight);
-    autoChooser.addCmd("Three Coral Left", this::threeCoralLeft);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -338,9 +347,12 @@ public class Robot extends LoggedRobot {
         .and(elevator.isNotAtCollect)
         .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
 
+    drive.atSetpoint.whileTrue(leds.setBlue());
+
     controller
         .rightBumper()
         .or(controller.leftBumper())
+        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
@@ -348,6 +360,7 @@ public class Robot extends LoggedRobot {
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
+        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
@@ -365,6 +378,26 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX())
                 .until(ejector.backSensor.negate()));
+
+    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
+    controller
+        .leftBumper()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+    controller
+        .leftTrigger()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
+    controller
+        .rightBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
 
     controller
         .leftBumper()
@@ -414,40 +447,33 @@ public class Robot extends LoggedRobot {
 
     controller
         .leftStick()
+        .and(override.negate())
         .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(drive.atSetpoint)
-                .andThen(
-                    Commands.parallel(
-                        ejector.eject(40),
-                        elevator.goToSetpoint(
-                            () -> {
-                              return switch (DriveSetpoints.closest(
-                                  drive::getPose, leftSetpoints)) {
-                                case A, B -> ElevatorSetpoints.AlgaePopHigh;
-                                case C, D -> ElevatorSetpoints.AlgaePopLow;
-                                case E, F -> ElevatorSetpoints.AlgaePopHigh;
-                                case G, H -> ElevatorSetpoints.AlgaePopLow;
-                                case I, J -> ElevatorSetpoints.AlgaePopHigh;
-                                case K, L -> ElevatorSetpoints.AlgaePopLow;
-                                default -> ElevatorSetpoints.AlgaePopLow;
-                              };
-                            },
-                            intake.backSensor.negate())))
+            Commands.parallel(
+                    drive.autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                    ejector.eject(40),
+                    elevator.goToSetpoint(
+                        () -> {
+                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
+                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                            case C, D -> ElevatorSetpoints.AlgaePopLow;
+                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                            case G, H -> ElevatorSetpoints.AlgaePopLow;
+                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                            case K, L -> ElevatorSetpoints.AlgaePopLow;
+                            default -> ElevatorSetpoints.AlgaePopLow;
+                          };
+                        },
+                        intake.backSensor.negate()))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller
         .rightStick()
-        .whileTrue(
-            ejector
-                .eject(15)
-                .until(ejector.backSensor.negate())
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
     intake
@@ -492,8 +518,29 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+    controller
+        .x()
+        .onTrue(
+            Commands.sequence(
+                climber.disengage(),
+                climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
+                elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
 
-    controller.x().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller // climb attempt
+        .a()
+        .and(() -> climber.climberDeployed)
+        .onTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
+                .until(elevator.atSetpoint)
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
+                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
+                .andThen(
+                    new ScheduleCommand(
+                        elevator.goToSetpoint(
+                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
+
+    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }

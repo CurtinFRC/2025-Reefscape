@@ -90,17 +90,25 @@ public final class DriveConstants {
       return pose;
     }
 
-    static Pose3d mapPose(Pose3d pose) {
+    static Pose3d mapPose(Pose3d pose, boolean offset) {
       double angle = pose.getRotation().getAngle();
-      return new Pose3d(
-          pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2,
-          pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
-          0.0,
-          pose.getRotation());
+      if (offset) {
+        return new Pose3d(
+            pose.getX() + Math.cos(angle) * (Constants.ROBOT_X / 2 + 0.03),
+            pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
+            0.0,
+            pose.getRotation());
+      } else {
+        return new Pose3d(
+            pose.getX() + Math.cos(angle) * Constants.ROBOT_X / 2,
+            pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
+            0.0,
+            pose.getRotation());
+      }
     }
 
     DriveSetpoints(Pose3d tag, boolean side, double sideOffset) {
-      Pose3d mappedPose = mapPose(tag);
+      Pose3d mappedPose = mapPose(tag, sideOffset == coralOffset);
       Rotation3d rotation = mappedPose.getRotation();
       double baseAngle = rotation.getAngle();
       double cos = Math.cos(baseAngle);
