@@ -62,7 +62,6 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
-import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -93,12 +92,10 @@ public class Robot extends LoggedRobot {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final Alert controllerDisconnected =
       new Alert("Driver controller disconnected!", AlertType.kError);
-  private final ButtonBoard board = new ButtonBoard(1);
 
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory factory;
-  // private final Autos autos;
 
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
