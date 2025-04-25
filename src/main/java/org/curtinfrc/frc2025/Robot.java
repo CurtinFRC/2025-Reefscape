@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -25,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.List;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
@@ -296,8 +294,6 @@ public class Robot extends LoggedRobot {
         "Five Piece Left", () -> Autos.fivePieceLeft(factory, drive, ejector, elevator, intake));
     autoChooser.addRoutine(
         "Five Piece Right", () -> Autos.fivePieceRight(factory, drive, ejector, elevator, intake));
-
-    autoChooser.addCmd("Test Auto", this::testAuto);
 
     // Set up SysId routines
     autoChooser.addCmd(
@@ -614,74 +610,4 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
-
-  public Command onePiece() {
-    return drive
-        .autoAlign(() -> DriveSetpoints.C.getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(elevator.atSetpoint)
-                .andThen(
-                    parallel(
-                        elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
-                        ejector.eject(8))))
-        .until(ejector.backSensor.negate());
-  }
-
-  public Command testAuto() {
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
-  }
-
-  public Command threeCoralRight() {
-    // E F B
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP));
-  }
-
-  public Command threeCoralLeft() {
-    // I J A
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)))
-        .andThen(intake(DriveSetpoints.LEFT_HP));
-  }
-
-  private Command node(Setpoint point) {
-    return drive
-        .autoAlign(() -> point.driveSetpoint().getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("firststep")
-        .until(elevator.atSetpoint)
-        .withName("GetToAutoPosition")
-        .andThen(
-            parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                ejector.eject(15).asProxy(),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("Eject")
-        .until(ejector.backSensor.negate())
-        .withName("Eject")
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
-
-  private Command intake(DriveSetpoints point) {
-    return elevator
-        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-        .until(elevator.atSetpoint)
-        .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
-        .andThen(waitSeconds(1.5))
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
 }
