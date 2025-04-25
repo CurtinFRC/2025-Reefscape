@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.List;
+import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
@@ -387,30 +389,19 @@ public class Robot extends LoggedRobot {
         .rightBumper()
         .or(controller.leftBumper())
         .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
         .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     controller
         .rightBumper()
         .or(controller.rightTrigger())
         .and(override.negate())
         .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+            autoAlignWithOverride(() -> DriveSetpoints.closest(drive::getPose, rightSetpoints))
                 .until(ejector.backSensor.negate()));
 
     controller
@@ -418,12 +409,7 @@ public class Robot extends LoggedRobot {
         .or(controller.leftTrigger())
         .and(override.negate())
         .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+            autoAlignWithOverride(() -> DriveSetpoints.closest(drive::getPose, leftSetpoints))
                 .until(ejector.backSensor.negate()));
 
     controller
@@ -431,11 +417,8 @@ public class Robot extends LoggedRobot {
         .and(override.negate())
         .whileTrue(
             parallel(
-                    drive.autoAlignWithOverride(
-                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
+                    autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints)),
                     ejector.eject(40),
                     elevator.goToSetpoint(
                         () -> {
@@ -457,22 +440,13 @@ public class Robot extends LoggedRobot {
     controller
         .leftBumper()
         .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.AlgaePopLow));
     controller
         .leftTrigger()
         .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller
-        .rightBumper()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
-
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.AlgaePopHigh));
+    controller.rightBumper().and(override).whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L2));
+    controller.rightTrigger().and(override).whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L3));
 
     drive
         .atSetpoint
@@ -611,4 +585,16 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
+
+  public Command elevatorGoToSetpoint(ElevatorSetpoints setpoint) {
+    return elevator.goToSetpoint(setpoint, intake.frontSensor.negate());
+  }
+
+  public Command autoAlignWithOverride(Supplier<DriveSetpoints> setpointSupplier) {
+    return drive.autoAlignWithOverride(
+        setpointSupplier,
+        () -> -controller.getLeftY(),
+        () -> -controller.getLeftX(),
+        () -> -controller.getRightX());
+  }
 }
