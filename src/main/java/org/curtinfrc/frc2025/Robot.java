@@ -330,173 +330,21 @@ public class Robot extends LoggedRobot {
     RobotModeTriggers.autonomous()
         .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
 
-    // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    drive
-        .atSetpoint
-        .and(elevator.atSetpoint)
-        .and(elevator.isNotAtCollect)
-        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
-
-    drive.atSetpoint.whileTrue(leds.setBlue());
-
-    controller
-        .rightBumper()
-        .or(controller.leftBumper())
-        .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .or(controller.leftTrigger())
-        .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-
-    controller
-        .rightBumper()
-        .or(controller.rightTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
-    controller
-        .leftBumper()
-        .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
-    controller
-        .leftTrigger()
-        .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller
-        .rightBumper()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
-
-    controller
-        .leftBumper()
-        .or(controller.leftTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    climber.stalled.onTrue(
-        climber
-            .stop()
-            .andThen(
-                elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
-                    .withTimeout(0.5)
-                    .andThen(
-                        parallel(
-                            climber.engage(),
-                            elevator.goToClimberSetpoint(
-                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
-                    .until(elevator.atClimbSetpoint)
-                    .andThen(parallel(climber.engage(), elevator.stop().repeatedly()))));
-
     intake.setDefaultCommand(intake.intake());
+
     ejector.setDefaultCommand(ejector.stop());
+
     elevator.setDefaultCommand(
         elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
+
     climber.setDefaultCommand(climber.stop());
 
-    ejector.backSensor.onFalse(
-        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-    intake.frontSensor.onTrue(
-        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-
-    controller
-        .leftStick()
-        .and(override.negate())
-        .whileTrue(
-            parallel(
-                    drive.autoAlignWithOverride(
-                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                    ejector.eject(40),
-                    elevator.goToSetpoint(
-                        () -> {
-                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
-                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
-                            case C, D -> ElevatorSetpoints.AlgaePopLow;
-                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
-                            case G, H -> ElevatorSetpoints.AlgaePopLow;
-                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
-                            case K, L -> ElevatorSetpoints.AlgaePopLow;
-                            default -> ElevatorSetpoints.AlgaePopLow;
-                          };
-                        },
-                        intake.backSensor.negate()))
-                .withName("AlgaePop")
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller
-        .rightStick()
-        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller.povUp().whileTrue(intake.intake(-4));
-
-    intake
-        .backSensor
-        .negate()
-        .and(intake.frontSensor.negate())
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor.negate())
-        .whileTrue(leds.setPink())
-        .whileFalse(leds.setGreen());
-
-    intake
-        .backSensor
-        .and(elevator.isNotAtCollect.negate())
-        .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(12));
-
-    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
-
-    intake
-        .backSensor
-        .negate()
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor)
-        .and(elevator.isNotAtCollect.negate())
-        .whileTrue(ejector.eject(-2).until(ejector.frontSensor).andThen(ejector.stop()));
-
-    ejector.backSensor.whileTrue(intake.stop());
-
-    // Reset gyro to 0° when B button is pressed
     controller
         .y()
         .onTrue(
@@ -529,6 +377,159 @@ public class Robot extends LoggedRobot {
                             ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
     controller.b().onTrue(runOnce(() -> overridden = !overridden));
+
+    controller
+        .rightStick()
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller.povUp().whileTrue(intake.intake(-4));
+
+    controller
+        .rightBumper()
+        .or(controller.leftBumper())
+        .and(override.negate())
+        .whileTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .or(controller.leftTrigger())
+        .and(override.negate())
+        .whileTrue(
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+                .until(ejector.backSensor.negate()));
+
+    controller
+        .rightBumper()
+        .or(controller.rightTrigger())
+        .and(override.negate())
+        .whileTrue(
+            drive
+                .autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(ejector.backSensor.negate()));
+
+    controller
+        .leftBumper()
+        .or(controller.leftTrigger())
+        .and(override.negate())
+        .whileTrue(
+            drive
+                .autoAlignWithOverride(
+                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> -controller.getRightX())
+                .until(ejector.backSensor.negate()));
+
+    controller
+        .leftStick()
+        .and(override.negate())
+        .whileTrue(
+            parallel(
+                    drive.autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()),
+                    ejector.eject(40),
+                    elevator.goToSetpoint(
+                        () -> {
+                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
+                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                            case C, D -> ElevatorSetpoints.AlgaePopLow;
+                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                            case G, H -> ElevatorSetpoints.AlgaePopLow;
+                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                            case K, L -> ElevatorSetpoints.AlgaePopLow;
+                            default -> ElevatorSetpoints.AlgaePopLow;
+                          };
+                        },
+                        intake.backSensor.negate()))
+                .withName("AlgaePop")
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
+    controller
+        .leftBumper()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+    controller
+        .leftTrigger()
+        .and(override)
+        .whileTrue(
+            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
+    controller
+        .rightBumper()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+
+
+    drive
+        .atSetpoint
+        .and(elevator.atSetpoint)
+        .and(elevator.isNotAtCollect)
+        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
+
+    climber.stalled.onTrue(
+        climber
+            .stop()
+            .andThen(
+                elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                    .withTimeout(0.5)
+                    .andThen(
+                        parallel(
+                            climber.engage(),
+                            elevator.goToClimberSetpoint(
+                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
+                    .until(elevator.atClimbSetpoint)
+                    .andThen(parallel(climber.engage(), elevator.stop().repeatedly()))));
+
+    ejector.backSensor.onFalse(
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+    intake.frontSensor.onTrue(
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+
+    intake
+        .backSensor
+        .negate()
+        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor.negate())
+        .whileTrue(leds.setPink())
+        .whileFalse(leds.setGreen());
+
+    intake
+        .backSensor
+        .and(elevator.isNotAtCollect.negate())
+        .and(elevator.atSetpoint)
+        .whileTrue(ejector.eject(12));
+
+    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
+
+    intake
+        .backSensor
+        .negate()
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor)
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(ejector.eject(-2).until(ejector.frontSensor).andThen(ejector.stop()));
+
+    ejector.backSensor.whileTrue(intake.stop());
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
