@@ -93,12 +93,10 @@ public class Robot extends LoggedRobot {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final Alert controllerDisconnected =
       new Alert("Driver controller disconnected!", AlertType.kError);
-  private final ButtonBoard board = new ButtonBoard(1);
 
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory factory;
-  // private final Autos autos;
 
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
