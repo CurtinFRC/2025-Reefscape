@@ -428,12 +428,9 @@ public class Robot extends LoggedRobot {
                     .andThen(parallel(climber.engage(), elevator.stop().repeatedly()))));
 
     intake.setDefaultCommand(intake.intake());
-    ejector.setDefaultCommand(
-        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    ejector.setDefaultCommand(ejector.stop());
     elevator.setDefaultCommand(
-        elevator
-            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
     climber.setDefaultCommand(climber.stop());
 
     ejector.backSensor.onFalse(
@@ -478,18 +475,18 @@ public class Robot extends LoggedRobot {
 
     intake
         .backSensor
-        .and(elevator.isNotAtCollect.negate())
-        .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(12));
-
-    intake
-        .backSensor
         .negate()
         .and(intake.frontSensor.negate())
         .and(ejector.frontSensor.negate())
         .and(ejector.backSensor.negate())
         .whileTrue(leds.setPink())
         .whileFalse(leds.setGreen());
+
+    intake
+        .backSensor
+        .and(elevator.isNotAtCollect.negate())
+        .and(elevator.atSetpoint)
+        .whileTrue(ejector.eject(12));
 
     intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
 
@@ -499,12 +496,7 @@ public class Robot extends LoggedRobot {
         .and(ejector.frontSensor.negate())
         .and(ejector.backSensor)
         .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            ejector
-                .eject(-2)
-                .until(ejector.frontSensor)
-                .andThen(ejector.stop())
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        .whileTrue(ejector.eject(-2).until(ejector.frontSensor).andThen(ejector.stop()));
 
     ejector.backSensor.whileTrue(intake.stop());
 
