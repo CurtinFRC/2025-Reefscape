@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints.*;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
@@ -17,7 +18,6 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -420,12 +420,12 @@ public class Robot extends LoggedRobot {
                     .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
                     .withTimeout(0.5)
                     .andThen(
-                        Commands.parallel(
+                        parallel(
                             climber.engage(),
                             elevator.goToClimberSetpoint(
                                 ElevatorSetpoints.climbed, intake.backSensor.negate())))
                     .until(elevator.atClimbSetpoint)
-                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
+                    .andThen(parallel(climber.engage(), elevator.stop().repeatedly()))));
 
     intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
@@ -437,19 +437,19 @@ public class Robot extends LoggedRobot {
     climber.setDefaultCommand(climber.stop());
 
     ejector.backSensor.onFalse(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
             .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
     intake.frontSensor.onTrue(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
             .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
     controller
         .leftStick()
         .and(override.negate())
         .whileTrue(
-            Commands.parallel(
+            parallel(
                     drive.autoAlignWithOverride(
                         () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
                         () -> -controller.getLeftY(),
@@ -512,7 +512,7 @@ public class Robot extends LoggedRobot {
     controller
         .y()
         .onTrue(
-            Commands.runOnce(
+            runOnce(
                     () ->
                         drive.setPose(
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
@@ -521,7 +521,7 @@ public class Robot extends LoggedRobot {
     controller
         .x()
         .onTrue(
-            Commands.sequence(
+            sequence(
                 climber.disengage(),
                 climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
                 elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
@@ -540,7 +540,7 @@ public class Robot extends LoggedRobot {
                         elevator.goToSetpoint(
                             ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
-    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller.b().onTrue(runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
@@ -632,7 +632,7 @@ public class Robot extends LoggedRobot {
                 .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
                 .until(elevator.atSetpoint)
                 .andThen(
-                    Commands.parallel(
+                    parallel(
                         elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
                         ejector.eject(8))))
         .until(ejector.backSensor.negate());
@@ -667,14 +667,14 @@ public class Robot extends LoggedRobot {
         .autoAlign(() -> point.driveSetpoint().getPose())
         .until(drive.atSetpoint)
         .andThen(
-            Commands.parallel(
+            parallel(
                 drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
         .withName("firststep")
         .until(elevator.atSetpoint)
         .withName("GetToAutoPosition")
         .andThen(
-            Commands.parallel(
+            parallel(
                 drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 ejector.eject(15).asProxy(),
                 elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
@@ -689,7 +689,7 @@ public class Robot extends LoggedRobot {
         .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
         .until(elevator.atSetpoint)
         .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
-        .andThen(Commands.waitSeconds(1.5))
+        .andThen(waitSeconds(1.5))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 }
