@@ -17,6 +17,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.curtinfrc.frc2025.util.PhoenixUtil;
 
 public class ElevatorIOComp implements ElevatorIO {
   private static final double pulleyRadiusMeters = 0.03055;
@@ -50,11 +51,13 @@ public class ElevatorIOComp implements ElevatorIO {
     tryUntilOk(5, () -> follower.getConfigurator().apply(config));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+
+    // Register signals to be updated
+    PhoenixUtil.registerSignals(false, velocity, voltage, current, position);
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    BaseStatusSignal.refreshAll(velocity, voltage, current, position);
     motor.setControl(voltageRequest);
     follower.setControl(followRequest);
     inputs.appliedVolts = voltage.getValueAsDouble();
