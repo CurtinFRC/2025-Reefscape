@@ -6,8 +6,10 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -19,6 +21,14 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class ElevatorIOComp implements ElevatorIO {
+  // TODO tune
+  private static final double KS = 0.00;
+  private static final double KG = 0.13;
+  private static final double KV = metresToRotations(3.35);
+  private static final double KA = metresToRotations(0.02);
+  private static final double KP = 0.00;
+  private static final double KD = 0.00;
+
   private static final double pulleyRadiusMeters = 0.03055;
   private static final double gearing = 8.1818;
   private static final int ID = 7;
@@ -30,7 +40,9 @@ public class ElevatorIOComp implements ElevatorIO {
                   .withInverted(InvertedValue.CounterClockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Brake))
           .withCurrentLimits(
-              new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60));
+              new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60))
+          .withSlot0(
+              new Slot0Configs().withKS(KS).withKG(KG).withKV(KV).withKA(KA).withKP(KP).withKD(KD));
 
   private final TalonFX motor = new TalonFX(ID);
   private final TalonFX follower = new TalonFX(FOLLOWER_ID);
@@ -43,6 +55,8 @@ public class ElevatorIOComp implements ElevatorIO {
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
   private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(true);
+  private final MotionMagicVoltage motionMagicRequest =
+      new MotionMagicVoltage(0).withEnableFOC(true);
   private final Follower followRequest = new Follower(ID, false);
 
   public ElevatorIOComp() {
@@ -50,13 +64,12 @@ public class ElevatorIOComp implements ElevatorIO {
     tryUntilOk(5, () -> follower.getConfigurator().apply(config));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
     motor.optimizeBusUtilization();
+    follower.setControl(followRequest);
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     BaseStatusSignal.refreshAll(velocity, voltage, current, position);
-    motor.setControl(voltageRequest);
-    follower.setControl(followRequest);
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
     inputs.positionMetres = rotationsToMetres(position.getValueAsDouble());
@@ -66,7 +79,12 @@ public class ElevatorIOComp implements ElevatorIO {
 
   @Override
   public void setVoltage(double volts) {
-    voltageRequest.withOutput(volts);
+    motor.setControl(voltageRequest.withOutput(volts));
+  }
+
+  @Override
+  public void setPosition(double positionMetres) {
+    motor.setControl(motionMagicRequest.withPosition(metresToRotations(positionMetres)));
   }
 
   @Override
@@ -74,7 +92,11 @@ public class ElevatorIOComp implements ElevatorIO {
     motor.setPosition(0);
   }
 
-  private double rotationsToMetres(double rotations) {
+  private static double rotationsToMetres(double rotations) {
     return rotations * Math.PI * 2 * pulleyRadiusMeters / gearing;
+  }
+
+  private static double metresToRotations(double metres) {
+    return metres / (Math.PI * 2 * pulleyRadiusMeters) * gearing;
   }
 }
