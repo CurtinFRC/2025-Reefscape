@@ -11,10 +11,10 @@ public class ElevatorIOSim implements ElevatorIO {
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
     elevatorSim.update(0.02);
-    // ignore velocity cause we dont care
     inputs.currentAmps = elevatorSim.getCurrentDrawAmps();
     inputs.appliedVolts = volts;
-    inputs.positionRotations = elevatorSim.getPositionMeters();
+    inputs.positionMetres = elevatorSim.getPositionMeters();
+    inputs.velocityMetresPerSecond = elevatorSim.getVelocityMetersPerSecond();
   }
 
   @Override
