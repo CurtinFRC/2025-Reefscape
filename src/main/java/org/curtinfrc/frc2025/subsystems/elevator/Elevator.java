@@ -16,20 +16,29 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
+  private static final double TOLERANCE = 0.01;
+
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private final PIDController pid = new PIDController(kP, 0, kD);
   private final PIDController climbPID = new PIDController(climbkP, climbkI, climbkD);
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
-  public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
+  public final Trigger atSetpoint;
   public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
 
   public Elevator(ElevatorIO io) {
     this.io = io;
-    pid.setTolerance(tolerance);
     climbPID.setTolerance(tolerance);
+
+    atSetpoint =
+        new Trigger(
+                () -> {
+                  var error = Math.abs(inputs.positionMetres - setpoint.setpoint);
+                  var velocity = Math.abs(inputs.velocityMetresPerSecond);
+                  return error < TOLERANCE && velocity < 0.1;
+                })
+            .debounce(0.01);
   }
 
   @Override
@@ -46,14 +55,12 @@ public class Elevator extends SubsystemBase {
   }
 
   private void goToTarget(double targetMetres) {
-    var output = pid.calculate(inputs.positionMetres, targetMetres);
-    Logger.recordOutput("Elevator/Output", output);
-    Logger.recordOutput("Elevator/Error", pid.getError());
-    io.setVoltage(output);
+    io.setPosition(targetMetres);
   }
 
   public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {
     return run(() -> {
+          setpoint = point.get();
           if (safe.getAsBoolean()) {
             goToTarget(point.get().setpoint);
           }
@@ -63,6 +70,7 @@ public class Elevator extends SubsystemBase {
 
   public Command goToSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
     return run(() -> {
+          setpoint = point;
           if (safe.getAsBoolean()) {
             goToTarget(point.setpoint);
           }

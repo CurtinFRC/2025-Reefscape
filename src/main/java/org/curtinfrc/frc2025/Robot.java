@@ -281,6 +281,13 @@ public class Robot extends LoggedRobot {
             drive,
             drive::logTrajectory);
 
+    autoChooser.addCmd(
+        "Elevator L2",
+        () -> elevator.goToSetpoint(ElevatorSetpoints.L2, () -> true).until(elevator.atSetpoint));
+    autoChooser.addCmd(
+        "Elevator L3",
+        () -> elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true).until(elevator.atSetpoint));
+
     autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
     autoChooser.addRoutine(
         "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
