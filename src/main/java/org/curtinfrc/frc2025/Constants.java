@@ -7,7 +7,7 @@ import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
 import edu.wpi.first.wpilibj.RobotBase;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator.ElevatorSetpoints;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
