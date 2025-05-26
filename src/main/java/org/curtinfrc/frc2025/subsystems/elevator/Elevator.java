@@ -58,10 +58,7 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point.get();
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
+                  var out = pid.calculate(inputs.positionMetres, setpoint.setpoint);
                   Logger.recordOutput("Elevator/Output", out);
                   Logger.recordOutput("Elevator/Error", pid.getError());
                   Logger.recordOutput("Elevator/ClimberPID", false);
@@ -78,10 +75,7 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point;
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
+                  var out = pid.calculate(inputs.positionMetres, setpoint.setpoint);
                   Logger.recordOutput("Elevator/Output", out);
                   Logger.recordOutput("Elevator/Error", pid.getError());
                   Logger.recordOutput("Elevator/ClimberPID", false);
@@ -98,9 +92,7 @@ public class Elevator extends SubsystemBase {
         run(
             () -> {
               setpoint = point;
-              var out =
-                  climbPID.calculate(
-                      io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+              var out = climbPID.calculate(inputs.positionMetres, setpoint.setpoint);
               io.setVoltage(MathUtil.clamp(out, -4, 4));
             }),
         Commands.none(),
@@ -117,10 +109,6 @@ public class Elevator extends SubsystemBase {
 
   @AutoLogOutput(key = "Elevator/Height")
   public Pose3d getHeight() {
-    return new Pose3d(
-        0,
-        0,
-        io.positionRotationsToMetres(inputs.positionRotations),
-        new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
+    return new Pose3d(0, 0, inputs.positionMetres, new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }

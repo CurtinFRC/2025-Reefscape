@@ -62,8 +62,8 @@ public class ElevatorIOComp implements ElevatorIO {
     follower.setControl(followRequest);
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
-    inputs.positionRotations = position.getValueAsDouble();
-    inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
+    inputs.positionMetres = rotationsToMetres(position.getValueAsDouble());
+    inputs.velocityMetresPerSecond = rotationsToMetres(velocity.getValueAsDouble());
     inputs.hominSensor = reset.get();
   }
 
@@ -77,13 +77,7 @@ public class ElevatorIOComp implements ElevatorIO {
     motor.setPosition(0);
   }
 
-  @Override
-  public double positionRotationsToMetres(double rotations) {
+  private double rotationsToMetres(double rotations) {
     return rotations * Math.PI * 2 * pulleyRadiusMeters / gearing;
-  }
-
-  @Override
-  public double positionMetresToRotations(double metres) {
-    return metres / (Math.PI * 2 * pulleyRadiusMeters) * gearing;
   }
 }
