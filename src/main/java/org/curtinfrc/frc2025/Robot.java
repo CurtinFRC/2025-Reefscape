@@ -44,7 +44,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOComp;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOComp;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
