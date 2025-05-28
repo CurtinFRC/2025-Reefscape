@@ -29,6 +29,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -77,33 +78,34 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(3.5, 0, 0);
-  private final PIDController yController = new PIDController(3.5, 0, 0);
-  private final PIDController headingController = new PIDController(3.5, 0, 0);
+  private final TrapezoidProfile magnitudeProfile =
+      new TrapezoidProfile(
+          new TrapezoidProfile.Constraints(
+              getMaxLinearSpeedMetersPerSec(), MAX_LINEAR_ACCELERATION));
+  private final TrapezoidProfile headingController =
+      new TrapezoidProfile(
+          new TrapezoidProfile.Constraints(getMaxAngularSpeedRadPerSec(), ANGLE_MAX_ACCELERATION));
 
   private final PIDController xFollower = new PIDController(1, 0, 0);
   private final PIDController yFollower = new PIDController(1, 0, 0);
   private final PIDController headingFollower = new PIDController(1.5, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
-  public DriveSetpoints setpoint = DriveSetpoints.A;
+  public Pose2d setpoint = Pose2d.kZero;
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
   public Trigger atSetpoint =
       new Trigger(
-          () ->
-              xController.atSetpoint()
-                  && yController.atSetpoint()
-                  && headingController.atSetpoint());
-
-  @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
-  public Trigger almostAtSetpoint =
-      new Trigger(
-          () -> {
-            return getPose().minus(setpoint.getPose()).getTranslation().getNorm() < 1;
-          });
-
-  private final RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
+              () -> {
+                var error = setpoint.minus(getPose());
+                Logger.recordOutput("Drive/error", error);
+                var translationOk = Math.abs(error.getTranslation().getNorm()) < 0.03;
+                var rotationOk = Math.abs(error.getRotation().getRadians()) < 0.05;
+                Logger.recordOutput("Drive/translationOK", translationOk);
+                Logger.recordOutput("Drive/rotationOK", rotationOk);
+                return translationOk && rotationOk;
+              })
+          .debounce(0);
 
   public Drive(
       GyroIO gyroIO,
@@ -144,11 +146,6 @@ public class Drive extends SubsystemBase {
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
-
-    xController.setTolerance(0.02);
-    yController.setTolerance(0.02);
-    headingController.setTolerance(0.02);
-    headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -242,10 +239,6 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
-
-    Logger.recordOutput("xPidAtSetpoint", xController.atSetpoint());
-    Logger.recordOutput("yPidAtSetpoint", yController.atSetpoint());
-    Logger.recordOutput("omegaPidAtSetpoint", headingController.atSetpoint());
   }
 
   /**
@@ -664,7 +657,6 @@ public class Drive extends SubsystemBase {
       DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          this.setpoint = _setpoint.get();
           if (Math.abs(xSupplier.getAsDouble()) > 0.05
               || Math.abs(ySupplier.getAsDouble()) > 0.05
               || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
@@ -676,16 +668,29 @@ public class Drive extends SubsystemBase {
   }
 
   private void autoAlign(Pose2d _setpoint) {
-    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint);
+    setpoint = _setpoint;
     var robotPose = getPose();
+    var robotSpeed = getChassisSpeeds();
+    var robotSpeedV = new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond);
+
+    var mag =
+        magnitudeProfile.calculate(
+            0.02,
+            new State(robotPose.getTranslation().getNorm(), robotSpeedV.getNorm()),
+            new State(setpoint.getTranslation().getNorm(), 0));
+    var dir = setpoint.getTranslation().minus(robotPose.getTranslation()).getAngle();
+    var targetSpeed = new Translation2d(Math.abs(mag.velocity), dir);
 
     var omega =
         headingController.calculate(
-            getRotation().getRadians(), _setpoint.getRotation().getRadians());
-    var x = xController.calculate(robotPose.getX(), _setpoint.getX());
-    var y = yController.calculate(robotPose.getY(), _setpoint.getY());
+            0.02,
+            new State(getRotation().getRadians(), robotSpeed.omegaRadiansPerSecond),
+            new State(setpoint.getRotation().getRadians(), 0));
+
     runVelocity(
-        ChassisSpeeds.fromFieldRelativeSpeeds(-x, -y, -omega, getRotation()), new double[4]);
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            targetSpeed.getX(), targetSpeed.getY(), omega.velocity, getRotation()),
+        new double[4]);
   }
 
   public Command autoAlign(Supplier<Pose2d> _setpoint) {

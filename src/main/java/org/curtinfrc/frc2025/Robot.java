@@ -299,6 +299,8 @@ public class Robot extends LoggedRobot {
 
     autoChooser.addCmd("Test Auto", this::testAuto);
 
+    autoChooser.addCmd("Align to A", () -> drive.autoAlign(A::getPose));
+
     // Set up SysId routines
     autoChooser.addCmd(
         "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
