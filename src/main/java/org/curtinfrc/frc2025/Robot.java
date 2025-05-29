@@ -216,10 +216,14 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
-                  new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
-                  new VisionIOPhotonVisionSim(camera3Name, robotToCamera3, drive::getPose));
+                  new VisionIOPhotonVisionSim(
+                      camera0Name, robotToCamera0, drive::getSimGroundTruth),
+                  new VisionIOPhotonVisionSim(
+                      camera1Name, robotToCamera1, drive::getSimGroundTruth),
+                  new VisionIOPhotonVisionSim(
+                      camera2Name, robotToCamera2, drive::getSimGroundTruth),
+                  new VisionIOPhotonVisionSim(
+                      camera3Name, robotToCamera3, drive::getSimGroundTruth));
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
