@@ -36,6 +36,7 @@ public class ElevatorIOComp implements ElevatorIO {
   private final TalonFX follower = new TalonFX(FOLLOWER_ID);
 
   private DigitalInput reset = new DigitalInput(0);
+  private final DigitalInput safe = new DigitalInput(5);
 
   private final StatusSignal<Voltage> voltage = motor.getMotorVoltage();
   private final StatusSignal<Current> current = motor.getStatorCurrent();
@@ -62,6 +63,7 @@ public class ElevatorIOComp implements ElevatorIO {
     inputs.positionRotations = position.getValueAsDouble();
     inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
     inputs.hominSensor = reset.get();
+    inputs.safe = !safe.get();
   }
 
   @Override

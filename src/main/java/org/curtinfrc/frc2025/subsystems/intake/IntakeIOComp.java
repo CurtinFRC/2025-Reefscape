@@ -24,7 +24,6 @@ public class IntakeIOComp implements IntakeIO {
   private final TalonFX motor = new TalonFX(ID);
 
   private final DigitalInput frontSensor = new DigitalInput(3);
-  private final DigitalInput backSensor = new DigitalInput(5);
 
   private final StatusSignal<Voltage> voltage = motor.getMotorVoltage();
   private final StatusSignal<Current> current = motor.getStatorCurrent();
@@ -57,7 +56,6 @@ public class IntakeIOComp implements IntakeIO {
     inputs.positionRotations = position.getValueAsDouble();
     inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
     inputs.frontSensor = frontSensor.get();
-    inputs.backSensor = backSensor.get();
   }
 
   @Override

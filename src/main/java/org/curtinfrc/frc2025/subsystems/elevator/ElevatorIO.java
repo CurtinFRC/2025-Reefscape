@@ -11,6 +11,7 @@ public interface ElevatorIO {
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
     public boolean hominSensor;
+    public boolean safe;
   }
 
   public default void updateInputs(ElevatorIOInputs inputs) {}

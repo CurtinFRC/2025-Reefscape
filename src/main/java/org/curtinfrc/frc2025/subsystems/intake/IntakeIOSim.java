@@ -12,8 +12,6 @@ public class IntakeIOSim implements IntakeIO {
   private final DCMotorSim intakeMotorSim;
   private final SimDevice frontImpl;
   private final SimBoolean frontSensor;
-  private final SimDevice backImpl;
-  private final SimBoolean backSensor;
   private double volts = 0;
 
   public IntakeIOSim() {
@@ -22,8 +20,6 @@ public class IntakeIOSim implements IntakeIO {
 
     frontImpl = SimDevice.create("IntakeSensorFront", 3);
     frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
-    backImpl = SimDevice.create("IntakeSensorBack", 4);
-    backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
   }
 
   @Override
@@ -35,7 +31,6 @@ public class IntakeIOSim implements IntakeIO {
     inputs.positionRotations = intakeMotorSim.getAngularPositionRotations();
     inputs.angularVelocityRotationsPerMinute = intakeMotorSim.getAngularVelocityRPM();
     inputs.frontSensor = frontSensor.get();
-    inputs.backSensor = backSensor.get();
   }
 
   @Override

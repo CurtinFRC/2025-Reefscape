@@ -351,18 +351,12 @@ public class Robot extends LoggedRobot {
         .rightBumper()
         .or(controller.leftBumper())
         .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
         .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     controller
         .rightBumper()
@@ -381,21 +375,13 @@ public class Robot extends LoggedRobot {
     controller
         .leftBumper()
         .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow));
     controller
         .leftTrigger()
         .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller
-        .rightBumper()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh));
+    controller.rightBumper().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2));
+    controller.rightTrigger().and(override).whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3));
 
     controller
         .leftBumper()
@@ -415,13 +401,12 @@ public class Robot extends LoggedRobot {
             .stop()
             .andThen(
                 elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed)
                     .withTimeout(0.5)
                     .andThen(
                         Commands.parallel(
                             climber.engage(),
-                            elevator.goToClimberSetpoint(
-                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
+                            elevator.goToClimberSetpoint(ElevatorSetpoints.climbed)))
                     .until(elevator.atClimbSetpoint)
                     .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
 
@@ -430,7 +415,7 @@ public class Robot extends LoggedRobot {
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     elevator.setDefaultCommand(
         elevator
-            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+            .goToSetpoint(ElevatorSetpoints.BASE)
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
 
@@ -465,8 +450,7 @@ public class Robot extends LoggedRobot {
                             case K, L -> ElevatorSetpoints.AlgaePopLow;
                             default -> ElevatorSetpoints.AlgaePopLow;
                           };
-                        },
-                        intake.backSensor.negate()))
+                        }))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller
@@ -474,26 +458,24 @@ public class Robot extends LoggedRobot {
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
-    intake
-        .backSensor
+    elevator
+        .safe
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
         .whileTrue(ejector.eject(12));
 
-    intake
-        .backSensor
-        .negate()
+    elevator
+        .safe
         .and(intake.frontSensor.negate())
         .and(ejector.frontSensor.negate())
         .and(ejector.backSensor.negate())
         .whileTrue(leds.setPink())
         .whileFalse(leds.setGreen());
 
-    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
+    elevator.safe.and(ejector.frontSensor).whileTrue(ejector.stop());
 
-    intake
-        .backSensor
-        .negate()
+    elevator
+        .safe
         .and(ejector.frontSensor.negate())
         .and(ejector.backSensor)
         .and(elevator.isNotAtCollect.negate())
@@ -522,21 +504,18 @@ public class Robot extends LoggedRobot {
             Commands.sequence(
                 climber.disengage(),
                 climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
-                elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
+                elevator.goToSetpoint(ElevatorSetpoints.climbPrep)));
 
     controller // climb attempt
         .a()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
-                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
+                .goToSetpoint(ElevatorSetpoints.climbAttempt)
                 .until(elevator.atSetpoint)
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
-                .andThen(
-                    new ScheduleCommand(
-                        elevator.goToSetpoint(
-                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
+                .andThen(new ScheduleCommand(elevator.goToSetpoint(ElevatorSetpoints.climbPrep))));
 
     controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
@@ -627,12 +606,11 @@ public class Robot extends LoggedRobot {
         .until(drive.atSetpoint)
         .andThen(
             elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .goToSetpoint(ElevatorSetpoints.L2)
                 .until(elevator.atSetpoint)
                 .andThen(
                     Commands.parallel(
-                        elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
-                        ejector.eject(8))))
+                        elevator.goToSetpoint(ElevatorSetpoints.L2), ejector.eject(8))))
         .until(ejector.backSensor.negate());
   }
 
@@ -667,7 +645,7 @@ public class Robot extends LoggedRobot {
         .andThen(
             Commands.parallel(
                 drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+                elevator.goToSetpoint(point.elevatorSetpoint())))
         .withName("firststep")
         .until(elevator.atSetpoint)
         .withName("GetToAutoPosition")
@@ -675,7 +653,7 @@ public class Robot extends LoggedRobot {
             Commands.parallel(
                 drive.autoAlign(() -> point.driveSetpoint().getPose()),
                 ejector.eject(15).asProxy(),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
+                elevator.goToSetpoint(point.elevatorSetpoint())))
         .withName("Eject")
         .until(ejector.backSensor.negate())
         .withName("Eject")
@@ -684,7 +662,7 @@ public class Robot extends LoggedRobot {
 
   private Command intake(DriveSetpoints point) {
     return elevator
-        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+        .goToSetpoint(ElevatorSetpoints.BASE)
         .until(elevator.atSetpoint)
         .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
         .andThen(Commands.waitSeconds(1.5))
