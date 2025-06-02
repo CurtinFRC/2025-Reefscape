@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
@@ -156,8 +155,6 @@ public class Robot extends LoggedRobot {
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
-
-    DriverStation.waitForDsConnection(60);
 
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.robotType) {
