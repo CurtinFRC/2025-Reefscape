@@ -77,9 +77,23 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(3.5, 0, 0);
-  private final PIDController yController = new PIDController(3.5, 0, 0);
-  private final PIDController headingController = new PIDController(3.5, 0, 0);
+  private final ProfiledPIDController xController =
+      new ProfiledPIDController(
+          10,
+          0,
+          0,
+          new TrapezoidProfile.Constraints(
+              getMaxLinearSpeedMetersPerSec(), MAX_LINEAR_ACCELERATION));
+  private final ProfiledPIDController yController =
+      new ProfiledPIDController(
+          10,
+          0,
+          0,
+          new TrapezoidProfile.Constraints(
+              getMaxLinearSpeedMetersPerSec(), MAX_LINEAR_ACCELERATION));
+  private final ProfiledPIDController headingController =
+      new ProfiledPIDController(
+          10, 0, 0, new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
 
   private final PIDController xFollower = new PIDController(1, 0, 0);
   private final PIDController yFollower = new PIDController(1, 0, 0);
@@ -145,9 +159,9 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
-    xController.setTolerance(0.02);
-    yController.setTolerance(0.02);
-    headingController.setTolerance(0.02);
+    xController.setTolerance(0.01);
+    yController.setTolerance(0.01);
+    headingController.setTolerance(0.01);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);

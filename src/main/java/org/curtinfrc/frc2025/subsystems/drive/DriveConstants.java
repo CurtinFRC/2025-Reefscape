@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructGenerator;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -30,6 +31,10 @@ public final class DriveConstants {
   public static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   public static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   public static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+  public static final double KT = DCMotor.getKrakenX60Foc(1).KtNMPerAmp * 5.99;
+  // max acceleration = 4 * torque / r / robotWeight
+  // torque = kT * statorCurrentLimit * gearRatio
+  public static final double MAX_LINEAR_ACCELERATION = 4 * KT * 60 / 0.0508 / 38.5554;
   public static final double ODOMETRY_FREQUENCY =
       new CANBus(CompTunerConstants.DrivetrainConstants.CANBusName).isNetworkFD() ? 250.0 : 100.0;
   public static final double DRIVE_BASE_RADIUS =
