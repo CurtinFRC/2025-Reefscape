@@ -23,10 +23,7 @@ public class Autos {
   public static AutoRoutine path(String name, AutoFactory factory, Drive drive) {
     var routine = factory.newRoutine("follow" + name);
     var trajectory = routine.trajectory(name);
-    routine.active().onTrue(trajectory.cmd());
-    trajectory
-        .done()
-        .onTrue(drive.autoAlign(() -> trajectory.getFinalPose().get()).until(drive.atSetpoint));
+    routine.active().onTrue(factory.resetOdometry(name).andThen(trajectory.cmd()));
     return routine;
   }
 
