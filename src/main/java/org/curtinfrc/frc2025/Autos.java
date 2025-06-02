@@ -41,18 +41,17 @@ public class Autos {
                     waitSeconds(1),
                     parallel(
                             drive.autoAlign(() -> DriveSetpoints.G.getPose()),
-                            elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true))
+                            elevator.goToSetpoint(ElevatorSetpoints.L3))
                         .until(elevator.atSetpoint.and(drive.atSetpoint)),
                     parallel(
                             drive.autoAlign(() -> DriveSetpoints.G.getPose()),
-                            elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true),
+                            elevator.goToSetpoint(ElevatorSetpoints.L3),
                             ejector.eject(30))
                         .until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
                             ejector.eject(40),
-                            elevator.goToSetpoint(
-                                () -> ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()))
+                            elevator.goToSetpoint(() -> ElevatorSetpoints.AlgaePopLow))
                         .withTimeout(2)
                         .withName("AlgaePop"),
                     drive
@@ -76,7 +75,7 @@ public class Autos {
     //             .until(drive.atSetpoint)
     //             .andThen(
     //                 elevator
-    //                     .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+    //                     .goToSetpoint(ElevatorSetpoints.L3)
     //                     .until(elevator.atSetpoint)
     //                     .andThen(
     //                         parallel(ejector.eject(15)),
@@ -85,7 +84,7 @@ public class Autos {
     //                     .until(ejector.backSensor.negate()))
     //             .andThen(
     //                 elevator
-    //                     .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
+    //                     .goToSetpoint(ElevatorSetpoints.BASE)
     //                     .until(elevator.atSetpoint))
     //             .andThen(
     //                 parallel(drive.autoAlign(() -> DriveSetpoints.FAR.getPose()),
@@ -111,10 +110,7 @@ public class Autos {
                 .until(ejector.backSensor.negate()));
     trajectory
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
     return routine;
   }
 
@@ -140,10 +136,7 @@ public class Autos {
 
     startToFirst
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     firstToHP
         .done()
@@ -166,10 +159,7 @@ public class Autos {
 
     hpToSecond
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     return routine;
   }
@@ -199,10 +189,7 @@ public class Autos {
 
     startToFirst
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     firstToHP
         .done()
@@ -235,10 +222,7 @@ public class Autos {
 
     hpToSecond
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     hpToThird
         .done()
@@ -250,10 +234,7 @@ public class Autos {
                     ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
-                            elevator
-                                .goToSetpoint(
-                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
-                                .asProxy(),
+                            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow).asProxy(),
                             ejector.eject(30))
                         .withTimeout(1),
                     kToHp.cmd())
@@ -261,10 +242,7 @@ public class Autos {
 
     hpToThird
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     return routine;
   }
@@ -296,10 +274,7 @@ public class Autos {
 
     startToI
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     iToHp
         .done()
@@ -332,10 +307,7 @@ public class Autos {
 
     hpToJ
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     hpToL
         .done()
@@ -359,10 +331,7 @@ public class Autos {
 
     hpToL
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     hpToK
         .done()
@@ -374,10 +343,7 @@ public class Autos {
                     ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
-                            elevator
-                                .goToSetpoint(
-                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
-                                .asProxy(),
+                            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow).asProxy(),
                             ejector.eject(30))
                         .withTimeout(1),
                     kToHp.cmd())
@@ -385,10 +351,7 @@ public class Autos {
 
     hpToK
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     return routine;
   }
@@ -427,10 +390,7 @@ public class Autos {
 
     startToI
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     iToHp
         .done()
@@ -463,10 +423,7 @@ public class Autos {
 
     hpToJ
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     hpToL
         .done()
@@ -490,10 +447,7 @@ public class Autos {
 
     hpToL
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     hpToK
         .done()
@@ -505,10 +459,7 @@ public class Autos {
                     ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_LEFT::getPose),
-                            elevator
-                                .goToSetpoint(
-                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
-                                .asProxy(),
+                            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow).asProxy(),
                             ejector.eject(30))
                         .withTimeout(0.5),
                     kToHp.cmd())
@@ -516,10 +467,7 @@ public class Autos {
 
     hpToK
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     kToHp
         .done()
@@ -532,10 +480,7 @@ public class Autos {
 
     hpToK2
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     hpToK2
         .done()
@@ -586,10 +531,7 @@ public class Autos {
 
     startToF
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     fToHp
         .done()
@@ -622,10 +564,7 @@ public class Autos {
 
     hpToE
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     hpToD
         .done()
@@ -649,10 +588,7 @@ public class Autos {
 
     hpToD
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     hpToC
         .done()
@@ -664,10 +600,7 @@ public class Autos {
                     ejector.eject(20).until(ejector.backSensor.negate()),
                     parallel(
                             drive.autoAlign(DriveSetpoints.CLOSE_RIGHT::getPose),
-                            elevator
-                                .goToSetpoint(
-                                    ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate())
-                                .asProxy(),
+                            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow).asProxy(),
                             ejector.eject(30))
                         .withTimeout(0.5),
                     cToHp.cmd())
@@ -675,10 +608,7 @@ public class Autos {
 
     hpToC
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
 
     cToHp
         .done()
@@ -691,10 +621,7 @@ public class Autos {
 
     hpToC2
         .atTime("RaiseElevator")
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
+        .onTrue(elevator.goToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
 
     hpToC2
         .done()
