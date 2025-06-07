@@ -86,24 +86,21 @@ public class Drive extends SubsystemBase {
   private final PIDController headingFollower = new PIDController(1.5, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
-  public DriveSetpoints setpoint = DriveSetpoints.A;
+  public Pose2d setpoint = Pose2d.kZero;
 
   @AutoLogOutput(key = "Drive/AtSetpoint")
   public Trigger atSetpoint =
       new Trigger(
-          () ->
-              xController.atSetpoint()
-                  && yController.atSetpoint()
-                  && headingController.atSetpoint());
-
-  @AutoLogOutput(key = "Drive/AlmostAtSetpoint")
-  public Trigger almostAtSetpoint =
-      new Trigger(
-          () -> {
-            return getPose().minus(setpoint.getPose()).getTranslation().getNorm() < 1;
-          });
-
-  private final RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
+              () -> {
+                var error = setpoint.minus(getPose());
+                Logger.recordOutput("Drive/error", error);
+                var translationOk = Math.abs(error.getTranslation().getNorm()) < 0.03;
+                var rotationOk = Math.abs(error.getRotation().getRadians()) < 0.05;
+                Logger.recordOutput("Drive/translationOK", translationOk);
+                Logger.recordOutput("Drive/rotationOK", rotationOk);
+                return translationOk && rotationOk;
+              })
+          .debounce(0);
 
   public Drive(
       GyroIO gyroIO,
@@ -242,10 +239,6 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.getMode() != Mode.SIM);
-
-    Logger.recordOutput("xPidAtSetpoint", xController.atSetpoint());
-    Logger.recordOutput("yPidAtSetpoint", yController.atSetpoint());
-    Logger.recordOutput("omegaPidAtSetpoint", headingController.atSetpoint());
   }
 
   /**
@@ -663,7 +656,6 @@ public class Drive extends SubsystemBase {
       DoubleSupplier omegaSupplier) {
     return run(
         () -> {
-          this.setpoint = _setpoint.get();
           if (Math.abs(xSupplier.getAsDouble()) > 0.05
               || Math.abs(ySupplier.getAsDouble()) > 0.05
               || Math.abs(omegaSupplier.getAsDouble()) > 0.05) {
@@ -675,8 +667,8 @@ public class Drive extends SubsystemBase {
   }
 
   private void autoAlign(Pose2d _setpoint) {
-    Logger.recordOutput("Drive/AutoAlignSetpoint", _setpoint);
     var robotPose = getPose();
+    setpoint = _setpoint;
 
     var omega =
         headingController.calculate(
