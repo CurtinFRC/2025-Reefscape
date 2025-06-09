@@ -1,5 +1,6 @@
 package org.curtinfrc.frc2025;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints.*;
 import static org.curtinfrc.frc2025.subsystems.vision.VisionConstants.*;
 
@@ -16,15 +17,14 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import java.util.List;
+import java.util.function.Supplier;
 import org.curtinfrc.frc2025.Constants.Mode;
-import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
 import org.curtinfrc.frc2025.generated.DevTunerConstants;
 import org.curtinfrc.frc2025.subsystems.climber.Climber;
@@ -61,7 +61,6 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
-import org.curtinfrc.frc2025.util.ButtonBoard;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -92,12 +91,10 @@ public class Robot extends LoggedRobot {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final Alert controllerDisconnected =
       new Alert("Driver controller disconnected!", AlertType.kError);
-  private final ButtonBoard board = new ButtonBoard(1);
 
   // Auto stuff
   private final AutoChooser autoChooser;
   private final AutoFactory factory;
-  // private final Autos autos;
 
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
@@ -294,8 +291,6 @@ public class Robot extends LoggedRobot {
     autoChooser.addRoutine(
         "Five Piece Right", () -> Autos.fivePieceRight(factory, drive, ejector, elevator, intake));
 
-    autoChooser.addCmd("Test Auto", this::testAuto);
-
     // Set up SysId routines
     autoChooser.addCmd(
         "Drive Wheel Radius Characterization", () -> drive.wheelRadiusCharacterization());
@@ -331,185 +326,25 @@ public class Robot extends LoggedRobot {
     RobotModeTriggers.autonomous()
         .whileTrue(autoChooser.selectedCommandScheduler().withName("AutoCMD"));
 
-    // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    drive
-        .atSetpoint
-        .and(elevator.atSetpoint)
-        .and(elevator.isNotAtCollect)
-        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
-
-    drive.atSetpoint.whileTrue(leds.setBlue());
-
-    controller
-        .rightBumper()
-        .or(controller.leftBumper())
-        .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .or(controller.leftTrigger())
-        .and(override.negate())
-        .whileTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
-                .until(ejector.backSensor.negate()));
-
-    controller
-        .rightBumper()
-        .or(controller.rightTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
-    controller
-        .leftBumper()
-        .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
-    controller
-        .leftTrigger()
-        .and(override)
-        .whileTrue(
-            elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller
-        .rightBumper()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller
-        .rightTrigger()
-        .and(override)
-        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
-
-    controller
-        .leftBumper()
-        .or(controller.leftTrigger())
-        .and(override.negate())
-        .whileTrue(
-            drive
-                .autoAlignWithOverride(
-                    () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
-                .until(ejector.backSensor.negate()));
-
-    climber.stalled.onTrue(
-        climber
-            .stop()
-            .andThen(
-                elevator
-                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
-                    .withTimeout(0.5)
-                    .andThen(
-                        Commands.parallel(
-                            climber.engage(),
-                            elevator.goToClimberSetpoint(
-                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
-                    .until(elevator.atClimbSetpoint)
-                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
-
     intake.setDefaultCommand(intake.intake());
-    ejector.setDefaultCommand(
-        ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+
+    ejector.setDefaultCommand(ejector.stop());
+
     elevator.setDefaultCommand(
-        elevator
-            .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-            .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        elevator.goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate()));
+
     climber.setDefaultCommand(climber.stop());
 
-    ejector.backSensor.onFalse(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-    intake.frontSensor.onTrue(
-        Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
-            .withTimeout(0.5)
-            .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
-
-    controller
-        .leftStick()
-        .and(override.negate())
-        .whileTrue(
-            Commands.parallel(
-                    drive.autoAlignWithOverride(
-                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
-                    ejector.eject(40),
-                    elevator.goToSetpoint(
-                        () -> {
-                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
-                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
-                            case C, D -> ElevatorSetpoints.AlgaePopLow;
-                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
-                            case G, H -> ElevatorSetpoints.AlgaePopLow;
-                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
-                            case K, L -> ElevatorSetpoints.AlgaePopLow;
-                            default -> ElevatorSetpoints.AlgaePopLow;
-                          };
-                        },
-                        intake.backSensor.negate()))
-                .withName("AlgaePop")
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller
-        .rightStick()
-        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller.povUp().whileTrue(intake.intake(-4));
-
-    intake
-        .backSensor
-        .and(elevator.isNotAtCollect.negate())
-        .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(12));
-
-    intake
-        .backSensor
-        .negate()
-        .and(intake.frontSensor.negate())
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor.negate())
-        .whileTrue(leds.setPink())
-        .whileFalse(leds.setGreen());
-
-    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
-
-    intake
-        .backSensor
-        .negate()
-        .and(ejector.frontSensor.negate())
-        .and(ejector.backSensor)
-        .and(elevator.isNotAtCollect.negate())
-        .whileTrue(
-            ejector
-                .eject(-2)
-                .until(ejector.frontSensor)
-                .andThen(ejector.stop())
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-
-    ejector.backSensor.whileTrue(intake.stop());
-
-    // Reset gyro to 0° when B button is pressed
     controller
         .y()
         .onTrue(
-            Commands.runOnce(
+            runOnce(
                     () ->
                         drive.setPose(
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
@@ -518,7 +353,7 @@ public class Robot extends LoggedRobot {
     controller
         .x()
         .onTrue(
-            Commands.sequence(
+            sequence(
                 climber.disengage(),
                 climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
                 elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
@@ -537,7 +372,132 @@ public class Robot extends LoggedRobot {
                         elevator.goToSetpoint(
                             ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
-    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller.b().onTrue(runOnce(() -> overridden = !overridden));
+
+    controller
+        .rightStick()
+        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    controller.povUp().whileTrue(intake.intake(-4));
+
+    controller
+        .rightBumper()
+        .or(controller.leftBumper())
+        .and(override.negate())
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L2).until(ejector.backSensor.negate()));
+    controller
+        .rightTrigger()
+        .or(controller.leftTrigger())
+        .and(override.negate())
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L3).until(ejector.backSensor.negate()));
+
+    controller
+        .rightBumper()
+        .or(controller.rightTrigger())
+        .and(override.negate())
+        .whileTrue(
+            autoAlignWithOverride(() -> DriveSetpoints.closest(drive::getPose, rightSetpoints))
+                .until(ejector.backSensor.negate()));
+
+    controller
+        .leftBumper()
+        .or(controller.leftTrigger())
+        .and(override.negate())
+        .whileTrue(
+            autoAlignWithOverride(() -> DriveSetpoints.closest(drive::getPose, leftSetpoints))
+                .until(ejector.backSensor.negate()));
+
+    controller
+        .leftStick()
+        .and(override.negate())
+        .whileTrue(
+            parallel(
+                    autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints)),
+                    ejector.eject(40),
+                    elevator.goToSetpoint(
+                        () -> {
+                          return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
+                            case A, B -> ElevatorSetpoints.AlgaePopHigh;
+                            case C, D -> ElevatorSetpoints.AlgaePopLow;
+                            case E, F -> ElevatorSetpoints.AlgaePopHigh;
+                            case G, H -> ElevatorSetpoints.AlgaePopLow;
+                            case I, J -> ElevatorSetpoints.AlgaePopHigh;
+                            case K, L -> ElevatorSetpoints.AlgaePopLow;
+                            default -> ElevatorSetpoints.AlgaePopLow;
+                          };
+                        },
+                        intake.backSensor.negate()))
+                .withName("AlgaePop")
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
+    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
+    controller
+        .leftBumper()
+        .and(override)
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.AlgaePopLow));
+    controller
+        .leftTrigger()
+        .and(override)
+        .whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.AlgaePopHigh));
+    controller.rightBumper().and(override).whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L2));
+    controller.rightTrigger().and(override).whileTrue(elevatorGoToSetpoint(ElevatorSetpoints.L3));
+
+    drive
+        .atSetpoint
+        .and(elevator.atSetpoint)
+        .and(elevator.isNotAtCollect)
+        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
+
+    climber.stalled.onTrue(
+        climber
+            .stop()
+            .andThen(
+                elevator
+                    .goToClimberSetpoint(ElevatorSetpoints.climbed, intake.backSensor.negate())
+                    .withTimeout(0.5)
+                    .andThen(
+                        parallel(
+                            climber.engage(),
+                            elevator.goToClimberSetpoint(
+                                ElevatorSetpoints.climbed, intake.backSensor.negate())))
+                    .until(elevator.atClimbSetpoint)
+                    .andThen(parallel(climber.engage(), elevator.stop().repeatedly()))));
+
+    ejector.backSensor.onFalse(
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+    intake.frontSensor.onTrue(
+        run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
+            .withTimeout(0.5)
+            .andThen(runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
+
+    intake
+        .backSensor
+        .negate()
+        .and(intake.frontSensor.negate())
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor.negate())
+        .whileTrue(leds.setPink())
+        .whileFalse(leds.setGreen());
+
+    intake
+        .backSensor
+        .and(elevator.isNotAtCollect.negate())
+        .and(elevator.atSetpoint)
+        .whileTrue(ejector.eject(12));
+
+    intake.backSensor.negate().and(ejector.frontSensor).whileTrue(ejector.stop());
+
+    intake
+        .backSensor
+        .negate()
+        .and(ejector.frontSensor.negate())
+        .and(ejector.backSensor)
+        .and(elevator.isNotAtCollect.negate())
+        .whileTrue(ejector.eject(-2).until(ejector.frontSensor).andThen(ejector.stop()));
+
+    ejector.backSensor.whileTrue(intake.stop());
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
@@ -620,73 +580,15 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {}
 
-  public Command onePiece() {
-    return drive
-        .autoAlign(() -> DriveSetpoints.C.getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
-                .until(elevator.atSetpoint)
-                .andThen(
-                    Commands.parallel(
-                        elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()),
-                        ejector.eject(8))))
-        .until(ejector.backSensor.negate());
+  public Command elevatorGoToSetpoint(ElevatorSetpoints setpoint) {
+    return elevator.goToSetpoint(setpoint, intake.frontSensor.negate());
   }
 
-  public Command testAuto() {
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.K));
-  }
-
-  public Command threeCoralRight() {
-    // E F B
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.E))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.F)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.B)))
-        .andThen(intake(DriveSetpoints.RIGHT_HP));
-  }
-
-  public Command threeCoralLeft() {
-    // I J A
-    return node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.I))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.J)))
-        .andThen(intake(DriveSetpoints.LEFT_HP))
-        .andThen(node(new Setpoint(ElevatorSetpoints.L2, DriveSetpoints.A)))
-        .andThen(intake(DriveSetpoints.LEFT_HP));
-  }
-
-  private Command node(Setpoint point) {
-    return drive
-        .autoAlign(() -> point.driveSetpoint().getPose())
-        .until(drive.atSetpoint)
-        .andThen(
-            Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("firststep")
-        .until(elevator.atSetpoint)
-        .withName("GetToAutoPosition")
-        .andThen(
-            Commands.parallel(
-                drive.autoAlign(() -> point.driveSetpoint().getPose()),
-                ejector.eject(15).asProxy(),
-                elevator.goToSetpoint(point.elevatorSetpoint(), intake.backSensor.negate())))
-        .withName("Eject")
-        .until(ejector.backSensor.negate())
-        .withName("Eject")
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
-
-  private Command intake(DriveSetpoints point) {
-    return elevator
-        .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
-        .until(elevator.atSetpoint)
-        .andThen(drive.autoAlign(() -> point.getPose()).until(intake.frontSensor))
-        .andThen(Commands.waitSeconds(1.5))
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+  public Command autoAlignWithOverride(Supplier<DriveSetpoints> setpointSupplier) {
+    return drive.autoAlignWithOverride(
+        setpointSupplier,
+        () -> -controller.getLeftY(),
+        () -> -controller.getLeftX(),
+        () -> -controller.getRightX());
   }
 }
