@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -25,6 +24,7 @@ public class Elevator extends SubsystemBase {
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
+  public final Trigger safe = new Trigger(() -> inputs.safe);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
   public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
   public final Trigger algaePop =
@@ -53,7 +53,7 @@ public class Elevator extends SubsystemBase {
     // }
   }
 
-  public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {
+  public Command goToSetpoint(Supplier<ElevatorSetpoints> point) {
     return Commands.either(
             run(
                 () -> {
@@ -68,12 +68,12 @@ public class Elevator extends SubsystemBase {
                   io.setVoltage(out);
                 }),
             Commands.none(),
-            safe)
+            () -> inputs.safe)
         .repeatedly()
         .withName("GoToSetpoint");
   }
 
-  public Command goToSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
+  public Command goToSetpoint(ElevatorSetpoints point) {
     return Commands.either(
             run(
                 () -> {
@@ -88,12 +88,12 @@ public class Elevator extends SubsystemBase {
                   io.setVoltage(out);
                 }),
             Commands.none(),
-            safe)
+            () -> inputs.safe)
         .repeatedly()
         .withName("GoToSetpoint");
   }
 
-  public Command goToClimberSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {
+  public Command goToClimberSetpoint(ElevatorSetpoints point) {
     return Commands.either(
         run(
             () -> {
@@ -104,7 +104,7 @@ public class Elevator extends SubsystemBase {
               io.setVoltage(MathUtil.clamp(out, -4, 4));
             }),
         Commands.none(),
-        safe);
+        () -> inputs.safe);
   }
 
   public Command zero() {
