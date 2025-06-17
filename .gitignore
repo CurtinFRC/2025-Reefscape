@@ -188,3 +188,4 @@ src/main/java/org/curtinfrc/frc2025/BuildConstants.java
 
 # Eclipse generated annotation processor file
 /.factorypath
+/workspace
