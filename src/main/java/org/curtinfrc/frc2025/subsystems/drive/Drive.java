@@ -684,7 +684,8 @@ public class Drive extends SubsystemBase {
             getRotation().getRadians(), _setpoint.getRotation().getRadians());
     var x = xController.calculate(robotPose.getX(), _setpoint.getX());
     var y = yController.calculate(robotPose.getY(), _setpoint.getY());
-    runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(x, y, omega, getRotation()), new double[4]);
+    runVelocity(
+        ChassisSpeeds.fromFieldRelativeSpeeds(-x, -y, -omega, getRotation()), new double[4]);
   }
 
   public Command autoAlign(Supplier<Pose2d> _setpoint) {
