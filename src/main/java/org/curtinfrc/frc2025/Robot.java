@@ -174,7 +174,8 @@ public class Robot extends LoggedRobot {
                   drive::addVisionMeasurement,
                   new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOPhotonVision(camera1Name, robotToCamera1),
-                  new VisionIOPhotonVision(camera2Name, robotToCamera2),
+                  // new VisionIOPhotonVision(camera2Name, robotToCamera2),
+                  new VisionIO() {},
                   new VisionIOPhotonVision(camera3Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
@@ -336,9 +337,9 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
+            () -> controller.getRightX()));
 
     drive
         .atSetpoint
