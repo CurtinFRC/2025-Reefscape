@@ -7,7 +7,7 @@
       "ModuleId": 0,
       "Encoder": {
         "Id": 8,
-        "Name": "FLEnccoder",
+        "Name": "FL Encoder",
         "Model": "CANCoder vers. H",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -15,7 +15,7 @@
         "IsStandaloneFx": false
       },
       "SteerMotor": {
-        "Id": 0,
+        "Id": 10,
         "Name": "FL Turn",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
@@ -29,8 +29,8 @@
         "IsStandaloneFx": false
       },
       "DriveMotor": {
-        "Id": 1,
-        "Name": "FLDrive",
+        "Id": 3,
+        "Name": "FL Drive",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -45,13 +45,13 @@
       "IsEncoderInverted": false,
       "IsSteerInverted": true,
       "SelectedEncoderType": "CANcoder",
-      "EncoderOffset": -0.270263671875,
+      "EncoderOffset": 0.0087890625,
       "DriveMotorSelectionState": 1,
       "SteerMotorSelectionState": 1,
       "SteerEncoderSelectionState": 1,
       "IsModuleValidationComplete": true,
-      "ValidatedSteerId": 0,
-      "ValidatedDriveId": 1,
+      "ValidatedSteerId": 10,
+      "ValidatedDriveId": 3,
       "ValidatedEncoderId": 8
     },
     {
@@ -59,7 +59,7 @@
       "ModuleId": 1,
       "Encoder": {
         "Id": 6,
-        "Name": "FREncoder",
+        "Name": "FR Encoder",
         "Model": "CANCoder vers. H",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -68,7 +68,7 @@
       },
       "SteerMotor": {
         "Id": 30,
-        "Name": "FRTurn",
+        "Name": "FR Turn",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -82,7 +82,7 @@
       },
       "DriveMotor": {
         "Id": 15,
-        "Name": "FRDrive",
+        "Name": "FR Drive",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -97,7 +97,7 @@
       "IsEncoderInverted": false,
       "IsSteerInverted": true,
       "SelectedEncoderType": "CANcoder",
-      "EncoderOffset": 0.40869140625,
+      "EncoderOffset": 0.396484375,
       "DriveMotorSelectionState": 1,
       "SteerMotorSelectionState": 1,
       "SteerEncoderSelectionState": 1,
@@ -111,7 +111,7 @@
       "ModuleId": 2,
       "Encoder": {
         "Id": 4,
-        "Name": "BLEncoder",
+        "Name": "BL Encoder",
         "Model": "CANCoder vers. H",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -120,7 +120,7 @@
       },
       "SteerMotor": {
         "Id": 5,
-        "Name": "BLTurn",
+        "Name": "BL Turn",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -134,7 +134,7 @@
       },
       "DriveMotor": {
         "Id": 45,
-        "Name": "BLDrive",
+        "Name": "BL Drive",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -149,7 +149,7 @@
       "IsEncoderInverted": false,
       "IsSteerInverted": true,
       "SelectedEncoderType": "CANcoder",
-      "EncoderOffset": -0.419677734375,
+      "EncoderOffset": -0.4189453125,
       "DriveMotorSelectionState": 1,
       "SteerMotorSelectionState": 1,
       "SteerEncoderSelectionState": 1,
@@ -163,7 +163,7 @@
       "ModuleId": 3,
       "Encoder": {
         "Id": 2,
-        "Name": "BREncoder",
+        "Name": "BR Encoder",
         "Model": "CANCoder vers. H",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -171,8 +171,8 @@
         "IsStandaloneFx": false
       },
       "SteerMotor": {
-        "Id": 10,
-        "Name": "BRTurn",
+        "Id": 0,
+        "Name": "BR Turn",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -185,8 +185,8 @@
         "IsStandaloneFx": false
       },
       "DriveMotor": {
-        "Id": 3,
-        "Name": "BRDrive",
+        "Id": 1,
+        "Name": "BR Drive",
         "Model": "Talon FX vers. C",
         "CANbus": "5006E79E463847532020204B17080DFF",
         "CANbusFriendly": "Drivebase",
@@ -201,13 +201,13 @@
       "IsEncoderInverted": false,
       "IsSteerInverted": true,
       "SelectedEncoderType": "CANcoder",
-      "EncoderOffset": 0.2578125,
+      "EncoderOffset": -0.01513671875,
       "DriveMotorSelectionState": 1,
       "SteerMotorSelectionState": 1,
       "SteerEncoderSelectionState": 1,
       "IsModuleValidationComplete": true,
-      "ValidatedSteerId": 10,
-      "ValidatedDriveId": 3,
+      "ValidatedSteerId": 0,
+      "ValidatedDriveId": 1,
       "ValidatedEncoderId": 2
     }
   ],
@@ -223,11 +223,11 @@
       "IsStandaloneFx": false
     },
     "IsValidGyroCANbus": true,
-    "VerticalTrackSizeInches": 16.457,
-    "HorizontalTrackSizeInches": 17.835,
+    "VerticalTrackSizeInches": 16.5,
+    "HorizontalTrackSizeInches": 18.0,
     "WheelRadiusInches": 2.0,
-    "IsLeftSideInverted": false,
-    "IsRightSideInverted": true,
+    "IsLeftSideInverted": true,
+    "IsRightSideInverted": false,
     "SwerveModuleType": 4,
     "SwerveModuleConfiguration": {
       "ModuleBrand": 4,
