@@ -44,7 +44,7 @@ import org.curtinfrc.frc2025.subsystems.ejector.EjectorIO;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOComp;
 import org.curtinfrc.frc2025.subsystems.ejector.EjectorIOSim;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIO;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOComp;
 import org.curtinfrc.frc2025.subsystems.elevator.ElevatorIOSim;
@@ -280,6 +280,13 @@ public class Robot extends LoggedRobot {
             true,
             drive,
             drive::logTrajectory);
+
+    autoChooser.addCmd(
+        "Elevator L2",
+        () -> elevator.goToSetpoint(ElevatorSetpoints.L2, () -> true).until(elevator.atSetpoint));
+    autoChooser.addCmd(
+        "Elevator L3",
+        () -> elevator.goToSetpoint(ElevatorSetpoints.L3, () -> true).until(elevator.atSetpoint));
 
     autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
     autoChooser.addRoutine(
