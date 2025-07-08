@@ -77,8 +77,8 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-  private final PIDController xController = new PIDController(3.5, 0, 0);
-  private final PIDController yController = new PIDController(3.5, 0, 0);
+  private final PIDController xController = new PIDController(2, 0, 0);
+  private final PIDController yController = new PIDController(2, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
   private final PIDController xFollower = new PIDController(1, 0, 0);
