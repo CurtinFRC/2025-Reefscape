@@ -8,8 +8,8 @@ public interface ElevatorIO {
   public static class ElevatorIOInputs {
     public double appliedVolts;
     public double currentAmps;
-    public double positionRotations;
-    public double angularVelocityRotationsPerMinute;
+    public double positionMetres;
+    public double velocityMetresPerSecond;
     public boolean hominSensor;
   }
 
@@ -17,13 +17,7 @@ public interface ElevatorIO {
 
   public default void setVoltage(double volts) {}
 
+  public default void setPosition(double positionMetres) {}
+
   public default void zero() {}
-
-  public default double positionRotationsToMetres(double rotations) {
-    return rotations;
-  }
-
-  public default double positionMetresToRotations(double metres) {
-    return metres;
-  }
 }

@@ -14,7 +14,7 @@ import org.curtinfrc.frc2025.subsystems.drive.Drive;
 import org.curtinfrc.frc2025.subsystems.drive.DriveConstants.DriveSetpoints;
 import org.curtinfrc.frc2025.subsystems.ejector.Ejector;
 import org.curtinfrc.frc2025.subsystems.elevator.Elevator;
-import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpoints;
+import org.curtinfrc.frc2025.subsystems.elevator.Elevator.ElevatorSetpoints;
 import org.curtinfrc.frc2025.subsystems.intake.Intake;
 
 public class Autos {
