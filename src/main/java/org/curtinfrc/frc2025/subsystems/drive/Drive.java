@@ -23,6 +23,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -44,6 +45,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
@@ -74,7 +76,8 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition(),
         new SwerveModulePosition()
       };
-  private SwerveDrivePoseEstimator poseEstimator =
+  private final Optional<SwerveDriveOdometry> simGroundTruth;
+  private final SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
   private final PIDController xController = new PIDController(2, 0, 0);
@@ -151,6 +154,15 @@ public class Drive extends SubsystemBase {
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);
+
+    if (Constants.getMode() == Constants.Mode.SIM) {
+      simGroundTruth =
+          Optional.of(
+              new SwerveDriveOdometry(
+                  kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero));
+    } else {
+      simGroundTruth = Optional.empty();
+    }
   }
 
   public void followTrajectory(SwerveSample sample) {
@@ -238,6 +250,9 @@ public class Drive extends SubsystemBase {
 
       // Apply update
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+      if (Constants.getMode() == Constants.Mode.SIM) {
+        simGroundTruth.get().update(rawGyroRotation, modulePositions);
+      }
     }
 
     // Update gyro alert
@@ -690,5 +705,12 @@ public class Drive extends SubsystemBase {
 
   public Command autoAlign(Supplier<Pose2d> _setpoint) {
     return run(() -> autoAlign(_setpoint.get())).withName("AutoAlign");
+  }
+
+  public Pose2d getSimGroundTruth() {
+    if (Constants.getMode() != Constants.Mode.SIM) {
+      throw new RuntimeException("You may only use sim ground truth in sim");
+    }
+    return simGroundTruth.get().getPoseMeters();
   }
 }
