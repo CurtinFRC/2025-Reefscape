@@ -2,6 +2,7 @@ package org.curtinfrc.frc2025.subsystems.processor;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class Processor extends SubsystemBase {
   private final ProcessorIO io;
@@ -11,20 +12,32 @@ public class Processor extends SubsystemBase {
     this.io = io;
   }
 
-  // public final Trigger processorSensor = new Trigger(() -> inputs.processorSensor);
+  public final Trigger processorSensor = new Trigger(() -> inputs.processorSensor);
 
   @Override
   public void periodic() {}
 
-  public Command stop() {
-    return run(() -> io.setVoltage(0));
+  public Command stopIntakeAlgae() {
+    return run(() -> io.intakeSetVoltage(0));
   }
 
-  public Command intake(double volts) {
-    return run(() -> io.setVoltage(volts));
+  public Command intakeAlgae(double volts) {
+    return run(() -> io.intakeSetVoltage(volts));
   }
 
-  public Command intake() {
-    return run(() -> io.setVoltage(3));
+  public Command intakeAlgae() {
+    return run(() -> io.intakeSetVoltage(3)); // change voltage
+  }
+
+  public Command stopArm() {
+    return run(() -> io.armSetVoltage(0));
+  }
+
+  public Command runArm(double volts) {
+    return run(() -> io.armSetVoltage(volts));
+  }
+
+  public Command runArm() {
+    return run(() -> io.armSetVoltage(3)); // change voltage
   }
 }
