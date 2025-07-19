@@ -8,38 +8,52 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class ProcessorIOSim implements ProcessorIO {
-  private final DCMotor processorMotor = DCMotor.getNEO(1);
-  private final DCMotorSim processorMotorSim;
-  private final SimDevice frontImpl;
-  private final SimBoolean frontSensor;
-  private final SimDevice backImpl;
-  private final SimBoolean backSensor;
-  private double volts = 0;
+  private final DCMotor processorArmMotor = DCMotor.getNEO(1);
+  private final DCMotorSim processorArmMotorSim;
+  private final DCMotor processorIntakeMotor = DCMotor.getNEO(1);
+  private final DCMotorSim processorIntakeMotorSim;
+  private final SimDevice sensorImpl;
+  private final SimBoolean processorSensor;
+  private double armVolts = 0;
+  private double intakeVolts = 0;
 
   public ProcessorIOSim() {
-    processorMotorSim =
-        new DCMotorSim(LinearSystemId.createDCMotorSystem(processorMotor, 3, 1), processorMotor);
+    processorArmMotorSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(processorArmMotor, 3, 1), processorArmMotor);
+    processorIntakeMotorSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(processorIntakeMotor, 3, 1), processorIntakeMotor);
 
-    frontImpl = SimDevice.create("ProcessorSensorFront", 3);
-    frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
-    backImpl = SimDevice.create("ProcessorSensorBack", 4);
-    backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    sensorImpl = SimDevice.create("ProcessorSensorFront", 3);
+    processorSensor = sensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
   }
 
   @Override
   public void updateInputs(ProcessorIOInputs inputs) {
-    processorMotorSim.setInputVoltage(volts);
-    processorMotorSim.update(0.02);
-    // inputs.appliedVolts = processorMotorSim.getInputVoltage();
-    // inputs.currentAmps = processorMotorSim.getCurrentDrawAmps();
-    // inputs.positionRotations = processorMotorSim.getAngularPositionRotations();
-    // inputs.angularVelocityRotationsPerMinute = processorMotorSim.getAngularVelocityRPM();
-    // inputs.frontSensor = frontSensor.get();
-    // inputs.backSensor = backSensor.get();
+    processorArmMotorSim.setInputVoltage(armVolts);
+    processorArmMotorSim.update(0.02);
+    processorIntakeMotorSim.setInputVoltage(intakeVolts);
+    processorIntakeMotorSim.update(0.02);
+    inputs.armAppliedVolts = processorArmMotorSim.getInputVoltage();
+    inputs.armCurrentAmps = processorArmMotorSim.getCurrentDrawAmps();
+    inputs.armPositionRotations = processorArmMotorSim.getAngularPositionRotations();
+    inputs.armAngularVelocityRotationsPerMinute = processorArmMotorSim.getAngularVelocityRPM();
+    inputs.intakeAppliedVolts = processorIntakeMotorSim.getInputVoltage();
+    inputs.intakeCurrentAmps = processorIntakeMotorSim.getCurrentDrawAmps();
+    inputs.intakePositionRotations = processorIntakeMotorSim.getAngularPositionRotations();
+    inputs.intakeAngularVelocityRotationsPerMinute =
+        processorIntakeMotorSim.getAngularVelocityRPM();
+    inputs.processorSensor = processorSensor.get();
   }
 
   @Override
-  public void setVoltage(double volts) {
-    this.volts = volts;
+  public void armSetVoltage(double volts) {
+    this.armVolts = volts;
+  }
+
+  @Override
+  public void intakeSetVoltage(double volts) {
+    this.intakeVolts = volts;
   }
 }
