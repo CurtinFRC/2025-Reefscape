@@ -20,6 +20,7 @@ import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
 public final class DriveConstants {
   public static final double coralOffset = 0.32 / 2;
+  public static final double l1Offset = 45.5;
   public static final double algaeOffset = 0.155;
   public static final double DEADBAND = 0;
   public static final double ANGLE_KP = 5.0;
@@ -48,16 +49,28 @@ public final class DriveConstants {
 
   public static enum DriveSetpoints implements StructSerializable {
     A(aprilTagLayout.getTagPose(18).get(), true, coralOffset),
+    A_LEFTL1(aprilTagLayout.getTagPose(18).get(), true, l1Offset),
+    A_RIGHTL1(aprilTagLayout.getTagPose(18).get(), false, l1Offset),
     B(aprilTagLayout.getTagPose(18).get(), false, coralOffset),
     C(aprilTagLayout.getTagPose(17).get(), true, coralOffset),
+    C_LEFTL1(aprilTagLayout.getTagPose(17).get(), true, l1Offset),
+    C_RIGHTL1(aprilTagLayout.getTagPose(17).get(), false, l1Offset),
     D(aprilTagLayout.getTagPose(17).get(), false, coralOffset),
     E(aprilTagLayout.getTagPose(22).get(), true, coralOffset),
+    E_LEFTL1(aprilTagLayout.getTagPose(22).get(), true, l1Offset),
+    E_RIGHTL1(aprilTagLayout.getTagPose(22).get(), false, l1Offset),
     F(aprilTagLayout.getTagPose(22).get(), false, coralOffset),
     G(aprilTagLayout.getTagPose(21).get(), true, coralOffset),
+    G_LEFTL1(aprilTagLayout.getTagPose(21).get(), true, l1Offset),
+    G_RIGHTL1(aprilTagLayout.getTagPose(21).get(), false, l1Offset),
     H(aprilTagLayout.getTagPose(21).get(), false, coralOffset),
     I(aprilTagLayout.getTagPose(20).get(), true, coralOffset),
+    I_LEFTL1(aprilTagLayout.getTagPose(20).get(), true, l1Offset),
+    I_RIGHTL1(aprilTagLayout.getTagPose(20).get(), false, l1Offset),
     J(aprilTagLayout.getTagPose(20).get(), false, coralOffset),
     K(aprilTagLayout.getTagPose(19).get(), true, coralOffset),
+    K_LEFTL1(aprilTagLayout.getTagPose(19).get(), true, l1Offset),
+    K_RIGHTL1(aprilTagLayout.getTagPose(19).get(), false, l1Offset),
     L(aprilTagLayout.getTagPose(19).get(), false, coralOffset),
     CLOSE(aprilTagLayout.getTagPose(18).get(), true, algaeOffset),
     CLOSE_LEFT(aprilTagLayout.getTagPose(19).get(), true, algaeOffset),
@@ -192,6 +205,42 @@ public final class DriveConstants {
       }
       if (desiredPose.equals(CLOSE_LEFT.getPose())) {
         return CLOSE_LEFT;
+      }
+      if (desiredPose.equals(A_LEFTL1.getPose())) {
+        return A_LEFTL1;
+      }
+      if (desiredPose.equals(A_RIGHTL1.getPose())) {
+        return A_RIGHTL1;
+      }
+      if (desiredPose.equals(C_LEFTL1.getPose())) {
+        return C_LEFTL1;
+      }
+      if (desiredPose.equals(C_RIGHTL1.getPose())) {
+        return C_RIGHTL1;
+      }
+      if (desiredPose.equals(E_LEFTL1.getPose())) {
+        return E_LEFTL1;
+      }
+      if (desiredPose.equals(E_RIGHTL1.getPose())) {
+        return E_RIGHTL1;
+      }
+      if (desiredPose.equals(G_LEFTL1.getPose())) {
+        return G_LEFTL1;
+      }
+      if (desiredPose.equals(G_RIGHTL1.getPose())) {
+        return G_RIGHTL1;
+      }
+      if (desiredPose.equals(I_LEFTL1.getPose())) {
+        return I_LEFTL1;
+      }
+      if (desiredPose.equals(I_RIGHTL1.getPose())) {
+        return I_RIGHTL1;
+      }
+      if (desiredPose.equals(K_LEFTL1.getPose())) {
+        return K_LEFTL1;
+      }
+      if (desiredPose.equals(K_RIGHTL1.getPose())) {
+        return K_RIGHTL1;
       }
       throw new IllegalStateException("No matching setpoint found!");
     }
