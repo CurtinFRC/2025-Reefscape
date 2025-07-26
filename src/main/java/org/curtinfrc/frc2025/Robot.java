@@ -10,8 +10,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -102,6 +105,7 @@ public class Robot extends LoggedRobot {
 
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
+  private final List<Pose2d> l1Setpoints;
   private final List<Pose2d> algaeSetpoints;
 
   @AutoLogOutput(key = "Robot/Overridden")
@@ -154,9 +158,14 @@ public class Robot extends LoggedRobot {
 
     SignalLogger.start();
     SignalLogger.setPath("/U/logs");
+    DataLogManager.start();
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
+
+    if (!RobotBase.isSimulation()) {
+      DriverStation.waitForDsConnection(300);
+    }
 
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.robotType) {
@@ -261,6 +270,21 @@ public class Robot extends LoggedRobot {
 
     rightSetpoints =
         List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
+
+    l1Setpoints =
+        List.of(
+            A_LEFTL1.getPose(),
+            A_RIGHTL1.getPose(),
+            C_LEFTL1.getPose(),
+            C_RIGHTL1.getPose(),
+            E_LEFTL1.getPose(),
+            E_RIGHTL1.getPose(),
+            G_LEFTL1.getPose(),
+            G_RIGHTL1.getPose(),
+            I_LEFTL1.getPose(),
+            I_RIGHTL1.getPose(),
+            K_LEFTL1.getPose(),
+            K_RIGHTL1.getPose());
 
     algaeSetpoints =
         List.of(
@@ -374,9 +398,9 @@ public class Robot extends LoggedRobot {
             drive
                 .autoAlignWithOverride(
                     () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+                    () -> controller.getLeftY(),
+                    () -> controller.getLeftX(),
+                    () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
     controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
@@ -407,9 +431,9 @@ public class Robot extends LoggedRobot {
             drive
                 .autoAlignWithOverride(
                     () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+                    () -> controller.getLeftY(),
+                    () -> controller.getLeftX(),
+                    () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
@@ -446,15 +470,15 @@ public class Robot extends LoggedRobot {
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
     controller
-        .leftStick()
+        .povLeft()
         .and(override.negate())
         .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
                         () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> controller.getRightX()),
                     ejector.eject(40),
                     elevator.goToSetpoint(
                         () -> {
@@ -471,8 +495,30 @@ public class Robot extends LoggedRobot {
                         intake.backSensor.negate()))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
     controller
-        .rightStick()
+        .povRight()
+        .and(override.negate())
+        .whileTrue(
+            Commands.sequence(
+                Commands.parallel(
+                        drive.autoAlignWithOverride(
+                            () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
+                            () -> controller.getLeftY(),
+                            () -> controller.getLeftX(),
+                            () -> controller.getRightX()),
+                        elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()))
+                    .until(elevator.atSetpoint.and(drive.atSetpoint)),
+                Commands.parallel(
+                    drive.autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> controller.getRightX()),
+                    elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
+                    ejector.eject(25))));
+    controller
+        .leftStick()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 
