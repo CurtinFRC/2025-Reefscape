@@ -1,0 +1,34 @@
+apply plugin: 'java-library'
+apply plugin: 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin'
+
+repositories {
+    mavenCentral()
+}
+wpilibRepositories.addAllReleaseRepositories(project)
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+// Apply Java configuration
+dependencies {
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2025.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2025.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2025.+'
+    implementation 'edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2025.+'
+    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2025.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2025.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-jni:2025.+'
+    implementation 'edu.wpi.first.hal:hal-java:2025.+'
+
+    api "com.fasterxml.jackson.core:jackson-annotations:2.15.2"
+    api "com.fasterxml.jackson.core:jackson-core:2.15.2"
+    api "com.fasterxml.jackson.core:jackson-databind:2.15.2"
+
+    implementation 'com.google.code.gson:gson:2.11.0'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
