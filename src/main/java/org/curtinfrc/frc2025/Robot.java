@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -65,6 +64,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
+import org.curtinfrc.frc2025.util.ContextfulXboxController;
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -92,8 +92,17 @@ public class Robot extends LoggedRobot {
   private Ejector ejector;
   private Climber climber;
 
+  @AutoLogOutput(key = "Robot/Overridden")
+  private boolean overridden = false;
+
+  @AutoLogOutput(key = "Robot/Overide")
+  private final Trigger override = new Trigger(() -> overridden);
+
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  private final ContextfulXboxController controller =
+      new ContextfulXboxController(0, override.negate());
+  private final ContextfulXboxController manualController =
+      new ContextfulXboxController(0, override);
   private final Alert controllerDisconnected =
       new Alert("Driver controller disconnected!", AlertType.kError);
   private final ButtonBoard board = new ButtonBoard(1);
@@ -107,12 +116,6 @@ public class Robot extends LoggedRobot {
   private final List<Pose2d> rightSetpoints;
   private final List<Pose2d> l1Setpoints;
   private final List<Pose2d> algaeSetpoints;
-
-  @AutoLogOutput(key = "Robot/Overridden")
-  private boolean overridden = false;
-
-  @AutoLogOutput(key = "Robot/Overide")
-  private final Trigger override = new Trigger(() -> overridden);
 
   public Robot() {
     // Record metadata
@@ -376,7 +379,6 @@ public class Robot extends LoggedRobot {
     controller
         .rightBumper()
         .or(controller.leftBumper())
-        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
@@ -384,7 +386,6 @@ public class Robot extends LoggedRobot {
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
-        .and(override.negate())
         .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
@@ -393,7 +394,6 @@ public class Robot extends LoggedRobot {
     controller
         .rightBumper()
         .or(controller.rightTrigger())
-        .and(override.negate())
         .whileTrue(
             drive
                 .autoAlignWithOverride(
@@ -403,30 +403,25 @@ public class Robot extends LoggedRobot {
                     () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
-    controller.leftBumper().or(controller.leftTrigger()).and(override).whileTrue(ejector.eject(30));
-    controller
+    manualController.leftBumper().or(controller.leftTrigger()).whileTrue(ejector.eject(30));
+    manualController
         .leftBumper()
-        .and(override)
         .whileTrue(
             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopLow, intake.backSensor.negate()));
-    controller
+    manualController
         .leftTrigger()
-        .and(override)
         .whileTrue(
             elevator.goToSetpoint(ElevatorSetpoints.AlgaePopHigh, intake.backSensor.negate()));
-    controller
+    manualController
         .rightBumper()
-        .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
-    controller
+    manualController
         .rightTrigger()
-        .and(override)
         .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
 
     controller
         .leftBumper()
         .or(controller.leftTrigger())
-        .and(override.negate())
         .whileTrue(
             drive
                 .autoAlignWithOverride(
@@ -471,7 +466,6 @@ public class Robot extends LoggedRobot {
 
     controller
         .povLeft()
-        .and(override.negate())
         .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
@@ -518,9 +512,10 @@ public class Robot extends LoggedRobot {
                     elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
                     ejector.eject(25))));
     controller
-        .leftStick()
+        .rightStickRaw()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-    controller.povUp().whileTrue(intake.intake(-4));
+
+    controller.povUpRaw().whileTrue(intake.intake(-4));
 
     intake
         .backSensor
@@ -556,7 +551,7 @@ public class Robot extends LoggedRobot {
 
     // Reset gyro to 0° when B button is pressed
     controller
-        .y()
+        .yRaw()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -565,7 +560,7 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
     controller
-        .x()
+        .xRaw()
         .onTrue(
             Commands.sequence(
                 climber.disengage(),
@@ -573,7 +568,7 @@ public class Robot extends LoggedRobot {
                 elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
 
     controller // climb attempt
-        .a()
+        .aRaw()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
@@ -586,7 +581,7 @@ public class Robot extends LoggedRobot {
                         elevator.goToSetpoint(
                             ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
-    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller.bRaw().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
