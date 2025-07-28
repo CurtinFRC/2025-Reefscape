@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -62,6 +61,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
+import org.curtinfrc.frc2025.util.ContextfulXboxController;
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -72,7 +72,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
-import org.curtinfrc.frc2025.util.ContextfulXboxController;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -97,8 +96,10 @@ public class Robot extends LoggedRobot {
   private final Trigger override = new Trigger(() -> overridden);
 
   // Controller
-  private final ContextfulXboxController controller = new ContextfulXboxController(0, override.negate());
-  private final ContextfulXboxController manualController = new ContextfulXboxController(0, override);
+  private final ContextfulXboxController controller =
+      new ContextfulXboxController(0, override.negate());
+  private final ContextfulXboxController manualController =
+      new ContextfulXboxController(0, override);
   private final Alert controllerDisconnected =
       new Alert("Driver controller disconnected!", AlertType.kError);
   private final ButtonBoard board = new ButtonBoard(1);
@@ -111,7 +112,6 @@ public class Robot extends LoggedRobot {
   private final List<Pose2d> leftSetpoints;
   private final List<Pose2d> rightSetpoints;
   private final List<Pose2d> algaeSetpoints;
-
 
   public Robot() {
     // Record metadata
@@ -362,7 +362,7 @@ public class Robot extends LoggedRobot {
     controller
         .rightTrigger()
         .or(controller.leftTrigger())
-         .whileTrue(
+        .whileTrue(
             elevator
                 .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
                 .until(ejector.backSensor.negate()));
@@ -519,14 +519,14 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
     manualController
-    .y()
-    .onTrue(
-        Commands.runOnce(
-                () ->
-                    drive.setPose(
-                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                drive)
-            .ignoringDisable(true));
+        .y()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                    drive)
+                .ignoringDisable(true));
     controller
         .x()
         .onTrue(
