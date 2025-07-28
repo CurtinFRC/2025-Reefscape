@@ -466,15 +466,10 @@ public class Robot extends LoggedRobot {
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller
-        .rightStick()
+        .rightStickRaw()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
-    manualController
-        .rightStick()
-        .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-
-    controller.povUp().whileTrue(intake.intake(-4));
-    manualController.povUp().whileTrue(intake.intake(-4));
+    controller.povUpRaw().whileTrue(intake.intake(-4));
 
     intake
         .backSensor
@@ -510,16 +505,7 @@ public class Robot extends LoggedRobot {
 
     // Reset gyro to 0° when B button is pressed
     controller
-        .y()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
-                .ignoringDisable(true));
-    manualController
-        .y()
+        .yRaw()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -528,14 +514,7 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
     controller
-        .x()
-        .onTrue(
-            Commands.sequence(
-                climber.disengage(),
-                climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
-                elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
-    manualController
-        .x()
+        .xRaw()
         .onTrue(
             Commands.sequence(
                 climber.disengage(),
@@ -543,20 +522,7 @@ public class Robot extends LoggedRobot {
                 elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
 
     controller // climb attempt
-        .a()
-        .and(() -> climber.climberDeployed)
-        .onTrue(
-            elevator
-                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
-                .until(elevator.atSetpoint)
-                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
-                .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
-                .andThen(
-                    new ScheduleCommand(
-                        elevator.goToSetpoint(
-                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
-    manualController // climb attempt
-        .a()
+        .aRaw()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
@@ -569,8 +535,7 @@ public class Robot extends LoggedRobot {
                         elevator.goToSetpoint(
                             ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
 
-    controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
-    manualController.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
+    controller.bRaw().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
   }
