@@ -24,7 +24,7 @@ public class EjectorIOComp implements EjectorIO {
   private static final int ID = 53;
   private static final int FOLLOWER_ID = 46;
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60);
   private static final TalonFXConfiguration leaderConfig =
       new TalonFXConfiguration()
           .withMotorOutput(
