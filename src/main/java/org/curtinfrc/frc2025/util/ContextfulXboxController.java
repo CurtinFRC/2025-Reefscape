@@ -7,10 +7,10 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.BooleanSupplier;
 
 /* All the Triggers check for the context as they should
-* activate based on the controller state. None of the methods that return a
-* (non-trigger) value don't check the context as they return values from the
-* physical controller which isn't dependent on the context.
-*/
+ * activate based on the controller state. None of the methods that return a
+ * (non-trigger) value don't check the context as they return values from the
+ * physical controller which isn't dependent on the context.
+ */
 public class ContextfulXboxController {
 
   private final CommandXboxController xboxController;
@@ -180,7 +180,7 @@ public class ContextfulXboxController {
   public Trigger pov(int angle) {
     return xboxController.pov(angle).and(context);
   }
-  
+
   public Trigger povRaw(int angle) {
     return xboxController.pov(angle);
   }
@@ -204,7 +204,7 @@ public class ContextfulXboxController {
   public Trigger axisLessThan(int axis, double threshold) {
     return xboxController.axisLessThan(axis, threshold).and(context);
   }
-  
+
   public Trigger axisLessThanRaw(int axis, double threshold) {
     return xboxController.axisLessThan(axis, threshold);
   }
@@ -216,7 +216,7 @@ public class ContextfulXboxController {
   public Trigger axisLessThanRaw(int axis, double threshold, EventLoop loop) {
     return xboxController.axisLessThan(axis, threshold, loop);
   }
-  
+
   public Trigger axisGreaterThan(int axis, double threshold) {
     return xboxController.axisGreaterThan(axis, threshold).and(context);
   }
