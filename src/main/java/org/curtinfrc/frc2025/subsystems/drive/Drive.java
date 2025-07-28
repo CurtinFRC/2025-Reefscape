@@ -189,7 +189,7 @@ public class Drive extends SubsystemBase {
             headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
             getRotation());
 
-    runVelocity(speeds, new double[4]);
+    runVelocity(new ChassisSpeeds(), feedforwards);
   }
 
   @Override

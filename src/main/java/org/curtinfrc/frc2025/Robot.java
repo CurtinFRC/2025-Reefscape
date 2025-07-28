@@ -65,6 +65,7 @@ import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
+import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
@@ -329,9 +330,9 @@ public class Robot extends LoggedRobot {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         drive.joystickDrive(
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
+            () -> controller.getRightX()));
 
     drive
         .atSetpoint
@@ -486,7 +487,13 @@ public class Robot extends LoggedRobot {
                     elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
                     ejector.eject(25))));
     controller
-        .leftStick()
+        .povLeft()
+        .and(
+            controller
+                .rightBumper()
+                .or(controller.leftBumper())
+                .or(controller.rightTrigger())
+                .or(controller.leftTrigger()))
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
 

@@ -140,7 +140,6 @@ public class AutoTrajectory {
           (Trajectory<DifferentialSample>) trajectory;
       differentialLogger.accept(differentialTrajectory, starting);
     }
-    ;
   }
 
   private void cmdInitialize() {
@@ -151,6 +150,7 @@ public class AutoTrajectory {
     isCompleted = false;
     logTrajectory(true);
     routine.updateIdle(false);
+    cmdExecute();
   }
 
   @SuppressWarnings("unchecked")
