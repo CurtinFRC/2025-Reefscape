@@ -551,7 +551,7 @@ public class Robot extends LoggedRobot {
                 .andThen(ejector.stop())
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
-    intake.motorStalled.whileTrue(intake.intake());
+    intake.motorStalled.whileTrue(intake.intake(-4));
     ejector.backSensor.whileTrue(intake.stop());
 
     // Reset gyro to 0° when B button is pressed
