@@ -9,22 +9,21 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
-
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 
 public class ProcessorIOComp implements ProcessorIO {
   private static final int ID = 0;
   private static final CurrentLimitsConfigs currentLimits =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
-    
+
   private final TalonFX armMotor = new TalonFX(ID); // change later
   private final SparkMax intakeMotor = new SparkMax(0, MotorType.kBrushless);
   private final DigitalInput processorSensor = new DigitalInput(0); // change later
@@ -42,6 +41,7 @@ public class ProcessorIOComp implements ProcessorIO {
 
   private final VoltageOut armVoltageRequest = new VoltageOut(0).withEnableFOC(true);
   private double intakeVoltageRequest = 0;
+
   public ProcessorIOComp() {
     tryUntilOk(
         5,
