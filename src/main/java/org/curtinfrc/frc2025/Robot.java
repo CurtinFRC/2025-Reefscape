@@ -421,22 +421,23 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getRightX())
                 .until(ejector.backSensor.negate()));
     controller
-        .a() // change this
-        .negate()
-        .whileTrue(Commands.run(() -> processor.runArm(2)));
+        .rightStick()
+        .and(() -> !processor.processorSensor.getAsBoolean())
+        .whileTrue(
+            Commands.parallel(
+                Commands.run(() -> processor.runArm(4)) // TODO: Change values
+                    .finallyDo(() -> processor.stopArm()),
+                Commands.run(() -> processor.runIntake(4)) // TODO: Change values
+                    .finallyDo(() -> processor.stopIntake())));
     controller
-        .b() // change this
-        .negate()
-        .whileTrue(Commands.run(() -> processor.runArm(-2)));
-    controller
-        .x() // change this
-        .negate()
-        .whileTrue(Commands.run(() -> processor.intakeAlgae(2)));
-    controller
-        .y() // change this
-        .negate()
-        .whileTrue(Commands.run(() -> processor.intakeAlgae(-2)));
-
+        .rightStick()
+        .and(() -> processor.processorSensor.getAsBoolean())
+        .whileTrue(
+            Commands.parallel(
+                Commands.run(() -> processor.runArm(-4)) // TODO: Change values
+                    .finallyDo(() -> processor.stopArm()),
+                Commands.run(() -> processor.runIntake(-4)) // TODO: Change values
+                    .finallyDo(() -> processor.stopIntake())));
     climber.stalled.onTrue(
         climber
             .stop()
