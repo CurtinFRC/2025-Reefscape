@@ -17,15 +17,15 @@ public class Processor extends SubsystemBase {
   @Override
   public void periodic() {}
 
-  public Command stopIntakeAlgae() {
+  public Command stopIntake() {
     return run(() -> io.intakeSetVoltage(0));
   }
 
-  public Command intakeAlgae(double volts) {
+  public Command runIntake(double volts) {
     return run(() -> io.intakeSetVoltage(volts));
   }
 
-  public Command intakeAlgae() {
+  public Command runIntake() {
     return run(() -> io.intakeSetVoltage(3)); // change voltage
   }
 
