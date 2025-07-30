@@ -420,6 +420,22 @@ public class Robot extends LoggedRobot {
                     () -> -controller.getLeftX(),
                     () -> -controller.getRightX())
                 .until(ejector.backSensor.negate()));
+    controller
+        .a() // change this
+        .negate()
+        .whileTrue(Commands.run(() -> processor.runArm(2)));
+    controller
+        .b() // change this
+        .negate()
+        .whileTrue(Commands.run(() -> processor.runArm(-2)));
+    controller
+        .x() // change this
+        .negate()
+        .whileTrue(Commands.run(() -> processor.intakeAlgae(2)));
+    controller
+        .y() // change this
+        .negate()
+        .whileTrue(Commands.run(() -> processor.intakeAlgae(-2)));
 
     climber.stalled.onTrue(
         climber
@@ -484,7 +500,6 @@ public class Robot extends LoggedRobot {
         .rightStick()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
-
     intake
         .backSensor
         .and(elevator.isNotAtCollect.negate())
@@ -516,7 +531,6 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     ejector.backSensor.whileTrue(intake.stop());
-
     // Reset gyro to 0° when B button is pressed
     controller
         .y()

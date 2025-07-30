@@ -34,10 +34,11 @@ public class ProcessorIOComp implements ProcessorIO {
   private final StatusSignal<Angle> armPosition = armMotor.getPosition();
   private final StatusSignal<AngularVelocity> armVelocity = armMotor.getVelocity();
 
-  private final double intakeVoltage = intakeMotor.getAppliedOutput();
-  private final double intakeCurrent = intakeMotor.getOutputCurrent();
-  private final double intakePosition = intakeMotor.getEncoder().getPosition();
-  private final double intakeVelocity = intakeMotor.getEncoder().getVelocity();
+  // Updated in updateInputs not sure what to do
+  // private final double intakeVoltage = intakeMotor.getAppliedOutput();
+  // private final double intakeCurrent = intakeMotor.getOutputCurrent();
+  // private final double intakePosition = intakeMotor.getEncoder().getPosition();
+  // private final double intakeVelocity = intakeMotor.getEncoder().getVelocity();
 
   private final VoltageOut armVoltageRequest = new VoltageOut(0).withEnableFOC(true);
   private double intakeVoltageRequest = 0;
@@ -68,10 +69,10 @@ public class ProcessorIOComp implements ProcessorIO {
     inputs.armCurrentAmps = armCurrent.getValueAsDouble();
     inputs.armPositionRotations = armPosition.getValueAsDouble();
     inputs.armAngularVelocityRotationsPerMinute = armVelocity.getValueAsDouble();
-    inputs.intakeAppliedVolts = intakeVoltage;
-    inputs.intakeCurrentAmps = intakeCurrent;
-    inputs.intakePositionRotations = intakePosition;
-    inputs.intakeAngularVelocityRotationsPerMinute = intakeVelocity;
+    inputs.intakeAppliedVolts = intakeMotor.getAppliedOutput();
+    inputs.intakeCurrentAmps = intakeMotor.getOutputCurrent();
+    inputs.intakePositionRotations = intakeMotor.getEncoder().getPosition();
+    inputs.intakeAngularVelocityRotationsPerMinute = intakeMotor.getEncoder().getVelocity();
     inputs.processorSensor = processorSensor.get();
   }
 
