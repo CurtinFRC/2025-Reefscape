@@ -425,19 +425,12 @@ public class Robot extends LoggedRobot {
         .and(() -> !processor.processorSensor.getAsBoolean())
         .whileTrue(
             Commands.parallel(
-                Commands.run(() -> processor.runArm(4)) // TODO: Change values
-                    .finallyDo(() -> processor.stopArm()),
-                Commands.run(() -> processor.runIntake(4)) // TODO: Change values
-                    .finallyDo(() -> processor.stopIntake())));
+                processor.runArm(4), // Just use the command directly
+                processor.runIntake(4)));
     controller
         .rightStick()
         .and(() -> processor.processorSensor.getAsBoolean())
-        .whileTrue(
-            Commands.parallel(
-                Commands.run(() -> processor.runArm(-4)) // TODO: Change values
-                    .finallyDo(() -> processor.stopArm()),
-                Commands.run(() -> processor.runIntake(-4)) // TODO: Change values
-                    .finallyDo(() -> processor.stopIntake())));
+        .whileTrue(Commands.parallel(processor.runArm(-4), processor.runIntake(-4)));
     climber.stalled.onTrue(
         climber
             .stop()
@@ -461,6 +454,7 @@ public class Robot extends LoggedRobot {
             .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
+    processor.setDefaultCommand(Commands.parallel(processor.stopArm(), processor.stopIntake()));
 
     ejector.backSensor.onFalse(
         Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
