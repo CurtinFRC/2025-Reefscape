@@ -15,20 +15,9 @@ public class LEDsIOComp implements LEDsIO {
   public void updateInputs(LEDsIOInputs inputs) {
     inputs.currentColour = currentColour;
     switch (currentColour) {
-      case PINK:
-        LEDController.set(0.57);
-        break;
-
-      case GREEN:
-        LEDController.set(0.77);
-        break;
-
-      case BLUE:
-        LEDController.set(0.83);
-        break;
-
-      default:
-        break;
+      case PINK -> LEDController.set(0.57);
+      case GREEN -> LEDController.set(0.77);
+      case BLUE -> LEDController.set(0.83);
     }
   }
 
