@@ -8,6 +8,7 @@ public interface ProcessorIO {
     public double armAppliedVolts;
     public double armCurrentAmps;
     public double armPositionRotations;
+    public double armAbsolutePosition;
     public double armAngularVelocityRotationsPerMinute;
     public double intakeAppliedVolts;
     public double intakeCurrentAmps;

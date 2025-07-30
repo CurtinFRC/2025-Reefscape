@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -20,24 +21,23 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 
 public class ProcessorIOComp implements ProcessorIO {
-  private static final int ID = 0;
+  private static final int armMotorID = 0;
+  private static final int armEncoderID = 0; // TODO: Use correct CAN ID
   private static final CurrentLimitsConfigs currentLimits =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
 
-  private final TalonFX armMotor = new TalonFX(ID); // change later
+  private final TalonFX armMotor = new TalonFX(armMotorID);
+  private final CANcoder armEncoder = new CANcoder(armEncoderID);
   private final SparkMax intakeMotor = new SparkMax(0, MotorType.kBrushless);
-  private final DigitalInput processorSensor = new DigitalInput(0); // change later
+  private final DigitalInput processorSensor = new DigitalInput(0); // TODO: change later
 
+  // private final StatusSignal<Angle> armAbsolutePosition =
+  // armAbsoluteEncoder.getAbsolutePosition();
   private final StatusSignal<Voltage> armVoltage = armMotor.getMotorVoltage();
   private final StatusSignal<Current> armCurrent = armMotor.getStatorCurrent();
   private final StatusSignal<Angle> armPosition = armMotor.getPosition();
+  private final StatusSignal<Angle> armAbsolutePosition = armEncoder.getAbsolutePosition();
   private final StatusSignal<AngularVelocity> armVelocity = armMotor.getVelocity();
-
-  // Updated in updateInputs not sure what to do
-  // private final double intakeVoltage = intakeMotor.getAppliedOutput();
-  // private final double intakeCurrent = intakeMotor.getOutputCurrent();
-  // private final double intakePosition = intakeMotor.getEncoder().getPosition();
-  // private final double intakeVelocity = intakeMotor.getEncoder().getVelocity();
 
   private final VoltageOut armVoltageRequest = new VoltageOut(0).withEnableFOC(true);
   private double intakeVoltageRequest = 0;
@@ -54,11 +54,12 @@ public class ProcessorIOComp implements ProcessorIO {
                             new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                         .withCurrentLimits(currentLimits)));
     BaseStatusSignal.setUpdateFrequencyForAll(
-        20.0, armVelocity, armVoltage, armCurrent, armPosition);
+        20.0, armVelocity, armVoltage, armCurrent, armPosition, armAbsolutePosition);
     armMotor.optimizeBusUtilization();
 
     // Register signals to be updated
-    PhoenixUtil.registerSignals(false, armVelocity, armVoltage, armCurrent, armPosition);
+    PhoenixUtil.registerSignals(
+        false, armVelocity, armVoltage, armCurrent, armPosition, armAbsolutePosition);
   }
 
   @Override
@@ -68,6 +69,7 @@ public class ProcessorIOComp implements ProcessorIO {
     inputs.armAppliedVolts = armVoltage.getValueAsDouble();
     inputs.armCurrentAmps = armCurrent.getValueAsDouble();
     inputs.armPositionRotations = armPosition.getValueAsDouble();
+    inputs.armAbsolutePosition = armAbsolutePosition.getValueAsDouble();
     inputs.armAngularVelocityRotationsPerMinute = armVelocity.getValueAsDouble();
     inputs.intakeAppliedVolts = intakeMotor.getAppliedOutput();
     inputs.intakeCurrentAmps = intakeMotor.getOutputCurrent();
