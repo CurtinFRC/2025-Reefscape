@@ -1,10 +1,10 @@
 package org.curtinfrc.frc2025.subsystems.processor;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.Logger;
-import edu.wpi.first.math.controller.PIDController;
 
 public class Processor extends SubsystemBase {
   private final ProcessorIO io;
@@ -24,35 +24,52 @@ public class Processor extends SubsystemBase {
   }
 
   public Command goToPosition(double desiredPosition) {
-    return run(() -> {
-      var currentPosition = inputs.armAbsolutePosition;
-      var output = controller.calculate(currentPosition, desiredPosition);
-      Logger.recordOutput("processor/desiredPosition", desiredPosition);
-      io.armSetVoltage(output);
-    });
+    return run(
+        () -> {
+          var currentPosition = inputs.armAbsolutePosition;
+          var output = controller.calculate(currentPosition, desiredPosition);
+          Logger.recordOutput("processor/desiredPosition", desiredPosition);
+          io.armSetVoltage(output);
+        });
   }
 
-  public Command stopIntake() {
-    return run(() -> io.intakeSetVoltage(0));
+  public void stopIntake() {
+    io.intakeSetVoltage(0);
   }
 
-  public Command runIntake(double volts) {
-    return run(() -> io.intakeSetVoltage(volts));
-  }
-
-  public Command runIntake() {
-    return run(() -> io.intakeSetVoltage(3)); // change voltage
+  public void runIntake(double volts) {
+    io.intakeSetVoltage(volts);
   }
 
   public Command stopArm() {
     return run(() -> io.armSetVoltage(0));
   }
 
-  public Command runArm(double volts) {
-    return run(() -> io.armSetVoltage(volts));
+  public void runArm(double volts) {
+    io.armSetVoltage(volts);
   }
 
-  public Command runArm() {
-    return run(() -> io.armSetVoltage(3)); // change voltage
+  public Command intake() {
+    return run(
+        () -> {
+          goToPosition(99);
+          runIntake(4);
+        });
+  }
+
+  public Command outake() {
+    return run(
+        () -> {
+          goToPosition(0);
+          runIntake(-4);
+        });
+  }
+
+  public Command idle() {
+    return run(
+        () -> {
+          goToPosition(0);
+          stopIntake();
+        });
   }
 }
