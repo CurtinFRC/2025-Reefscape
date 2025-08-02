@@ -58,6 +58,10 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.leds.LEDs;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
+import org.curtinfrc.frc2025.subsystems.processor.Processor;
+import org.curtinfrc.frc2025.subsystems.processor.ProcessorIO;
+import org.curtinfrc.frc2025.subsystems.processor.ProcessorIOComp;
+import org.curtinfrc.frc2025.subsystems.processor.ProcessorIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -87,6 +91,7 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
+  private Processor processor;
   private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
@@ -188,6 +193,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVision(camera3Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
+          processor = new Processor(new ProcessorIOComp());
           ejector = new Ejector(new EjectorIOComp());
           climber = new Climber(new ClimberIOComp());
           leds = new LEDs(new LEDsIOComp());
@@ -211,6 +217,7 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIO() {});
+          processor = new Processor(new ProcessorIO() {});
           ejector = new Ejector(new EjectorIO() {});
           climber = new Climber(new ClimberIO() {});
           leds = new LEDs(new LEDsIO() {});
@@ -234,6 +241,7 @@ public class Robot extends LoggedRobot {
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
+          processor = new Processor(new ProcessorIOSim() {});
           ejector = new Ejector(new EjectorIOSim());
           climber = new Climber(new ClimberIOSim());
           leds = new LEDs(new LEDsIO() {});
@@ -258,6 +266,7 @@ public class Robot extends LoggedRobot {
 
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
+      processor = new Processor(new ProcessorIO() {});
       ejector = new Ejector(new EjectorIO() {});
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
@@ -435,7 +444,14 @@ public class Robot extends LoggedRobot {
                     () -> controller.getLeftX(),
                     () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
-
+    controller
+        .rightStick()
+        .and(() -> !processor.processorSensor.getAsBoolean())
+        .whileTrue(processor.intake());
+    controller
+        .rightStick()
+        .and(() -> processor.processorSensor.getAsBoolean())
+        .whileTrue(processor.outake());
     climber.stalled.onTrue(
         climber
             .stop()
@@ -459,6 +475,7 @@ public class Robot extends LoggedRobot {
             .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
+    processor.setDefaultCommand(processor.idle());
 
     ejector.backSensor.onFalse(
         Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
@@ -521,7 +538,6 @@ public class Robot extends LoggedRobot {
         .leftStick()
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     controller.povUp().whileTrue(intake.intake(-4));
-
     intake
         .backSensor
         .and(elevator.isNotAtCollect.negate())
@@ -553,7 +569,6 @@ public class Robot extends LoggedRobot {
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
     ejector.backSensor.whileTrue(intake.stop());
-
     // Reset gyro to 0° when B button is pressed
     controller
         .y()
