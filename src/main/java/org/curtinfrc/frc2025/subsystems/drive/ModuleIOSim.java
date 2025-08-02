@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.drive;
 
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -40,7 +27,7 @@ public class ModuleIOSim implements ModuleIO {
   private static final DCMotor DRIVE_GEARBOX = DCMotor.getKrakenX60Foc(1);
   private static final DCMotor TURN_GEARBOX = DCMotor.getKrakenX60Foc(1);
 
-  private final DCMotorSim driveSim;
+  private final org.curtinfrc.frc2025.util.DCMotorSim driveSim;
   private final DCMotorSim turnSim;
 
   private boolean driveClosedLoop = false;
@@ -54,10 +41,8 @@ public class ModuleIOSim implements ModuleIO {
   public ModuleIOSim(SwerveModuleConstants constants) {
     // Create drive and turn sim models
     driveSim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
-            DRIVE_GEARBOX);
+        new org.curtinfrc.frc2025.util.DCMotorSim(
+            createDCMotorSystem(constants.DriveInertia, DRIVE_GEARBOX.KtNmPerAmp));
     turnSim =
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
@@ -84,17 +69,17 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     // Update simulation state
-    driveSim.setInputVoltage(MathUtil.clamp(driveAppliedVolts, -12.0, 12.0));
+    driveSim.setInput(driveCurrentAmps);
     turnSim.setInputVoltage(MathUtil.clamp(turnAppliedVolts, -12.0, 12.0));
     driveSim.update(0.02);
     turnSim.update(0.02);
 
     // Update drive inputs
     inputs.driveConnected = true;
-    inputs.drivePositionRad = driveSim.getAngularPositionRad();
-    inputs.driveVelocityRadPerSec = driveSim.getAngularVelocityRadPerSec();
+    inputs.drivePositionRad = driveSim.getOutput(0) * 2 * 3.14;
+    inputs.driveVelocityRadPerSec = driveSim.getOutput(1) * 2 * 3.14;
     inputs.driveAppliedVolts = driveAppliedVolts;
-    inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
+    inputs.driveCurrentAmps = Math.abs(driveSim.getInput(0));
 
     // Update turn inputs
     inputs.turnConnected = true;
@@ -126,7 +111,7 @@ public class ModuleIOSim implements ModuleIO {
   @Override
   public void setDriveVelocity(double velocityRadPerSec, double feedforward) {
     driveClosedLoop = true;
-    driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + DRIVE_KV * velocityRadPerSec;
+    driveFFVolts = feedforward;
     driveController.setSetpoint(velocityRadPerSec);
   }
 
