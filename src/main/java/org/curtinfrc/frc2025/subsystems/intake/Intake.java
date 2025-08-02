@@ -14,7 +14,6 @@ public class Intake extends SubsystemBase {
   }
 
   public final Trigger frontSensor = new Trigger(() -> inputs.frontSensor);
-  public final Trigger backSensor = new Trigger(() -> inputs.backSensor);
 
   @Override
   public void periodic() {

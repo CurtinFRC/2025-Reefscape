@@ -10,7 +10,6 @@ public interface IntakeIO {
     public double positionRotations;
     public double angularVelocityRotationsPerMinute;
     public boolean frontSensor;
-    public boolean backSensor;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
