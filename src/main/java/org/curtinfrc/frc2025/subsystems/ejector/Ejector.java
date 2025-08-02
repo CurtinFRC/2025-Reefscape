@@ -14,37 +14,6 @@ public class Ejector extends SubsystemBase {
     this.io = io;
   }
 
-  @AutoLogOutput(key = "Ejector/HasTried")
-  private boolean hasTried = false;
-
-  @AutoLogOutput(key = "Ejector/HasContacted")
-  private boolean hasContacted = false;
-
-  @AutoLogOutput(key = "Ejector/HasPopped")
-  public final Trigger hasPopped =
-      new Trigger(
-          () -> {
-            if (hasContacted) {
-              hasTried = false;
-              var ret = inputs.angularVelocityRotationsPerSecond > 50 && inputs.currentAmps < 45;
-              if (ret) {
-                hasContacted = false;
-              }
-              return ret;
-            }
-
-            if (hasTried) {
-              hasContacted =
-                  inputs.angularVelocityRotationsPerSecond < 45 && inputs.currentAmps > 45;
-            }
-
-            if (!hasTried && !hasContacted) {
-              hasTried = inputs.angularVelocityRotationsPerSecond > 50 && inputs.currentAmps > 2;
-            }
-
-            return false;
-          });
-
   public final Trigger backSensor = new Trigger(() -> inputs.backSensor);
   public final Trigger frontSensor = new Trigger(() -> inputs.frontSensor);
 
