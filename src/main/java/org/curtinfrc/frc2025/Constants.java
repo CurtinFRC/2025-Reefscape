@@ -15,11 +15,12 @@ import org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.ElevatorSetpo
  * (log replay from a file).
  */
 public final class Constants {
-  public static final RobotType robotType = RobotType.COMPBOT;
+  public static final RobotType robotType = RobotType.SIMBOT;
   public static final double ROBOT_X = 0.705;
   public static final double ROBOT_Y = 0.730;
   public static final double FIELD_LENGTH = aprilTagLayout.getFieldLength();
   public static final double FIELD_WIDTH = aprilTagLayout.getFieldWidth();
+  public static final boolean tuningMode = true;
 
   public static final Mode getMode() {
     return switch (robotType) {
@@ -48,6 +49,12 @@ public final class Constants {
 
     /** Replaying from a log file. */
     REPLAY
+  }
+
+  public static boolean disableHAL = false;
+
+  public static void disableHAL() {
+    disableHAL = true;
   }
 
   public static void main(String... args) {
