@@ -122,9 +122,7 @@ public class Autos {
     var firstToHP = routine.trajectory("iToHp");
     var hpToSecond = routine.trajectory("hpToL");
 
-    routine
-        .active()
-        .onTrue(drive.autoAlign(startToFirst.getInitialPose()::get).andThen(startToFirst.cmd()));
+    routine.active().onTrue(startToFirst.cmd());
 
     startToFirst
         .done()
