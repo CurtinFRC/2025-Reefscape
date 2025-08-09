@@ -23,7 +23,7 @@ import org.curtinfrc.frc2025.util.PhoenixUtil;
 public class ProcessorIOComp implements ProcessorIO {
   private static final int armMotorID = 0;
   private static final int armEncoderID = 0; // TODO: Use correct CAN ID
-  private static final int intakeEncoderID = 0;
+  private static final int intakeMotorID = 0;
   private static final int intakeEncoderID = 0;
 
   private static final CurrentLimitsConfigs currentLimits =
