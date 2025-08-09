@@ -23,12 +23,16 @@ import org.curtinfrc.frc2025.util.PhoenixUtil;
 public class ProcessorIOComp implements ProcessorIO {
   private static final int armMotorID = 0;
   private static final int armEncoderID = 0; // TODO: Use correct CAN ID
+  private static final int intakeEncoderID = 0;
+  private static final int intakeEncoderID = 0;
+
   private static final CurrentLimitsConfigs currentLimits =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
 
   private final TalonFX armMotor = new TalonFX(armMotorID);
   private final CANcoder armEncoder = new CANcoder(armEncoderID);
-  private final SparkMax intakeMotor = new SparkMax(0, MotorType.kBrushless);
+  private final TalonFX intakeMotor = new TalonFX(intakeMotorID);
+  private final CANcoder intakeEncoder = new CANcoder(intakeEncoderID);
   private final DigitalInput processorSensor = new DigitalInput(0); // TODO: change later
 
   // private final StatusSignal<Angle> armAbsolutePosition =
@@ -39,8 +43,14 @@ public class ProcessorIOComp implements ProcessorIO {
   private final StatusSignal<Angle> armAbsolutePosition = armEncoder.getAbsolutePosition();
   private final StatusSignal<AngularVelocity> armVelocity = armMotor.getVelocity();
 
+  private final StatusSignal<Voltage> intakeVoltage = intakeMotor.getMotorVoltage();
+  private final StatusSignal<Current> intakeCurrent = intakeMotor.getStatorCurrent();
+  private final StatusSignal<Angle> intakePosition = intakeMotor.getPosition();
+  private final StatusSignal<Angle> intakeAbsolutePosition = intakeEncoder.getAbsolutePosition();
+  private final StatusSignal<AngularVelocity> intakeVelocity = intakeMotor.getVelocity();
+
   private final VoltageOut armVoltageRequest = new VoltageOut(0).withEnableFOC(true);
-  private double intakeVoltageRequest = 0;
+  private final VoltageOut intakeVoltageRequest = new VoltageOut(0).withEnableFOC(true);
 
   public ProcessorIOComp() {
     tryUntilOk(
@@ -62,19 +72,39 @@ public class ProcessorIOComp implements ProcessorIO {
         false, armVelocity, armVoltage, armCurrent, armPosition, armAbsolutePosition);
   }
 
+  public ProcessorIOComp() {
+    tryUntilOk(
+        5,
+        () ->
+            intakeMotor
+                .getConfigurator()
+                .apply(
+                    new TalonFXConfiguration()
+                        .withMotorOutput(
+                            new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
+                        .withCurrentLimits(currentLimits)));
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        20.0, intakeVelocity, intakeVoltage, intakeCurrent, intakePosition, intakeAbsolutePosition);
+    armMotor.optimizeBusUtilization();
+
+    // Register signals to be updated
+    PhoenixUtil.registerSignals(
+        false, intakeVelocity, intakeVoltage, intakeCurrent, intakePosition, intakeAbsolutePosition);
+  }
+
   @Override
   public void updateInputs(ProcessorIOInputs inputs) {
     armMotor.setControl(armVoltageRequest);
-    intakeMotor.setVoltage(intakeVoltageRequest);
+    intakeMotor.setControl(intakeVoltageRequest);
     inputs.armAppliedVolts = armVoltage.getValueAsDouble();
     inputs.armCurrentAmps = armCurrent.getValueAsDouble();
     inputs.armPositionRotations = armPosition.getValueAsDouble();
     inputs.armAbsolutePosition = armAbsolutePosition.getValueAsDouble();
     inputs.armAngularVelocityRotationsPerMinute = armVelocity.getValueAsDouble();
-    inputs.intakeAppliedVolts = intakeMotor.getAppliedOutput();
-    inputs.intakeCurrentAmps = intakeMotor.getOutputCurrent();
-    inputs.intakePositionRotations = intakeMotor.getEncoder().getPosition();
-    inputs.intakeAngularVelocityRotationsPerMinute = intakeMotor.getEncoder().getVelocity();
+    inputs.intakeAppliedVolts = intakeVoltage.getValueAsDouble();
+    inputs.intakeCurrentAmps = intakeCurrent.getValueAsDouble()
+    inputs.intakePositionRotations = intakePosition.getValueAsDouble();
+    inputs.intakeAngularVelocityRotationsPerMinute = intakeAbsolutePosition.getValueAsDouble();
     inputs.processorSensor = processorSensor.get();
   }
 
@@ -85,6 +115,6 @@ public class ProcessorIOComp implements ProcessorIO {
 
   @Override
   public void intakeSetVoltage(double volts) {
-    intakeVoltageRequest = volts;
+    intakeVoltageRequest.withOutput(volts);
   }
 }
