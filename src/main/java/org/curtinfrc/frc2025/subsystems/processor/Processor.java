@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger;
 public class Processor extends SubsystemBase {
   private final ProcessorIO io;
   private final ProcessorIOInputsAutoLogged inputs = new ProcessorIOInputsAutoLogged();
-  private final PIDController controller = new PIDController(0, 0, 0);
+  private final PIDController controller = new PIDController(11, 0, 0);
 
   public Processor(ProcessorIO io) {
     this.io = io;
@@ -23,14 +23,11 @@ public class Processor extends SubsystemBase {
     Logger.processInputs("processor", inputs);
   }
 
-  public Command goToPosition(double desiredPosition) {
-    return run(
-        () -> {
-          var currentPosition = inputs.armAbsolutePosition;
-          var output = controller.calculate(currentPosition, desiredPosition);
-          Logger.recordOutput("processor/desiredPosition", desiredPosition);
-          io.armSetVoltage(output);
-        });
+  public void goToPosition(double desiredPosition) {
+    var currentPosition = inputs.armAbsolutePosition;
+    var output = controller.calculate(currentPosition, desiredPosition);
+    Logger.recordOutput("processor/desiredPosition", desiredPosition);
+    io.armSetVoltage(output);
   }
 
   public void stopIntake() {
@@ -52,7 +49,7 @@ public class Processor extends SubsystemBase {
   public Command intake() {
     return run(
         () -> {
-          goToPosition(99);
+          goToPosition(0.15);
           runIntake(4);
         });
   }

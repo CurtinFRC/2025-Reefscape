@@ -5,14 +5,14 @@ import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -21,9 +21,9 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 
 public class ProcessorIOComp implements ProcessorIO {
-  private static final int armMotorID = 0;
-  private static final int armEncoderID = 0; // TODO: Use correct CAN ID
-  private static final int intakeMotorID = 0;
+  private static final int armMotorID = 1;
+  private static final int armEncoderID = 0;
+  private static final int intakeMotorID = 29;
   private static final int intakeEncoderID = 0;
 
   private static final CurrentLimitsConfigs currentLimits =
@@ -33,7 +33,7 @@ public class ProcessorIOComp implements ProcessorIO {
   private final CANcoder armEncoder = new CANcoder(armEncoderID);
   private final TalonFX intakeMotor = new TalonFX(intakeMotorID);
   private final CANcoder intakeEncoder = new CANcoder(intakeEncoderID);
-  private final DigitalInput processorSensor = new DigitalInput(0); // TODO: change later
+  private final DigitalInput processorSensor = new DigitalInput(8); // TODO: change later
 
   // private final StatusSignal<Angle> armAbsolutePosition =
   // armAbsoluteEncoder.getAbsolutePosition();
@@ -70,9 +70,7 @@ public class ProcessorIOComp implements ProcessorIO {
     // Register signals to be updated
     PhoenixUtil.registerSignals(
         false, armVelocity, armVoltage, armCurrent, armPosition, armAbsolutePosition);
-  }
 
-  public ProcessorIOComp() {
     tryUntilOk(
         5,
         () ->
@@ -85,11 +83,23 @@ public class ProcessorIOComp implements ProcessorIO {
                         .withCurrentLimits(currentLimits)));
     BaseStatusSignal.setUpdateFrequencyForAll(
         20.0, intakeVelocity, intakeVoltage, intakeCurrent, intakePosition, intakeAbsolutePosition);
-    armMotor.optimizeBusUtilization();
+    intakeMotor.optimizeBusUtilization();
+
+    intakeEncoder
+        .getConfigurator()
+        .apply(
+            new MagnetSensorConfigs()
+                .withMagnetOffset(0.487)
+                .withSensorDirection(SensorDirectionValue.Clockwise_Positive));
 
     // Register signals to be updated
     PhoenixUtil.registerSignals(
-        false, intakeVelocity, intakeVoltage, intakeCurrent, intakePosition, intakeAbsolutePosition);
+        false,
+        intakeVelocity,
+        intakeVoltage,
+        intakeCurrent,
+        intakePosition,
+        intakeAbsolutePosition);
   }
 
   @Override
@@ -102,7 +112,7 @@ public class ProcessorIOComp implements ProcessorIO {
     inputs.armAbsolutePosition = armAbsolutePosition.getValueAsDouble();
     inputs.armAngularVelocityRotationsPerMinute = armVelocity.getValueAsDouble();
     inputs.intakeAppliedVolts = intakeVoltage.getValueAsDouble();
-    inputs.intakeCurrentAmps = intakeCurrent.getValueAsDouble()
+    inputs.intakeCurrentAmps = intakeCurrent.getValueAsDouble();
     inputs.intakePositionRotations = intakePosition.getValueAsDouble();
     inputs.intakeAngularVelocityRotationsPerMinute = intakeAbsolutePosition.getValueAsDouble();
     inputs.processorSensor = processorSensor.get();
