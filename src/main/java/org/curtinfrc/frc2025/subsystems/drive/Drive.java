@@ -89,7 +89,7 @@ public class Drive extends SubsystemBase {
 
   private final PIDController xFollower = new PIDController(0, 0, 0);
   private final PIDController yFollower = new PIDController(0, 0, 0);
-  private final PIDController headingFollower = new PIDController(0, 0, 0);
+  private final PIDController headingFollower = new PIDController(3, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -184,12 +184,12 @@ public class Drive extends SubsystemBase {
 
     var speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            xFollower.calculate(pose.getX(), sample.x) + sample.vx,
-            yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
+            sample.vx,
+            sample.vy,
+            sample.omega + headingFollower.calculate(getRotation().getRadians(), sample.heading),
             getRotation());
 
-    runVelocity(new ChassisSpeeds(), feedforwards);
+    runVelocity(speeds.unaryMinus(), feedforwards);
   }
 
   @Override
