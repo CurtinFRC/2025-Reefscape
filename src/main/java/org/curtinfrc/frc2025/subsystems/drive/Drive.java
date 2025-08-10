@@ -87,9 +87,9 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(2, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
-  private final PIDController xFollower = new PIDController(1, 0, 0);
-  private final PIDController yFollower = new PIDController(1, 0, 0);
-  private final PIDController headingFollower = new PIDController(1.5, 0, 0);
+  private final PIDController xFollower = new PIDController(2, 0, 0);
+  private final PIDController yFollower = new PIDController(2, 0, 0);
+  private final PIDController headingFollower = new PIDController(3, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -180,15 +180,16 @@ public class Drive extends SubsystemBase {
       var force = VecBuilder.fill(rotated.getX(), rotated.getY(), 0);
       feedforwards[i] = Vector.cross(wheelRadius, force).div(kT).norm();
     }
+    Logger.recordOutput("SwerveFeedforwards", feedforwards);
 
     var speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            xFollower.calculate(pose.getX(), sample.x) + sample.vx,
-            yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
+            sample.vx,
+            sample.vy,
+            sample.omega + headingFollower.calculate(getRotation().getRadians(), sample.heading),
             getRotation());
 
-    runVelocity(speeds, new double[4]);
+    runVelocity(speeds.unaryMinus(), feedforwards);
   }
 
   @Override
