@@ -19,11 +19,17 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -551,6 +557,118 @@ public class Robot extends LoggedRobot {
     controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
+
+    CommandScheduler.getInstance().onCommandInitialize(this::commandStarted);
+    CommandScheduler.getInstance().onCommandFinish(this::commandEnded);
+    CommandScheduler.getInstance()
+        .onCommandInterrupt(
+            (interrupted, interrupting) -> {
+              interrupting.ifPresent(
+                  interrupter -> runningInterrupters.put(interrupter, interrupted));
+              commandEnded(interrupted);
+            });
+  }
+
+  private final Set<Command> runningNonInterrupters = new HashSet<>();
+  private final Map<Command, Command> runningInterrupters = new HashMap<>();
+  private final Map<Subsystem, Command> requiredSubsystems = new HashMap<>();
+
+  private void commandStarted(final Command command) {
+    if (!runningInterrupters.containsKey(command)) {
+      runningNonInterrupters.add(command);
+    }
+
+    for (final Subsystem subsystem : command.getRequirements()) {
+      requiredSubsystems.put(subsystem, command);
+    }
+  }
+
+  private void commandEnded(final Command command) {
+    runningNonInterrupters.remove(command);
+    runningInterrupters.remove(command);
+
+    for (final Subsystem subsystem : command.getRequirements()) {
+      requiredSubsystems.remove(subsystem);
+    }
+  }
+
+  private final StringBuilder subsystemsBuilder = new StringBuilder();
+
+  private String getCommandName(Command command) {
+    subsystemsBuilder.setLength(0);
+    int j = 1;
+    for (final Subsystem subsystem : command.getRequirements()) {
+      subsystemsBuilder.append(subsystem.getName());
+      if (j < command.getRequirements().size()) {
+        subsystemsBuilder.append(",");
+      }
+
+      j++;
+    }
+    var finalName = command.getName();
+    if (j > 1) {
+      finalName += " (" + subsystemsBuilder + ")";
+    }
+    return finalName;
+  }
+
+  private void logRunningCommands() {
+    Logger.recordOutput("CommandScheduler/Running/.type", "Alerts");
+
+    //    final String[] runningCommands = new String[runningNonInterrupters.size()];
+    //    int i = 0;
+    //    for (final Command command : runningNonInterrupters) {
+    //      runningCommands[i] = getCommandName(command);
+    //      i++;
+    //    }
+    final ArrayList<String> runningCommands = new ArrayList<>();
+    final ArrayList<String> runningDefaultCommands = new ArrayList<>();
+    for (final Command command : runningNonInterrupters) {
+      boolean isDefaultCommand = false;
+      for (Subsystem subsystem : command.getRequirements()) {
+        if (subsystem.getDefaultCommand() == command) {
+          runningDefaultCommands.add(getCommandName(command));
+          isDefaultCommand = true;
+          break;
+        }
+      }
+      if (!isDefaultCommand) {
+        runningCommands.add(getCommandName(command));
+      }
+    }
+    Logger.recordOutput(
+        "CommandScheduler/Running/warnings", runningCommands.toArray(new String[0]));
+    Logger.recordOutput(
+        "CommandScheduler/Running/infos", runningDefaultCommands.toArray(new String[0]));
+
+    final String[] interrupters = new String[runningInterrupters.size()];
+    int j = 0;
+    for (final Map.Entry<Command, Command> entry : runningInterrupters.entrySet()) {
+      final Command interrupter = entry.getKey();
+      final Command interrupted = entry.getValue();
+
+      interrupters[j] = getCommandName(interrupter) + " interrupted " + getCommandName(interrupted);
+      j++;
+    }
+
+    Logger.recordOutput("CommandScheduler/Running/errors", interrupters);
+  }
+
+  private void logRequiredSubsystems() {
+    Logger.recordOutput("CommandScheduler/Subsystems/.type", "Alerts");
+
+    final String[] subsystems = new String[requiredSubsystems.size()];
+    {
+      int i = 0;
+      for (final Map.Entry<Subsystem, Command> entry : requiredSubsystems.entrySet()) {
+        final Subsystem required = entry.getKey();
+        final Command command = entry.getValue();
+
+        subsystems[i] = required.getName() + " (" + command.getName() + ")";
+        i++;
+      }
+    }
+    Logger.recordOutput("CommandScheduler/Subsystems/infos", subsystems);
   }
 
   @Override
@@ -602,12 +720,14 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    logRunningCommands();
+    logRequiredSubsystems();
+    Logger.recordOutput(
+        "LoggedRobot/MemoryUsageMb",
+        (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1e6);
 
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
-
-    // Runs LoggedNetork items
-    autoChooser.periodic();
 
     if (drive.getCurrentCommand() != null) {
       Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
@@ -629,7 +749,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically when disabled. */
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    autoChooser.periodic();
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
