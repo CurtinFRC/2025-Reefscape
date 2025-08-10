@@ -440,6 +440,13 @@ public class Robot extends LoggedRobot {
 
     controller
         .povLeft()
+        .and(
+            controller
+                .rightBumper()
+                .or(controller.leftBumper())
+                .or(controller.rightTrigger())
+                .or(controller.leftTrigger())
+                .negate())
         .and(override.negate())
         .whileTrue(
             Commands.parallel(
@@ -462,6 +469,7 @@ public class Robot extends LoggedRobot {
                           };
                         },
                         intake.backSensor.negate()))
+                .until(ejector.hasPopped)
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
@@ -501,7 +509,7 @@ public class Robot extends LoggedRobot {
         .backSensor
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(12));
+        .whileTrue(ejector.eject(15));
 
     intake
         .backSensor

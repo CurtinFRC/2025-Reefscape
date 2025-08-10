@@ -173,7 +173,7 @@ public class Autos {
 
   public static AutoRoutine threePieceLeft(
       AutoFactory factory, Drive drive, Ejector ejector, Elevator elevator, Intake intake) {
-    var routine = factory.newRoutine("twoPieceLeft");
+    var routine = factory.newRoutine("threePieceLeft");
     var startToFirst = routine.trajectory("startToI");
     var firstToHP = routine.trajectory("iToHp");
     var hpToSecond = routine.trajectory("hpToL");
@@ -403,13 +403,7 @@ public class Autos {
     var hpToK2 = routine.trajectory("hpToK2");
     var kToHp = routine.trajectory("kToHp");
 
-    routine
-        .active()
-        .onTrue(
-            drive
-                .autoAlign(() -> startToI.getInitialPose().get())
-                .until(drive.atSetpoint)
-                .andThen(startToI.cmd()));
+    routine.active().onTrue(startToI.cmd());
 
     startToI
         .done()

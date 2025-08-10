@@ -20,7 +20,7 @@ import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
 public final class DriveConstants {
   public static final double coralOffset = 0.32 / 2;
-  public static final double l1Offset = 45.5;
+  public static final double l1Offset = 0.455;
   public static final double algaeOffset = 0.155;
   public static final double DEADBAND = 0;
   public static final double ANGLE_KP = 5.0;
