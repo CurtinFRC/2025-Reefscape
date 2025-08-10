@@ -11,10 +11,8 @@ import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -103,10 +101,10 @@ public class Robot extends LoggedRobot {
   private final AutoFactory factory;
   // private final Autos autos;
 
-  private final List<Pose2d> leftSetpoints;
-  private final List<Pose2d> rightSetpoints;
-  private final List<Pose2d> l1Setpoints;
-  private final List<Pose2d> algaeSetpoints;
+  private List<Pose2d> leftSetpoints;
+  private List<Pose2d> rightSetpoints;
+  private List<Pose2d> l1Setpoints;
+  private List<Pose2d> algaeSetpoints;
 
   @AutoLogOutput(key = "Robot/Overridden")
   private boolean overridden = false;
@@ -156,10 +154,6 @@ public class Robot extends LoggedRobot {
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
-
-    if (!RobotBase.isSimulation()) {
-      DriverStation.waitForDsConnection(300);
-    }
 
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.robotType) {
@@ -258,36 +252,6 @@ public class Robot extends LoggedRobot {
     }
 
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-
-    leftSetpoints =
-        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
-
-    rightSetpoints =
-        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
-
-    l1Setpoints =
-        List.of(
-            A_LEFTL1.getPose(),
-            A_RIGHTL1.getPose(),
-            C_LEFTL1.getPose(),
-            C_RIGHTL1.getPose(),
-            E_LEFTL1.getPose(),
-            E_RIGHTL1.getPose(),
-            G_LEFTL1.getPose(),
-            G_RIGHTL1.getPose(),
-            I_LEFTL1.getPose(),
-            I_RIGHTL1.getPose(),
-            K_LEFTL1.getPose(),
-            K_RIGHTL1.getPose());
-
-    algaeSetpoints =
-        List.of(
-            CLOSE.getPose(),
-            FAR.getPose(),
-            CLOSE_LEFT.getPose(),
-            FAR_LEFT.getPose(),
-            CLOSE_RIGHT.getPose(),
-            FAR_RIGHT.getPose());
 
     autoChooser = new AutoChooser("Auto Chooser");
     factory =
@@ -583,6 +547,39 @@ public class Robot extends LoggedRobot {
     controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
+  }
+
+  @Override
+  public void driverStationConnected() {
+    leftSetpoints =
+        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
+
+    rightSetpoints =
+        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
+
+    l1Setpoints =
+        List.of(
+            A_LEFTL1.getPose(),
+            A_RIGHTL1.getPose(),
+            C_LEFTL1.getPose(),
+            C_RIGHTL1.getPose(),
+            E_LEFTL1.getPose(),
+            E_RIGHTL1.getPose(),
+            G_LEFTL1.getPose(),
+            G_RIGHTL1.getPose(),
+            I_LEFTL1.getPose(),
+            I_RIGHTL1.getPose(),
+            K_LEFTL1.getPose(),
+            K_RIGHTL1.getPose());
+
+    algaeSetpoints =
+        List.of(
+            CLOSE.getPose(),
+            FAR.getPose(),
+            CLOSE_LEFT.getPose(),
+            FAR_LEFT.getPose(),
+            CLOSE_RIGHT.getPose(),
+            FAR_RIGHT.getPose());
   }
 
   /** This function is called periodically during all modes. */
