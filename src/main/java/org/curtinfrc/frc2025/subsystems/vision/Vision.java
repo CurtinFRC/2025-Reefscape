@@ -7,12 +7,15 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotController;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO.PoseObservationType;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -20,13 +23,17 @@ import org.photonvision.common.hardware.VisionLEDMode;
 
 public class Vision extends VirtualSubsystem {
   private final PoseEstimateConsumer consumer;
+  private final Supplier<Rotation2d> gyro;
+  private final TimeInterpolatableBuffer<Rotation2d> headingBuffer =
+      TimeInterpolatableBuffer.createBuffer(1.0);
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private int lastHPMeasurement;
   public boolean discardReef;
 
-  public Vision(PoseEstimateConsumer consumer, VisionIO... io) {
+  public Vision(PoseEstimateConsumer consumer, Supplier<Rotation2d> gyro, VisionIO... io) {
     this.consumer = consumer;
+    this.gyro = gyro;
     this.io = io;
 
     // Initialize inputs
@@ -59,6 +66,9 @@ public class Vision extends VirtualSubsystem {
 
   @Override
   public void periodic() {
+    // Update heading data
+    headingBuffer.addSample(RobotController.getTime(), gyro.get());
+
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
@@ -77,6 +87,7 @@ public class Vision extends VirtualSubsystem {
     List<Pose3d> allRobotPoses = new LinkedList<>();
     List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
     List<Pose3d> allRobotPosesRejected = new LinkedList<>();
+    List<Boolean> rejectPoseResults = new LinkedList<>();
 
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -111,19 +122,24 @@ public class Vision extends VirtualSubsystem {
             continue;
           }
         }
+
+        var rotation = headingBuffer.getSample(observation.timestamp()).get();
+        var pose = observation.pose();
         // Check whether to reject pose
         boolean rejectPose =
             observation.tagCount() == 0 // Must have at least one tag
-                || (observation.tagCount() == 1
-                    && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
-                || Math.abs(observation.pose().getZ())
-                    > maxZError // Must have realistic Z coordinate
-
+                || Math.abs(pose.getZ()) > maxZError // Must have realistic Z coordinate
                 // Must be within the field boundaries
-                || observation.pose().getX() < 0.0
-                || observation.pose().getX() > aprilTagLayout.getFieldLength()
-                || observation.pose().getY() < 0.0
-                || observation.pose().getY() > aprilTagLayout.getFieldWidth();
+                || pose.getX() < 0.0
+                || pose.getX() > aprilTagLayout.getFieldLength()
+                || pose.getY() < 0.0
+                || pose.getY() > aprilTagLayout.getFieldWidth()
+                // If the measurement is high ambiguity check it against the gyro
+                || ((observation.tagCount() == 1 && observation.ambiguity() > maxAmbiguity)
+                    && !(Math.abs(pose.getRotation().toRotation2d().minus(rotation).getDegrees())
+                            < 5
+                        && Math.signum(rotation.getDegrees())
+                            == Math.signum(pose.toPose2d().getRotation().getDegrees())));
 
         // Add pose to log
         robotPoses.add(observation.pose());
