@@ -121,37 +121,31 @@ public class Robot extends LoggedRobot {
     Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
     Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
     switch (BuildConstants.DIRTY) {
-      case 0:
-        Logger.recordMetadata("GitDirty", "All changes committed");
-        break;
-      case 1:
-        Logger.recordMetadata("GitDirty", "Uncommitted changes");
-        break;
-      default:
-        Logger.recordMetadata("GitDirty", "Unknown");
-        break;
+      case 0 -> Logger.recordMetadata("GitDirty", "All changes committed");
+      case 1 -> Logger.recordMetadata("GitDirty", "Uncommitted changes");
+      default -> Logger.recordMetadata("GitDirty", "Unknown");
     }
 
     switch (Constants.getMode()) {
-      case REAL:
+      case REAL -> {
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
-        break;
+      }
 
-      case SIM:
+      case SIM -> {
         // Running a physics simulator, log to NT
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
-        break;
+      }
 
-      case REPLAY:
+      case REPLAY -> {
         // Replaying a log, set up replay source
         setUseTiming(false); // Run as fast as possible
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-        break;
+      }
     }
 
     SignalLogger.start();
