@@ -193,16 +193,9 @@ public class VisionIOLimelight implements VisionIO {
   @Override
   public void setLEDMode(VisionLEDMode mode) {
     switch (mode) {
-      case kOn:
-        ledMode.setNumber(3);
-        break;
-      case kBlink:
-        ledMode.setNumber(2);
-        break;
-      case kDefault:
-      case kOff:
-        ledMode.setNumber(1);
-        break;
+      case kOn -> ledMode.setNumber(3);
+      case kBlink -> ledMode.setNumber(2);
+      case kOff, kDefault -> ledMode.setNumber(1);
     }
   }
 }

@@ -75,7 +75,13 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition()
       };
   private SwerveDrivePoseEstimator poseEstimator =
-      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+      new SwerveDrivePoseEstimator(
+          kinematics,
+          rawGyroRotation,
+          lastModulePositions,
+          Pose2d.kZero,
+          VecBuilder.fill(0.025, 0.025, 0.025),
+          VecBuilder.fill(0.1, 0.1, 0.1));
 
   private final PIDController xController = new PIDController(2, 0, 0);
   private final PIDController yController = new PIDController(2, 0, 0);
@@ -217,7 +223,8 @@ public class Drive extends SubsystemBase {
       SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
       SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
+        var pos = modules[moduleIndex].getOdometryPositions()[i];
+        modulePositions[moduleIndex] = new SwerveModulePosition(-pos.distanceMeters, pos.angle);
         moduleDeltas[moduleIndex] =
             new SwerveModulePosition(
                 modulePositions[moduleIndex].distanceMeters
