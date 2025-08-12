@@ -20,7 +20,7 @@ import org.curtinfrc.frc2025.util.PhoenixUtil;
 public class IntakeIOComp implements IntakeIO {
   private static final int ID = 20;
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60);
 
   private final TalonFX motor = new TalonFX(ID);
 

@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "edu.wpi.first.GradleRIO" version "2025.3.2"
+    id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2025.0' apply false
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "7.0.4"
 }
@@ -92,6 +93,8 @@ dependencies {
     nativeDebug wpi.java.vendor.jniDebug(wpi.platforms.desktop)
     simulationDebug wpi.sim.enableDebug()
 
+    implementation project("thirdparty:choreolib")
+
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
@@ -125,6 +128,7 @@ wpi.sim.addDriverstation()
 // in order to make them all available at runtime. Also adding the manifest so WPILib
 // knows where to look for our Robot Class.
 jar {
+    dependsOn 'thirdparty:choreolib:build'
     from {
         configurations.runtimeClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
