@@ -19,8 +19,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class EjectorIOComp implements EjectorIO {
+  private static double kP = 0.5;
+  private static double kV = 0.33;
   private static final int ID = 53;
   private static final int FOLLOWER_ID = 46;
   private static final CurrentLimitsConfigs currentLimits =
@@ -31,7 +34,7 @@ public class EjectorIOComp implements EjectorIO {
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Brake))
-          .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33))
+          .withSlot0(new Slot0Configs().withKP(kP).withKV(kV))
           .withCurrentLimits(currentLimits);
   private static final TalonFXConfiguration followerConfig =
       new TalonFXConfiguration()
@@ -80,5 +83,31 @@ public class EjectorIOComp implements EjectorIO {
   @Override
   public void setVelocity(double speedRotationsPerSecond) {
     motor.setControl(velocityRequest.withVelocity(speedRotationsPerSecond));
+  }
+
+  @Override
+  public double getkP() {
+    return kP;
+  }
+
+  @Override
+  public void setkP(double kP) {
+    EjectorIOComp.kP = kP;
+    if (DriverStation.isDisabled()) {
+      leaderConfig.withSlot0(new Slot0Configs().withKP(kP).withKV(kP));
+    }
+  }
+
+  @Override
+  public double getkV() {
+    return kV;
+  }
+
+  @Override
+  public void setkV(double kV) {
+    EjectorIOComp.kV = kV;
+    if (DriverStation.isDisabled()) {
+      leaderConfig.withSlot0(new Slot0Configs().withKP(getkP()).withKV(kV));
+    }
   }
 }

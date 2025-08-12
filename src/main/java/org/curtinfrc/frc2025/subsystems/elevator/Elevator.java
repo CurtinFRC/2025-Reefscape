@@ -19,8 +19,9 @@ import org.littletonrobotics.junction.Logger;
 public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private final PIDController pid = new PIDController(kP, 0, kD);
-  private final PIDController climbPID = new PIDController(climbkP, climbkI, climbkD);
+  private final PIDController pid = new PIDController(kP.get(), kI.get(), kD.get());
+  private final PIDController climbPID =
+      new PIDController(climbkP.get(), climbkI.get(), climbkD.get());
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
@@ -51,6 +52,16 @@ public class Elevator extends SubsystemBase {
     // if (inputs.hominSensor) {
     //   io.zero();
     // }
+
+    if (kP.hasChanged(kP.hashCode())) {
+      pid.setP(kP.get());
+    }
+    if (kI.hasChanged(kI.hashCode())) {
+      pid.setI(kI.get());
+    }
+    if (kD.hasChanged(kD.hashCode())) {
+      pid.setD(kD.get());
+    }
   }
 
   public Command goToSetpoint(Supplier<ElevatorSetpoints> point, BooleanSupplier safe) {

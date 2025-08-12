@@ -12,7 +12,7 @@ import org.littletonrobotics.junction.Logger;
 public class Climber extends SubsystemBase {
   private final ClimberIO io;
   private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
-  private final PIDController pid = new PIDController(kP, kI, kD);
+  private final PIDController pid = new PIDController(kP.get(), kI.get(), kD.get());
   public boolean climberDeployed = false;
 
   public Climber(ClimberIO io) {
@@ -26,6 +26,16 @@ public class Climber extends SubsystemBase {
     io.updateInputs(inputs);
     inputs.atSetpoint = pid.atSetpoint();
     Logger.processInputs("Climber", inputs);
+
+    if (kP.hasChanged(kP.hashCode())) {
+      pid.setP(kP.get());
+    }
+    if (kI.hasChanged(kI.hashCode())) {
+      pid.setI(kI.get());
+    }
+    if (kD.hasChanged(kD.hashCode())) {
+      pid.setD(kD.get());
+    }
   }
 
   public Command Raw() {

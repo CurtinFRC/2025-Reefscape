@@ -18,4 +18,16 @@ public interface EjectorIO {
   public default void setVoltage(double volts) {}
 
   public default void setVelocity(double speedRotationsPerSecond) {}
+
+  public default double getkP() {
+    return 0.0;
+  }
+
+  public default void setkP(double kP) {}
+
+  public default double getkV() {
+    return 0.0;
+  }
+
+  public default void setkV(double kV) {}
 }
