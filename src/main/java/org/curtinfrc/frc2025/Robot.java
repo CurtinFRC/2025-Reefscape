@@ -742,16 +742,6 @@ public class Robot extends LoggedRobot {
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
 
-    if (drive.getCurrentCommand() != null) {
-      Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
-    }
-    if (elevator.getCurrentCommand() != null) {
-      Logger.recordOutput("Elevator/Command", elevator.getCurrentCommand().getName());
-    }
-    if (ejector.getCurrentCommand() != null) {
-      Logger.recordOutput("Ejector/Command", ejector.getCurrentCommand().getName());
-    }
-
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
   }
