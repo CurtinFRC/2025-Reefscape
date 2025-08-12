@@ -3,8 +3,8 @@ package org.curtinfrc.frc2025.subsystems.ejector;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.curtinfrc.frc2025.util.LoggedTunableNumber;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Ejector extends SubsystemBase {
