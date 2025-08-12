@@ -18,7 +18,7 @@ public class ElevatorConstants {
   public static double climbkD = 0;
 
   public static enum ElevatorSetpoints implements StructSerializable {
-    L1(0),
+    L1(0.03),
     L2(0.221),
     AlgaePopLow(0),
     L3(0.611),
@@ -35,14 +35,11 @@ public class ElevatorConstants {
     }
 
     public static ElevatorSetpoints getPopPoint(ElevatorSetpoints point) {
-      switch (point) {
-        case L2:
-          return AlgaePopLow;
-        case L3:
-          return AlgaePopHigh;
-        default:
-          return BASE;
-      }
+      return switch (point) {
+        case L2 -> AlgaePopLow;
+        case L3 -> AlgaePopHigh;
+        default -> BASE;
+      };
     }
 
     public static final Struct<ElevatorSetpoints> struct =

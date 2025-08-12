@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
@@ -18,10 +19,16 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.curtinfrc.frc2025.Constants.Mode;
 import org.curtinfrc.frc2025.Constants.Setpoint;
 import org.curtinfrc.frc2025.generated.CompTunerConstants;
@@ -109,9 +116,10 @@ public class Robot extends LoggedRobot {
   private final AutoFactory factory;
   // private final Autos autos;
 
-  private final List<Pose2d> leftSetpoints;
-  private final List<Pose2d> rightSetpoints;
-  private final List<Pose2d> algaeSetpoints;
+  private List<Pose2d> leftSetpoints;
+  private List<Pose2d> rightSetpoints;
+  private List<Pose2d> l1Setpoints;
+  private List<Pose2d> algaeSetpoints;
 
   public Robot() {
     // Record metadata
@@ -122,41 +130,36 @@ public class Robot extends LoggedRobot {
     Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
     Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
     switch (BuildConstants.DIRTY) {
-      case 0:
-        Logger.recordMetadata("GitDirty", "All changes committed");
-        break;
-      case 1:
-        Logger.recordMetadata("GitDirty", "Uncommitted changes");
-        break;
-      default:
-        Logger.recordMetadata("GitDirty", "Unknown");
-        break;
+      case 0 -> Logger.recordMetadata("GitDirty", "All changes committed");
+      case 1 -> Logger.recordMetadata("GitDirty", "Uncommitted changes");
+      default -> Logger.recordMetadata("GitDirty", "Unknown");
     }
 
     switch (Constants.getMode()) {
-      case REAL:
+      case REAL -> {
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
-        break;
+      }
 
-      case SIM:
+      case SIM -> {
         // Running a physics simulator, log to NT
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
-        break;
+      }
 
-      case REPLAY:
+      case REPLAY -> {
         // Replaying a log, set up replay source
         setUseTiming(false); // Run as fast as possible
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-        break;
+      }
     }
 
     SignalLogger.start();
     SignalLogger.setPath("/U/logs");
+    DataLogManager.start();
     Logger.registerURCL(URCL.startExternal());
     // Start AdvantageKit logger
     Logger.start();
@@ -175,6 +178,7 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
+                  drive::getRotation,
                   new VisionIOPhotonVision(camera0Name, robotToCamera0),
                   new VisionIOPhotonVision(camera1Name, robotToCamera1),
                   // new VisionIOPhotonVision(camera2Name, robotToCamera2),
@@ -199,6 +203,7 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
+                  drive::getRotation,
                   new VisionIO() {},
                   new VisionIOLimelight(camera1Name, drive::getRotation),
                   new VisionIOLimelight(camera2Name, drive::getRotation),
@@ -221,6 +226,7 @@ public class Robot extends LoggedRobot {
           vision =
               new Vision(
                   drive::addVisionMeasurement,
+                  drive::getRotation,
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
@@ -245,6 +251,7 @@ public class Robot extends LoggedRobot {
       vision =
           new Vision(
               drive::addVisionMeasurement,
+              drive::getRotation,
               new VisionIO() {},
               new VisionIO() {},
               new VisionIO() {},
@@ -258,21 +265,6 @@ public class Robot extends LoggedRobot {
     }
 
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-
-    leftSetpoints =
-        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
-
-    rightSetpoints =
-        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
-
-    algaeSetpoints =
-        List.of(
-            CLOSE.getPose(),
-            FAR.getPose(),
-            CLOSE_LEFT.getPose(),
-            FAR_LEFT.getPose(),
-            CLOSE_RIGHT.getPose(),
-            FAR_RIGHT.getPose());
 
     autoChooser = new AutoChooser("Auto Chooser");
     factory =
@@ -374,9 +366,9 @@ public class Robot extends LoggedRobot {
             drive
                 .autoAlignWithOverride(
                     () -> DriveSetpoints.closest(drive::getPose, rightSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+                    () -> controller.getLeftY(),
+                    () -> controller.getLeftX(),
+                    () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
     manualController.leftBumper().or(controller.leftTrigger()).whileTrue(ejector.eject(30));
@@ -402,9 +394,9 @@ public class Robot extends LoggedRobot {
             drive
                 .autoAlignWithOverride(
                     () -> DriveSetpoints.closest(drive::getPose, leftSetpoints),
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> -controller.getRightX())
+                    () -> controller.getLeftY(),
+                    () -> controller.getLeftX(),
+                    () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
 
     climber.stalled.onTrue(
@@ -441,14 +433,21 @@ public class Robot extends LoggedRobot {
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
     controller
-        .leftStick()
+        .povLeft()
+        .and(
+            controller
+                .rightBumper()
+                .or(controller.leftBumper())
+                .or(controller.rightTrigger())
+                .or(controller.leftTrigger())
+                .negate())
         .whileTrue(
             Commands.parallel(
                     drive.autoAlignWithOverride(
                         () -> DriveSetpoints.closest(drive::getPose, algaeSetpoints),
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> controller.getRightX()),
                     ejector.eject(40),
                     elevator.goToSetpoint(
                         () -> {
@@ -465,8 +464,36 @@ public class Robot extends LoggedRobot {
                         intake.backSensor.negate()))
                 .withName("AlgaePop")
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+
     controller
-        .rightStickRaw()
+        .povRight()
+        .and(override.negate())
+        .whileTrue(
+            Commands.sequence(
+                Commands.parallel(
+                        drive.autoAlignWithOverride(
+                            () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
+                            () -> controller.getLeftY(),
+                            () -> controller.getLeftX(),
+                            () -> controller.getRightX()),
+                        elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()))
+                    .until(elevator.atSetpoint.and(drive.atSetpoint)),
+                Commands.parallel(
+                    drive.autoAlignWithOverride(
+                        () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> controller.getRightX()),
+                    elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
+                    ejector.eject(25))));
+    controller
+        .povLeft()
+        .and(
+            controller
+                .rightBumper()
+                .or(controller.leftBumper())
+                .or(controller.rightTrigger())
+                .or(controller.leftTrigger()))
         .whileTrue(ejector.eject(15).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     controller.povUpRaw().whileTrue(intake.intake(-4));
@@ -475,7 +502,7 @@ public class Robot extends LoggedRobot {
         .backSensor
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(12));
+        .whileTrue(ejector.eject(15));
 
     intake
         .backSensor
@@ -538,6 +565,151 @@ public class Robot extends LoggedRobot {
     controller.bRaw().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
     new Trigger(this::isEnabled).onTrue(climber.disengage());
+
+    CommandScheduler.getInstance().onCommandInitialize(this::commandStarted);
+    CommandScheduler.getInstance().onCommandFinish(this::commandEnded);
+    CommandScheduler.getInstance()
+        .onCommandInterrupt(
+            (interrupted, interrupting) -> {
+              interrupting.ifPresent(
+                  interrupter -> runningInterrupters.put(interrupter, interrupted));
+              commandEnded(interrupted);
+            });
+  }
+
+  private final Set<Command> runningNonInterrupters = new HashSet<>();
+  private final Map<Command, Command> runningInterrupters = new HashMap<>();
+  private final Map<Subsystem, Command> requiredSubsystems = new HashMap<>();
+
+  private void commandStarted(final Command command) {
+    if (!runningInterrupters.containsKey(command)) {
+      runningNonInterrupters.add(command);
+    }
+
+    for (final Subsystem subsystem : command.getRequirements()) {
+      requiredSubsystems.put(subsystem, command);
+    }
+  }
+
+  private void commandEnded(final Command command) {
+    runningNonInterrupters.remove(command);
+    runningInterrupters.remove(command);
+
+    for (final Subsystem subsystem : command.getRequirements()) {
+      requiredSubsystems.remove(subsystem);
+    }
+  }
+
+  private final StringBuilder subsystemsBuilder = new StringBuilder();
+
+  private String getCommandName(Command command) {
+    subsystemsBuilder.setLength(0);
+    int j = 1;
+    for (final Subsystem subsystem : command.getRequirements()) {
+      subsystemsBuilder.append(subsystem.getName());
+      if (j < command.getRequirements().size()) {
+        subsystemsBuilder.append(",");
+      }
+
+      j++;
+    }
+    var finalName = command.getName();
+    if (j > 1) {
+      finalName += " (" + subsystemsBuilder + ")";
+    }
+    return finalName;
+  }
+
+  private void logRunningCommands() {
+    Logger.recordOutput("CommandScheduler/Running/.type", "Alerts");
+
+    //    final String[] runningCommands = new String[runningNonInterrupters.size()];
+    //    int i = 0;
+    //    for (final Command command : runningNonInterrupters) {
+    //      runningCommands[i] = getCommandName(command);
+    //      i++;
+    //    }
+    final ArrayList<String> runningCommands = new ArrayList<>();
+    final ArrayList<String> runningDefaultCommands = new ArrayList<>();
+    for (final Command command : runningNonInterrupters) {
+      boolean isDefaultCommand = false;
+      for (Subsystem subsystem : command.getRequirements()) {
+        if (subsystem.getDefaultCommand() == command) {
+          runningDefaultCommands.add(getCommandName(command));
+          isDefaultCommand = true;
+          break;
+        }
+      }
+      if (!isDefaultCommand) {
+        runningCommands.add(getCommandName(command));
+      }
+    }
+    Logger.recordOutput(
+        "CommandScheduler/Running/warnings", runningCommands.toArray(new String[0]));
+    Logger.recordOutput(
+        "CommandScheduler/Running/infos", runningDefaultCommands.toArray(new String[0]));
+
+    final String[] interrupters = new String[runningInterrupters.size()];
+    int j = 0;
+    for (final Map.Entry<Command, Command> entry : runningInterrupters.entrySet()) {
+      final Command interrupter = entry.getKey();
+      final Command interrupted = entry.getValue();
+
+      interrupters[j] = getCommandName(interrupter) + " interrupted " + getCommandName(interrupted);
+      j++;
+    }
+
+    Logger.recordOutput("CommandScheduler/Running/errors", interrupters);
+  }
+
+  private void logRequiredSubsystems() {
+    Logger.recordOutput("CommandScheduler/Subsystems/.type", "Alerts");
+
+    final String[] subsystems = new String[requiredSubsystems.size()];
+    {
+      int i = 0;
+      for (final Map.Entry<Subsystem, Command> entry : requiredSubsystems.entrySet()) {
+        final Subsystem required = entry.getKey();
+        final Command command = entry.getValue();
+
+        subsystems[i] = required.getName() + " (" + command.getName() + ")";
+        i++;
+      }
+    }
+    Logger.recordOutput("CommandScheduler/Subsystems/infos", subsystems);
+  }
+
+  @Override
+  public void driverStationConnected() {
+    leftSetpoints =
+        List.of(A.getPose(), C.getPose(), E.getPose(), G.getPose(), I.getPose(), K.getPose());
+
+    rightSetpoints =
+        List.of(B.getPose(), D.getPose(), F.getPose(), H.getPose(), J.getPose(), L.getPose());
+
+    l1Setpoints =
+        List.of(
+            A_LEFTL1.getPose(),
+            A_RIGHTL1.getPose(),
+            C_LEFTL1.getPose(),
+            C_RIGHTL1.getPose(),
+            E_LEFTL1.getPose(),
+            E_RIGHTL1.getPose(),
+            G_LEFTL1.getPose(),
+            G_RIGHTL1.getPose(),
+            I_LEFTL1.getPose(),
+            I_RIGHTL1.getPose(),
+            K_LEFTL1.getPose(),
+            K_RIGHTL1.getPose());
+
+    algaeSetpoints =
+        List.of(
+            CLOSE.getPose(),
+            FAR.getPose(),
+            CLOSE_LEFT.getPose(),
+            FAR_LEFT.getPose(),
+            CLOSE_RIGHT.getPose(),
+            FAR_RIGHT.getPose());
   }
 
   /** This function is called periodically during all modes. */
@@ -556,22 +728,14 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    logRunningCommands();
+    logRequiredSubsystems();
+    Logger.recordOutput(
+        "LoggedRobot/MemoryUsageMb",
+        (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1e6);
 
     // Runs virtual subsystems
     VirtualSubsystem.periodicAll();
-
-    // Runs LoggedNetork items
-    autoChooser.periodic();
-
-    if (drive.getCurrentCommand() != null) {
-      Logger.recordOutput("Drive/Command", drive.getCurrentCommand().getName());
-    }
-    if (elevator.getCurrentCommand() != null) {
-      Logger.recordOutput("Elevator/Command", elevator.getCurrentCommand().getName());
-    }
-    if (ejector.getCurrentCommand() != null) {
-      Logger.recordOutput("Ejector/Command", ejector.getCurrentCommand().getName());
-    }
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
@@ -583,7 +747,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically when disabled. */
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    autoChooser.periodic();
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
