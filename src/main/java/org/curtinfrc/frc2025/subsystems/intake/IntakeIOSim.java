@@ -10,9 +10,9 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 public class IntakeIOSim implements IntakeIO {
   private final DCMotor intakeMotor = DCMotor.getNEO(1);
   private final DCMotorSim intakeMotorSim;
-  private final SimDevice frontImpl;
+  private final SimDevice frontSensorImpl;
   private final SimBoolean frontSensor;
-  private final SimDevice backImpl;
+  private final SimDevice backSensorImpl;
   private final SimBoolean backSensor;
   private double volts = 0;
 
@@ -20,10 +20,10 @@ public class IntakeIOSim implements IntakeIO {
     intakeMotorSim =
         new DCMotorSim(LinearSystemId.createDCMotorSystem(intakeMotor, 3, 1), intakeMotor);
 
-    frontImpl = SimDevice.create("IntakeSensorFront", 3);
-    frontSensor = frontImpl.createBoolean("IsTriggered", Direction.kInput, false);
-    backImpl = SimDevice.create("IntakeSensorBack", 4);
-    backSensor = backImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    frontSensorImpl = SimDevice.create("IntakeSensorFront", 3);
+    frontSensor = frontSensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
+    backSensorImpl = SimDevice.create("IntakeSensorBack", 4);
+    backSensor = backSensorImpl.createBoolean("IsTriggered", Direction.kInput, false);
   }
 
   @Override
