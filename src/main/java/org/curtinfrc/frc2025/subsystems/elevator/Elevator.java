@@ -24,6 +24,13 @@ public class Elevator extends SubsystemBase {
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
+
+  public final Trigger isNotAtCollectOrAlgae =
+      new Trigger(
+          () ->
+              setpoint != ElevatorSetpoints.BASE
+                  && setpoint != ElevatorSetpoints.AlgaePopLow
+                  && setpoint != ElevatorSetpoints.AlgaePopHigh);
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
   public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
   public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);

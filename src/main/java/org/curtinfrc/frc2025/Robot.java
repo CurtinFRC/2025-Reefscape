@@ -62,6 +62,10 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.leds.LEDs;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
+import org.curtinfrc.frc2025.subsystems.popper.Popper;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIOComp;
+import org.curtinfrc.frc2025.subsystems.popper.PopperIOSim;
 import org.curtinfrc.frc2025.subsystems.processor.Processor;
 import org.curtinfrc.frc2025.subsystems.processor.ProcessorIO;
 import org.curtinfrc.frc2025.subsystems.processor.ProcessorIOComp;
@@ -99,6 +103,7 @@ public class Robot extends LoggedRobot {
   private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
+  private Popper popper;
   private Climber climber;
 
   // Controller
@@ -190,6 +195,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIOComp());
           processor = new Processor(new ProcessorIOComp());
           ejector = new Ejector(new EjectorIOComp());
+          popper = new Popper(new PopperIOComp());
           climber = new Climber(new ClimberIOComp());
           leds = new LEDs(new LEDsIOComp());
         }
@@ -215,6 +221,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIO() {});
           processor = new Processor(new ProcessorIO() {});
           ejector = new Ejector(new EjectorIO() {});
+          popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIO() {});
           leds = new LEDs(new LEDsIO() {});
         }
@@ -240,6 +247,7 @@ public class Robot extends LoggedRobot {
           intake = new Intake(new IntakeIOSim());
           processor = new Processor(new ProcessorIOSim() {});
           ejector = new Ejector(new EjectorIOSim());
+          popper = new Popper(new PopperIOSim());
           climber = new Climber(new ClimberIOSim());
           leds = new LEDs(new LEDsIO() {});
         }
@@ -266,6 +274,7 @@ public class Robot extends LoggedRobot {
       intake = new Intake(new IntakeIO() {});
       processor = new Processor(new ProcessorIO() {});
       ejector = new Ejector(new EjectorIO() {});
+      popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
     }
@@ -345,8 +354,8 @@ public class Robot extends LoggedRobot {
     drive
         .atSetpoint
         .and(elevator.atSetpoint)
-        .and(elevator.isNotAtCollect)
-        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()));
+        .and(elevator.isNotAtCollectOrAlgae)
+        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()).withName("Eject!!"));
 
     drive.atSetpoint.whileTrue(leds.setBlue());
 
@@ -436,6 +445,7 @@ public class Robot extends LoggedRobot {
     intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
         elevator
             .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
@@ -469,7 +479,7 @@ public class Robot extends LoggedRobot {
                         () -> controller.getLeftY(),
                         () -> controller.getLeftX(),
                         () -> controller.getRightX()),
-                    ejector.eject(40),
+                    popper.pop(40),
                     elevator.goToSetpoint(
                         () -> {
                           return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
