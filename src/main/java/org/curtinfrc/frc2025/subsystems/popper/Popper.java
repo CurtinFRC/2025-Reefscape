@@ -2,6 +2,8 @@ package org.curtinfrc.frc2025.subsystems.popper;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Popper extends SubsystemBase {
@@ -39,8 +41,6 @@ public class Popper extends SubsystemBase {
             return false;
           });
 
-
-
   @Override
   public void periodic() {
     io.updateInputs(inputs);
@@ -52,9 +52,13 @@ public class Popper extends SubsystemBase {
   }
 
   public Command pop(double rotationsPerSecond) {
-    return runOnce(() -> hasTried = true).AndThen(run(() -> {
-          io.setVelocity(rotationsPerSecond);
-        })).finallyDo(() -> hasTried = false)
+    return runOnce(() -> hasTried = true)
+        .andThen(
+            run(
+                () -> {
+                  io.setVelocity(rotationsPerSecond);
+                }))
+        .finallyDo(() -> hasTried = false)
         .withName("Pop");
   }
 

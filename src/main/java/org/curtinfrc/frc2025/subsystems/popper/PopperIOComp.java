@@ -18,13 +18,13 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 
 public class PopperIOComp implements PopperIO {
-  private static final int ID = 46;
+  private static final int ID = 53;
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(100);
   private static final TalonFXConfiguration config =
       new TalonFXConfiguration()
           .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
-          .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33))
+          .withSlot0(new Slot0Configs().withKP(1).withKV(0.33))
           .withCurrentLimits(currentLimits);
 
   private final TalonFX motor = new TalonFX(ID);

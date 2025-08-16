@@ -20,16 +20,16 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 public class EjectorIOComp implements EjectorIO {
-  private static final int ID = 53;
+  private static final int ID = 46;
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(100);
   private static final TalonFXConfiguration leaderConfig =
       new TalonFXConfiguration()
           .withMotorOutput(
               new MotorOutputConfigs()
-                  .withInverted(InvertedValue.CounterClockwise_Positive)
+                  .withInverted(InvertedValue.Clockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Brake))
-          .withSlot0(new Slot0Configs().withKP(0.5).withKV(0.33))
+          .withSlot0(new Slot0Configs().withKP(1).withKV(0.33))
           .withCurrentLimits(currentLimits);
 
   private final TalonFX motor = new TalonFX(ID);
