@@ -27,13 +27,13 @@ public class ProcessorIOComp implements ProcessorIO {
   private static final int intakeEncoderID = 0;
 
   private static final CurrentLimitsConfigs currentLimits =
-      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(40);
+      new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withStatorCurrentLimit(50);
 
   private final TalonFX armMotor = new TalonFX(armMotorID);
   private final CANcoder armEncoder = new CANcoder(armEncoderID);
   private final TalonFX intakeMotor = new TalonFX(intakeMotorID);
   private final CANcoder intakeEncoder = new CANcoder(intakeEncoderID);
-  private final DigitalInput processorSensor = new DigitalInput(8); // TODO: change later
+  private final DigitalInput processorSensor = new DigitalInput(6);
 
   // private final StatusSignal<Angle> armAbsolutePosition =
   // armAbsoluteEncoder.getAbsolutePosition();

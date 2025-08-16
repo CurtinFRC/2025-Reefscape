@@ -47,26 +47,26 @@ public class Processor extends SubsystemBase {
   }
 
   public Command intake() {
-    return run(
-        () -> {
+    return run(() -> {
           goToPosition(0.15);
-          runIntake(4);
-        });
+          runIntake(7);
+        })
+        .withName("Intake");
   }
 
   public Command outake() {
-    return run(
-        () -> {
-          goToPosition(0);
-          runIntake(-4);
-        });
+    return run(() -> {
+          goToPosition(0.15);
+          runIntake(-8);
+        })
+        .withName("Outake");
   }
 
   public Command idle() {
-    return run(
-        () -> {
+    return run(() -> {
           goToPosition(0);
           stopIntake();
-        });
+        })
+        .withName("Idle");
   }
 }

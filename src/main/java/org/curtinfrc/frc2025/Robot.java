@@ -412,14 +412,12 @@ public class Robot extends LoggedRobot {
                     () -> controller.getLeftX(),
                     () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
+    controller.rightStick().and(processor.processorSensor.negate()).onTrue(processor.intake());
+    processor.processorSensor.whileTrue(processor.intake());
     controller
         .rightStick()
-        .and(() -> processor.processorSensor.getAsBoolean())
-        .onTrue(processor.intake());
-    controller
-        .rightStick()
-        .and(() -> !processor.processorSensor.getAsBoolean())
-        .whileTrue(processor.outake());
+        .and(processor.processorSensor)
+        .whileTrue(processor.outake().withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     climber.stalled.onTrue(
         climber
             .stop()
