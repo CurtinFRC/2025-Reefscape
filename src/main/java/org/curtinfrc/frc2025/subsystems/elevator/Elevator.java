@@ -25,15 +25,22 @@ public class Elevator extends SubsystemBase {
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
 
-  public final Trigger isNotAtCollectOrAlgae =
-      new Trigger(
-          () ->
-              setpoint != ElevatorSetpoints.BASE
-                  && setpoint != ElevatorSetpoints.AlgaePopLow
-                  && setpoint != ElevatorSetpoints.AlgaePopHigh);
+  public final Trigger isNotAtCollectOrL1 =
+      new Trigger(() -> setpoint != ElevatorSetpoints.BASE && setpoint != ElevatorSetpoints.L1);
+
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
-  public final Trigger atSetpoint = new Trigger(pid::atSetpoint);
+  public final Trigger atSetpoint =
+      new Trigger(
+          () -> {
+            var refrence = setpoint.setpoint / (Math.PI * 2 * 0.03055) * 8.1818;
+            var current = inputs.positionRotations;
+
+            return (refrence - current) < 0.85248701367;
+          });
+
+  @AutoLogOutput(key = "Climber/ElevatorAtSetpoint")
   public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
+
   public final Trigger algaePop =
       new Trigger(
           () ->
@@ -65,14 +72,7 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point.get();
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
-                  Logger.recordOutput("Elevator/Output", out);
-                  Logger.recordOutput("Elevator/Error", pid.getError());
-                  Logger.recordOutput("Elevator/ClimberPID", false);
-                  io.setVoltage(out);
+                  io.setPosition(setpoint.setpoint);
                 }),
             Commands.none(),
             safe)
@@ -85,19 +85,12 @@ public class Elevator extends SubsystemBase {
             run(
                 () -> {
                   setpoint = point;
-                  var out =
-                      pid.calculate(
-                          io.positionRotationsToMetres(inputs.positionRotations),
-                          setpoint.setpoint);
-                  Logger.recordOutput("Elevator/Output", out);
-                  Logger.recordOutput("Elevator/Error", pid.getError());
-                  Logger.recordOutput("Elevator/ClimberPID", false);
-                  io.setVoltage(out);
+                  io.setPosition(setpoint.setpoint);
                 }),
             Commands.none(),
             safe)
         .repeatedly()
-        .withName("GoToSetpoint");
+        .withName("GoToSetpoint " + point.toString());
   }
 
   public Command goToClimberSetpoint(ElevatorSetpoints point, BooleanSupplier safe) {

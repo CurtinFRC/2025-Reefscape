@@ -6,8 +6,10 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -30,6 +32,7 @@ public class ElevatorIOComp implements ElevatorIO {
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Brake))
+          .withSlot0(new Slot0Configs().withKP(0.4))
           .withCurrentLimits(
               new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60));
 
@@ -44,6 +47,7 @@ public class ElevatorIOComp implements ElevatorIO {
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
   private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(true);
+  private final PositionVoltage positionRequest = new PositionVoltage(0).withEnableFOC(true);
   private final Follower followRequest = new Follower(ID, false);
 
   public ElevatorIOComp() {
@@ -58,7 +62,6 @@ public class ElevatorIOComp implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    motor.setControl(voltageRequest);
     follower.setControl(followRequest);
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
@@ -70,6 +73,13 @@ public class ElevatorIOComp implements ElevatorIO {
   @Override
   public void setVoltage(double volts) {
     voltageRequest.withOutput(volts);
+    motor.setControl(voltageRequest);
+  }
+
+  @Override
+  public void setPosition(double positionMetres) {
+    positionRequest.withPosition(positionMetresToRotations(positionMetres));
+    motor.setControl(positionRequest);
   }
 
   @Override
