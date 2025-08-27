@@ -87,9 +87,9 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(2, 0, 0);
   private final PIDController headingController = new PIDController(3.5, 0, 0);
 
-  private final PIDController xFollower = new PIDController(1, 0, 0);
-  private final PIDController yFollower = new PIDController(1, 0, 0);
-  private final PIDController headingFollower = new PIDController(1.5, 0, 0);
+  private PIDController xFollower = new PIDController(1.7, 0, 0);
+  private PIDController yFollower = new PIDController(1.7, 0, 0);
+  private final PIDController headingFollower = new PIDController(3, 0, 0);
 
   @AutoLogOutput(key = "Drive/Setpoint")
   public DriveSetpoints setpoint = DriveSetpoints.A;
@@ -151,12 +151,22 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
-    xController.setTolerance(0.02);
-    yController.setTolerance(0.02);
-    headingController.setTolerance(0.02);
+    xController.setTolerance(0.02, 0.1);
+    yController.setTolerance(0.02, 0.1);
+    headingController.setTolerance(0.02, 0.1);
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     headingFollower.enableContinuousInput(-Math.PI, Math.PI);
+  }
+
+  public Command scaleByBatteryVoltage() {
+    return runOnce(
+        () -> {
+          // var diff = Math.abs(13 - RobotController.getBatteryVoltage());
+          // Logger.recordOutput("BatteryDiff", diff);
+          // xFollower = new PIDController(0.5 + diff, 0, 0);
+          // yFollower = new PIDController(0.5 + diff, 0, 0);
+        });
   }
 
   public void followTrajectory(SwerveSample sample) {
@@ -183,12 +193,12 @@ public class Drive extends SubsystemBase {
 
     var speeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            xFollower.calculate(pose.getX(), sample.x) + sample.vx,
-            yFollower.calculate(pose.getY(), sample.y) + sample.vy,
-            headingFollower.calculate(getRotation().getRadians(), sample.heading) + sample.omega,
+            sample.vx + xFollower.calculate(pose.getTranslation().getX(), sample.x),
+            sample.vy + yFollower.calculate(pose.getTranslation().getY(), sample.y),
+            sample.omega + headingFollower.calculate(getRotation().getRadians(), sample.heading),
             getRotation());
 
-    runVelocity(speeds, new double[4]);
+    runVelocity(speeds.unaryMinus(), feedforwards);
   }
 
   @Override
@@ -268,7 +278,6 @@ public class Drive extends SubsystemBase {
     // Log unoptimized setpoints and setpoint speeds
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveChassisSpeeds/Setpoints", speeds);
-    Logger.recordOutput("SwerveChassisSpeeds/FeedForwardsAmps", feedforwardAmps);
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
@@ -277,6 +286,12 @@ public class Drive extends SubsystemBase {
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+
+    var loggedFeedforwards = new SwerveModuleState[4];
+    for (var i = 0; i < 4; i++) {
+      loggedFeedforwards[i] = new SwerveModuleState(feedforwardAmps[i], setpointStates[i].angle);
+    }
+    Logger.recordOutput("SwerveStates/SwerveFeedforwards", loggedFeedforwards);
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
