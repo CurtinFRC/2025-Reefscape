@@ -62,14 +62,6 @@ import org.curtinfrc.frc2025.subsystems.intake.IntakeIOSim;
 import org.curtinfrc.frc2025.subsystems.leds.LEDs;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIO;
 import org.curtinfrc.frc2025.subsystems.leds.LEDsIOComp;
-import org.curtinfrc.frc2025.subsystems.popper.Popper;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIO;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIOComp;
-import org.curtinfrc.frc2025.subsystems.popper.PopperIOSim;
-import org.curtinfrc.frc2025.subsystems.processor.Processor;
-import org.curtinfrc.frc2025.subsystems.processor.ProcessorIO;
-import org.curtinfrc.frc2025.subsystems.processor.ProcessorIOComp;
-import org.curtinfrc.frc2025.subsystems.processor.ProcessorIOSim;
 import org.curtinfrc.frc2025.subsystems.vision.Vision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIO;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOLimelight;
@@ -99,11 +91,9 @@ public class Robot extends LoggedRobot {
   private Drive drive;
   private Vision vision;
   private Intake intake;
-  private Processor processor;
   private LEDs leds;
   private Elevator elevator;
   private Ejector ejector;
-  private Popper popper;
   private Climber climber;
 
   // Controller
@@ -193,9 +183,7 @@ public class Robot extends LoggedRobot {
                   new VisionIOPhotonVision(camera3Name, robotToCamera3));
           elevator = new Elevator(new ElevatorIOComp());
           intake = new Intake(new IntakeIOComp());
-          processor = new Processor(new ProcessorIOComp());
           ejector = new Ejector(new EjectorIOComp());
-          popper = new Popper(new PopperIOComp());
           climber = new Climber(new ClimberIOComp());
           leds = new LEDs(new LEDsIOComp());
         }
@@ -219,9 +207,7 @@ public class Robot extends LoggedRobot {
                   new VisionIO() {});
           elevator = new Elevator(new ElevatorIO() {});
           intake = new Intake(new IntakeIO() {});
-          processor = new Processor(new ProcessorIO() {});
           ejector = new Ejector(new EjectorIO() {});
-          popper = new Popper(new PopperIO() {});
           climber = new Climber(new ClimberIO() {});
           leds = new LEDs(new LEDsIO() {});
         }
@@ -245,9 +231,7 @@ public class Robot extends LoggedRobot {
 
           elevator = new Elevator(new ElevatorIOSim());
           intake = new Intake(new IntakeIOSim());
-          processor = new Processor(new ProcessorIOSim() {});
           ejector = new Ejector(new EjectorIOSim());
-          popper = new Popper(new PopperIOSim());
           climber = new Climber(new ClimberIOSim());
           leds = new LEDs(new LEDsIO() {});
         }
@@ -272,9 +256,7 @@ public class Robot extends LoggedRobot {
 
       elevator = new Elevator(new ElevatorIO() {});
       intake = new Intake(new IntakeIO() {});
-      processor = new Processor(new ProcessorIO() {});
       ejector = new Ejector(new EjectorIO() {});
-      popper = new Popper(new PopperIO() {});
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
     }
@@ -293,19 +275,7 @@ public class Robot extends LoggedRobot {
 
     autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
     autoChooser.addRoutine(
-        "One Piece Centre", () -> Autos.onePieceCentre(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "One Piece Left", () -> Autos.onePieceLeft(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "Two Piece Left", () -> Autos.twoPieceLeft(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
         "Three Piece Left", () -> Autos.threePieceLeft(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "Four Piece Left", () -> Autos.fourPieceLeft(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "Five Piece Left", () -> Autos.fivePieceLeft(factory, drive, ejector, elevator, intake));
-    autoChooser.addRoutine(
-        "Five Piece Right", () -> Autos.fivePieceRight(factory, drive, ejector, elevator, intake));
 
     autoChooser.addCmd("Test Auto", this::testAuto);
 
@@ -354,8 +324,9 @@ public class Robot extends LoggedRobot {
     drive
         .atSetpoint
         .and(elevator.atSetpoint)
-        .and(elevator.isNotAtCollectOrAlgae)
-        .whileTrue(ejector.eject(15).until(ejector.backSensor.negate()).withName("Eject!!"));
+        .and(elevator.isNotAtCollectOrL1)
+        .whileTrue(
+            ejector.eject(15).until(ejector.backSensor.negate()).withName("Eject At Setpoint"));
 
     drive.atSetpoint.whileTrue(leds.setBlue());
 
@@ -421,12 +392,6 @@ public class Robot extends LoggedRobot {
                     () -> controller.getLeftX(),
                     () -> controller.getRightX())
                 .until(ejector.backSensor.negate()));
-    controller.rightStick().and(processor.processorSensor.negate()).onTrue(processor.intake());
-    processor.processorSensor.whileTrue(processor.intake());
-    controller
-        .rightStick()
-        .and(processor.processorSensor)
-        .whileTrue(processor.outake().withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     climber.stalled.onTrue(
         climber
             .stop()
@@ -440,18 +405,17 @@ public class Robot extends LoggedRobot {
                             elevator.goToClimberSetpoint(
                                 ElevatorSetpoints.climbed, intake.backSensor.negate())))
                     .until(elevator.atClimbSetpoint)
-                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly()))));
+                    .andThen(Commands.parallel(climber.engage(), elevator.stop().repeatedly())))
+            .withName("Climb Stalled"));
 
     intake.setDefaultCommand(intake.intake());
     ejector.setDefaultCommand(
         ejector.stop().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-    popper.setDefaultCommand(popper.stop());
     elevator.setDefaultCommand(
         elevator
             .goToSetpoint(ElevatorSetpoints.BASE, intake.backSensor.negate())
             .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
     climber.setDefaultCommand(climber.stop());
-    processor.setDefaultCommand(processor.idle());
 
     ejector.backSensor.onFalse(
         Commands.run(() -> controller.setRumble(RumbleType.kBothRumble, 0.5))
@@ -462,8 +426,11 @@ public class Robot extends LoggedRobot {
             .withTimeout(0.5)
             .andThen(Commands.runOnce(() -> controller.setRumble(RumbleType.kBothRumble, 0.0))));
 
+    controller.povLeft().and(override).whileTrue(ejector.eject(20));
+
     controller
         .povLeft()
+        .and(override.negate())
         .and(
             controller
                 .rightBumper()
@@ -479,7 +446,7 @@ public class Robot extends LoggedRobot {
                         () -> controller.getLeftY(),
                         () -> controller.getLeftX(),
                         () -> controller.getRightX()),
-                    popper.pop(40),
+                    ejector.pop(),
                     elevator.goToSetpoint(
                         () -> {
                           return switch (DriveSetpoints.closest(drive::getPose, leftSetpoints)) {
@@ -498,27 +465,35 @@ public class Robot extends LoggedRobot {
 
     controller
         .povRight()
+        .and(override)
+        .whileTrue(elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()));
+
+    controller
+        .povRight()
         .and(override.negate())
         .whileTrue(
             Commands.sequence(
-                Commands.parallel(
+                    Commands.parallel(
+                            drive.autoAlignWithOverride(
+                                () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
+                                () -> controller.getLeftY(),
+                                () -> controller.getLeftX(),
+                                () -> controller.getRightX()),
+                            elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()))
+                        .until(elevator.atSetpoint.and(drive.atSetpoint)),
+                    Commands.parallel(
                         drive.autoAlignWithOverride(
                             () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
                             () -> controller.getLeftY(),
                             () -> controller.getLeftX(),
                             () -> controller.getRightX()),
-                        elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()))
-                    .until(elevator.atSetpoint.and(drive.atSetpoint)),
-                Commands.parallel(
-                    drive.autoAlignWithOverride(
-                        () -> DriveSetpoints.closest(drive::getPose, l1Setpoints),
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX(),
-                        () -> controller.getRightX()),
-                    elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
-                    ejector.eject(25))));
+                        elevator.goToSetpoint(ElevatorSetpoints.L1, intake.backSensor.negate()),
+                        ejector.eject(20)))
+                .withName("L1"));
+
     controller
         .povLeft()
+        .and(override.negate())
         .and(
             controller
                 .rightBumper()
@@ -531,7 +506,7 @@ public class Robot extends LoggedRobot {
         .backSensor
         .and(elevator.isNotAtCollect.negate())
         .and(elevator.atSetpoint)
-        .whileTrue(ejector.eject(15));
+        .whileTrue(ejector.eject(10));
 
     intake
         .backSensor
@@ -572,23 +547,25 @@ public class Robot extends LoggedRobot {
         .x()
         .onTrue(
             Commands.sequence(
-                climber.disengage(),
-                climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
-                elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate())));
+                    climber.disengage(),
+                    climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn),
+                    elevator.goToSetpoint(ElevatorSetpoints.climbPrep, intake.backSensor.negate()))
+                .withName("Climb Ready"));
 
     controller // climb attempt
         .a()
         .and(() -> climber.climberDeployed)
         .onTrue(
             elevator
-                .goToSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
+                .goToClimberSetpoint(ElevatorSetpoints.climbAttempt, intake.backSensor.negate())
                 .until(elevator.atSetpoint)
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsOut))
                 .andThen(climber.goToSetpoint(ClimberConstants.targetPositionRotationsIn))
                 .andThen(
                     new ScheduleCommand(
                         elevator.goToSetpoint(
-                            ElevatorSetpoints.climbPrep, intake.backSensor.negate()))));
+                            ElevatorSetpoints.climbPrep, intake.backSensor.negate())))
+                .withName("Climb Attempt"));
 
     controller.b().onTrue(Commands.runOnce(() -> overridden = !overridden));
 
@@ -756,6 +733,7 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
     logRunningCommands();
     logRequiredSubsystems();
     Logger.recordOutput(
