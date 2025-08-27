@@ -20,7 +20,7 @@ import org.curtinfrc.frc2025.generated.CompTunerConstants;
 
 public final class DriveConstants {
   public static final double coralOffset = 0.32 / 2;
-  public static final double l1Offset = 0.455;
+  public static final double l1Offset = 0.355;
   public static final double algaeOffset = 0.155;
   public static final double DEADBAND = 0;
   public static final double ANGLE_KP = 5.0;
@@ -103,11 +103,17 @@ public final class DriveConstants {
       return pose;
     }
 
-    static Pose3d mapPose(Pose3d pose, boolean offset) {
+    static Pose3d mapPose(Pose3d pose, boolean offset, boolean autoOffset) {
       double angle = pose.getRotation().getAngle();
       if (offset) {
         return new Pose3d(
             pose.getX() + Math.cos(angle) * (Constants.ROBOT_X / 2 + 0.03),
+            pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
+            0.0,
+            pose.getRotation());
+      } else if (autoOffset) {
+        return new Pose3d(
+            pose.getX() + Math.cos(angle) * (Constants.ROBOT_X / 2 - 0.015),
             pose.getY() + Math.sin(angle) * Constants.ROBOT_Y / 2,
             0.0,
             pose.getRotation());
@@ -121,7 +127,7 @@ public final class DriveConstants {
     }
 
     DriveSetpoints(Pose3d tag, boolean side, double sideOffset) {
-      Pose3d mappedPose = mapPose(tag, sideOffset == coralOffset);
+      Pose3d mappedPose = mapPose(tag, sideOffset == coralOffset, sideOffset == algaeOffset);
       Rotation3d rotation = mappedPose.getRotation();
       double baseAngle = rotation.getAngle();
       double cos = Math.cos(baseAngle);
