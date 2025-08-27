@@ -7,7 +7,7 @@ import edu.wpi.first.util.struct.StructSerializable;
 public class ElevatorConstants {
   // TODO: TUNE PID and ff
   public static double tolerance = 0.021;
-  public static double kP = 20;
+  public static double kP = 19;
   public static double kD = 0;
   public static double kV = 0;
   public static double kA = 0.01;
@@ -18,11 +18,11 @@ public class ElevatorConstants {
   public static double climbkD = 0;
 
   public static enum ElevatorSetpoints implements StructSerializable {
-    L1(0.03),
+    L1(0.1),
     L2(0.221),
-    AlgaePopLow(0),
+    AlgaePopLow(0.045),
     L3(0.611),
-    AlgaePopHigh(0.38),
+    AlgaePopHigh(0.45),
     BASE(0.01),
     climbPrep(0.3),
     climbAttempt(0.5),
