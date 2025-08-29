@@ -69,6 +69,7 @@ import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVision;
 import org.curtinfrc.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 import org.curtinfrc.frc2025.util.AutoChooser;
 import org.curtinfrc.frc2025.util.ButtonBoard;
+import org.curtinfrc.frc2025.util.LoggedTracer;
 import org.curtinfrc.frc2025.util.PhoenixUtil;
 import org.curtinfrc.frc2025.util.VirtualSubsystem;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -224,6 +225,11 @@ public class Robot extends LoggedRobot {
               new Vision(
                   drive::addVisionMeasurement,
                   drive::getRotation,
+                  // new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                  // new VisionIOPhotonVision(camera1Name, robotToCamera1),
+                  // // new VisionIOPhotonVision(camera2Name, robotToCamera2),
+                  // new VisionIO() {},
+                  // new VisionIOPhotonVision(camera3Name, robotToCamera3));
                   new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
                   new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose),
                   new VisionIOPhotonVisionSim(camera2Name, robotToCamera2, drive::getPose),
@@ -723,25 +729,25 @@ public class Robot extends LoggedRobot {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
 
+    LoggedTracer.reset("Phoenix/RefreshTime");
     PhoenixUtil.refreshAll();
+    LoggedTracer.record("Phoenix/RefreshTime");
 
-    controllerDisconnected.set(!controller.isConnected());
-
-    // Runs the Scheduler. This is responsible for polling buttons, adding
-    // newly-scheduled commands, running already-scheduled commands, removing
-    // finished or interrupted commands, and running subsystem periodic() methods.
-    // This must be called from the robot's periodic block in order for anything in
-    // the Command-based framework to work.
+    LoggedTracer.reset("CommandSchedulerLoopTime");
     CommandScheduler.getInstance().run();
-
     logRunningCommands();
     logRequiredSubsystems();
+    LoggedTracer.record("CommandSchedulerLoopTime");
+
+    // Runs virtual subsystems
+    LoggedTracer.reset("VirtualSubsystemLoopTime");
+    VirtualSubsystem.periodicAll();
+    LoggedTracer.record("VirtualSubsystemLoopTime");
+
+    controllerDisconnected.set(!controller.isConnected());
     Logger.recordOutput(
         "LoggedRobot/MemoryUsageMb",
         (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1e6);
-
-    // Runs virtual subsystems
-    VirtualSubsystem.periodicAll();
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);

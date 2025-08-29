@@ -13,6 +13,13 @@ java {
 
 def ROBOT_MAIN_CLASS = "org.curtinfrc.frc2025.Main"
 
+def applyJvmArgs(Closure jvmArgsFun) {
+    jvmArgsFun("-XX:+UseG1GC")
+    jvmArgsFun("-Xmx10M")
+    jvmArgsFun("-Xms10M")
+    jvmArgsFun("-XX:MaxGCPauseMillis=2")
+}
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
@@ -30,16 +37,7 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
-                    // https://www.chiefdelphi.com/t/2024-wpilib-feedback/464322/141
-                    final MAX_JAVA_HEAP_SIZE_MB = 50;
-                    jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
-
-                    // Set the minimum heap size to the maximum heap size to avoid resizing
-                    jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    jvmArgs.add("-XX:GCTimeRatio=5")
-                    jvmArgs.add("-XX:+UseSerialGC")
-                    jvmArgs.add("-XX:MaxGCPauseMillis=50")
+                    applyJvmArgs({ thing -> jvmArgs.add(thing)})
                 }
 
                 // Static files artifact
@@ -105,6 +103,10 @@ dependencies {
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
 }
+
+
+applyJvmArgs({ thing -> simulateJavaRelease.jvmArgs(thing)})
+applyJvmArgs({ thing -> simulateJavaDebug.jvmArgs(thing)})
 
 test {
     useJUnitPlatform()

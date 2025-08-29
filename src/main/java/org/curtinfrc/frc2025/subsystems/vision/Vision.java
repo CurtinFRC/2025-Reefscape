@@ -43,25 +43,10 @@ public class Vision extends VirtualSubsystem {
     }
   }
 
-  /**
-   * Returns the X angle to the best target, which can be used for simple servoing with vision.
-   *
-   * @param cameraIndex The index of the camera to use.
-   */
-  public Rotation2d getTargetX(int cameraIndex) {
-    return inputs[cameraIndex].latestTargetObservation.tx();
-  }
-
   public void setLEDMode(VisionLEDMode mode) {
     for (var i : io) {
       i.setLEDMode(mode);
     }
-  }
-
-  public boolean hasTarget(int cameraIndex) {
-    return inputs[cameraIndex].connected
-        && !inputs[cameraIndex].latestTargetObservation.tx().equals(Rotation2d.kZero)
-        && !inputs[cameraIndex].latestTargetObservation.ty().equals(Rotation2d.kZero);
   }
 
   @Override

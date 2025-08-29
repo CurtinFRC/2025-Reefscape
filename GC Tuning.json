@@ -1,0 +1,190 @@
+{
+  "hubs": [
+    {
+      "x": 0,
+      "y": 69,
+      "width": 2400,
+      "height": 1531,
+      "state": {
+        "sidebar": {
+          "width": 339,
+          "expanded": [
+            "/RealOutputs/Popper",
+            "/Popper",
+            "/RealOutputs/Elevator/Height",
+            "/RealOutputs/Elevator/Height/translation",
+            "/RealOutputs/Elevator/setpoint",
+            "/ReplayOutputs",
+            "/ReplayOutputs/Popper",
+            "/ReplayOutputs/CommandScheduler/Subsystems",
+            "/ReplayOutputs/Odometry",
+            "/ReplayOutputs/Ejector",
+            "/URCL/Spark-1",
+            "/URCL/Spark-1/Warning",
+            "/URCL/Spark-2",
+            "/ReplayOutputs/CommandScheduler/Running",
+            "/ReplayOutputs/LoggedRobot",
+            "/ReplayOutputs/Elevator",
+            "/ReplayOutputs/Elevator/Height",
+            "/ReplayOutputs/Elevator/Height/translation",
+            "/RealOutputs/Vision/Summary/TagPoses/4",
+            "/DriverStation/Joystick0",
+            "/DriverStation/Joystick0/AxisValues",
+            "/DriverStation/Joystick0/AxisTypes",
+            "/RadioStatus/Status",
+            "/RadioStatus/Status/networkStatus6",
+            "/RealOutputs",
+            "/RealOutputs/LoggedTracer",
+            "/RealOutputs/LoggedTracer/CommandScheduler",
+            "/RealOutputs/LoggedRobot"
+          ]
+        },
+        "tabs": {
+          "selected": 2,
+          "tabs": [
+            {
+              "type": 0,
+              "title": "",
+              "controller": null,
+              "controllerUUID": "l18v27lj5z1tey72qzm9quinmokxu7is",
+              "renderer": "#/",
+              "controlsHeight": 0
+            },
+            {
+              "type": 1,
+              "title": "Line Graph",
+              "controller": {
+                "leftSources": [
+                  {
+                    "type": "stepped",
+                    "logKey": "/RealOutputs/LoggedRobot/MemoryUsageMb",
+                    "logType": "Number",
+                    "visible": true,
+                    "options": {
+                      "color": "#2b66a2",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "rightSources": [
+                  {
+                    "type": "stepped",
+                    "logKey": "/RealOutputs/LoggedRobot/GCTimeMS",
+                    "logType": "Number",
+                    "visible": true,
+                    "options": {
+                      "color": "#af2437",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "discreteSources": [],
+                "leftLockedRange": null,
+                "rightLockedRange": null,
+                "leftUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "rightUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "leftFilter": 0,
+                "rightFilter": 0
+              },
+              "controllerUUID": "jkirlvcj7cpy491kxeiiwrwuqj71gxom",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 1,
+              "title": "Line Graph",
+              "controller": {
+                "leftSources": [
+                  {
+                    "type": "stepped",
+                    "logKey": "/RealOutputs/LoggedRobot/GCCounts",
+                    "logType": "Number",
+                    "visible": false,
+                    "options": {
+                      "color": "#2b66a2",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "rightSources": [
+                  {
+                    "type": "stepped",
+                    "logKey": "/RealOutputs/LoggedRobot/GCTimeMS",
+                    "logType": "Number",
+                    "visible": true,
+                    "options": {
+                      "color": "#e5b31b",
+                      "size": "normal"
+                    }
+                  }
+                ],
+                "discreteSources": [],
+                "leftLockedRange": null,
+                "rightLockedRange": null,
+                "leftUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "rightUnitConversion": {
+                  "type": null,
+                  "factor": 1
+                },
+                "leftFilter": 0,
+                "rightFilter": 0
+              },
+              "controllerUUID": "6g6kk54zmvbk5g3tjpevrw24l5k8crap",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 6,
+              "title": "Statistics",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "independent",
+                    "logKey": "/RealOutputs/LoggedRobot/FullCycleMS",
+                    "logType": "Number",
+                    "visible": true,
+                    "options": {
+                      "color": "#e5b31b"
+                    }
+                  }
+                ],
+                "timeRange": "visible",
+                "rangeMin": 0,
+                "rangeMax": 50,
+                "stepSize": 0.25
+              },
+              "controllerUUID": "calzh3bblns6dqx1bblmr3atenk7zk4j",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 6,
+              "title": "Statistics",
+              "controller": {
+                "sources": [],
+                "timeRange": "visible",
+                "rangeMin": 0,
+                "rangeMax": 10,
+                "stepSize": 1
+              },
+              "controllerUUID": "8um9yumfi6yllfoyx0r4gcmalj8c1516",
+              "renderer": null,
+              "controlsHeight": 200
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "satellites": [],
+  "version": "4.1.6"
+}

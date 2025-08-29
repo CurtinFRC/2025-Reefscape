@@ -1,16 +1,3 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package org.curtinfrc.frc2025.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
@@ -45,8 +32,6 @@ public class VisionIOLimelight implements VisionIO {
   private final NetworkTableEntry ledMode;
 
   private final DoubleSubscriber latencySubscriber;
-  private final DoubleSubscriber txSubscriber;
-  private final DoubleSubscriber tySubscriber;
   private final DoubleArraySubscriber megatag1Subscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
 
@@ -65,8 +50,6 @@ public class VisionIOLimelight implements VisionIO {
     orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
     idFilterSet = table.getIntegerArrayTopic("fiducial_id_filters_set").publish();
     latencySubscriber = table.getDoubleTopic("tl").subscribe(0.0);
-    txSubscriber = table.getDoubleTopic("tx").subscribe(0.0);
-    tySubscriber = table.getDoubleTopic("ty").subscribe(0.0);
     megatag1Subscriber = table.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
     megatag2Subscriber =
         table.getDoubleArrayTopic("botpose_orb_wpiblue").subscribe(new double[] {});
@@ -87,11 +70,6 @@ public class VisionIOLimelight implements VisionIO {
 
     idFilterSet.set(allowedTags);
     inputs.allowedTags = allowedTags;
-
-    // Update target observation
-    inputs.latestTargetObservation =
-        new TargetObservation(
-            Rotation2d.fromDegrees(txSubscriber.get()), Rotation2d.fromDegrees(tySubscriber.get()));
 
     if (DriverStation.isDisabled()) {
       // Set IMU mode
