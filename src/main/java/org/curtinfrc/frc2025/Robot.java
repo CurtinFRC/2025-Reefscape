@@ -273,6 +273,26 @@ public class Robot extends LoggedRobot {
             drive,
             drive::logTrajectory);
 
+    autoChooser.addCmd(
+        "L3 No end", () -> elevator.goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate()));
+
+    autoChooser.addCmd(
+        "L2 No end", () -> elevator.goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate()));
+
+    autoChooser.addCmd(
+        "L3 End",
+        () ->
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L3, intake.backSensor.negate())
+                .until(elevator.atSetpoint));
+
+    autoChooser.addCmd(
+        "L2 End",
+        () ->
+            elevator
+                .goToSetpoint(ElevatorSetpoints.L2, intake.backSensor.negate())
+                .until(elevator.atSetpoint));
+
     autoChooser.addRoutine("Test Path", () -> Autos.path("Test Path", factory, drive));
     autoChooser.addRoutine(
         "Three Piece Left", () -> Autos.threePieceLeft(factory, drive, ejector, elevator, intake));
