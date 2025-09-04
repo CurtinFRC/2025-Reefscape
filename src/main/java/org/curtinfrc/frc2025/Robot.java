@@ -11,6 +11,7 @@ import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Threads;
@@ -260,6 +261,9 @@ public class Robot extends LoggedRobot {
       climber = new Climber(new ClimberIO() {});
       leds = new LEDs(new LEDsIO() {});
     }
+
+    // Rely on our custom alerts for disconnected controllers
+    DriverStation.silenceJoystickConnectionWarning(true);
 
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
