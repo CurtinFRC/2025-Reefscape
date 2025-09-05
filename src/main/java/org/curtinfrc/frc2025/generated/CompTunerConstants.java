@@ -98,7 +98,7 @@ public class CompTunerConstants {
   private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.01);
   // Simulated voltage necessary to overcome friction
   private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
-  private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
+  private static final Voltage kDriveFrictionVoltage = Volts.of(0.4);
 
   public static final SwerveDrivetrainConstants DrivetrainConstants =
       new SwerveDrivetrainConstants()
