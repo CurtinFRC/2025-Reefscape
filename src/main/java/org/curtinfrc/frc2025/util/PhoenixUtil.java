@@ -5,6 +5,8 @@ package org.curtinfrc.frc2025.util;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.Utils;
+import edu.wpi.first.wpilibj.RobotController;
 import java.util.function.Supplier;
 
 public class PhoenixUtil {
@@ -44,5 +46,25 @@ public class PhoenixUtil {
     if (rioSignals.length > 0) {
       BaseStatusSignal.refreshAll(rioSignals);
     }
+
+  /**
+   * Converts a time from Phoenix6's timebase to FPGA time. Should only be used inside of an IO
+   * layer as it relies on raw FPGA time.
+   */
+  public static double phoenixToFPGATime(double timeSeconds) {
+    return (RobotController.getFPGATime() - Utils.getCurrentTimeSeconds()) + timeSeconds;
+  }
+
+  /**
+   * Converts a time from Phoenix6's timebase to the robots timebase. Can be used outside of IO
+   * layers.
+   */
+  public static double phoenixToRobotTime(double timeSeconds) {
+    return (RobotController.getTime() - Utils.getCurrentTimeSeconds()) + timeSeconds;
+  }
+
+  /** Returns raw Phoenix time. Is *NOT* deterministic. */
+  public static double getTime() {
+    return Utils.getCurrentTimeSeconds();
   }
 }

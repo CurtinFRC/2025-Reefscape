@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -728,6 +729,10 @@ public class Robot extends LoggedRobot {
     Threads.setCurrentThreadPriority(true, 99);
 
     PhoenixUtil.refreshAll();
+    Logger.recordOutput("PhoenixTime", PhoenixUtil.getTime());
+    Logger.recordOutput("FPGATime", RobotController.getFPGATime() / 1000000.0);
+    Logger.recordOutput(
+        "TimeDifference", PhoenixUtil.getTime() - RobotController.getFPGATime() / 1000000.0);
 
     controllerDisconnected.set(!controller.isConnected());
 
