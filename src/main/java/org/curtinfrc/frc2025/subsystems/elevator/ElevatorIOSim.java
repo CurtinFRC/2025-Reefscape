@@ -1,28 +1,49 @@
 package org.curtinfrc.frc2025.subsystems.elevator;
 
-import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.kA;
-import static org.curtinfrc.frc2025.subsystems.elevator.ElevatorConstants.kV;
-
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 
-public class ElevatorIOSim implements ElevatorIO {
+public class ElevatorIOSim extends ElevatorIOComp {
   private final ElevatorSim elevatorSim =
-      new ElevatorSim(kV, kA, DCMotor.getNEO(1), 0, 0.6, true, 0);
-  private double volts = 0;
+      new ElevatorSim(5.29, 0.01, DCMotor.getKrakenX60Foc(2), 0, 0.7, true, 0, 0.0005, 0.005);
 
-  @Override
-  public void updateInputs(ElevatorIOInputs inputs) {
+  private double lastSimTime;
+  private final Notifier notifier;
+
+  public ElevatorIOSim() {
+    super();
+    lastSimTime = RobotController.getFPGATime();
+
+    notifier =
+        new Notifier(
+            () -> {
+              final double currentTime = RobotController.getFPGATime();
+              double deltaTime = currentTime - lastSimTime;
+              lastSimTime = currentTime;
+
+              updateSimState(deltaTime);
+            });
+    notifier.startPeriodic(0.001);
+  }
+
+  private void updateSimState(double deltaTime) {
+    var simState = motor.getSimState();
+    elevatorSim.setInput(simState.getMotorVoltage());
     elevatorSim.update(0.02);
-    // ignore velocity cause we dont care
-    inputs.currentAmps = elevatorSim.getCurrentDrawAmps();
-    inputs.appliedVolts = volts;
-    inputs.positionRotations = elevatorSim.getPositionMeters();
+    var rotorPosition = metresToRotations(elevatorSim.getPositionMeters());
+    simState.setRawRotorPosition(rotorPosition);
+    var rotorVel = metresToRotations(elevatorSim.getVelocityMetersPerSecond());
+    simState.setRotorVelocity(rotorVel);
   }
 
   @Override
-  public void setVoltage(double volts) {
-    this.volts = volts;
-    elevatorSim.setInputVoltage(volts);
+  public void updateInputs(ElevatorIOInputs inputs) {
+    super.updateInputs(inputs);
+    final double currentTime = RobotController.getFPGATime();
+    double deltaTime = currentTime - lastSimTime;
+    lastSimTime = currentTime;
+    updateSimState(deltaTime);
   }
 }

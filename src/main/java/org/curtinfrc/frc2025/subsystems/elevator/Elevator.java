@@ -19,8 +19,7 @@ import org.littletonrobotics.junction.Logger;
 public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private final PIDController pid = new PIDController(kP, 0, kD);
-  private final PIDController climbPID = new PIDController(climbkP, climbkI, climbkD);
+  private final PIDController climbPID = new PIDController(45, 0, 0);
   private ElevatorSetpoints setpoint = ElevatorSetpoints.BASE;
 
   public final Trigger isNotAtCollect = new Trigger(() -> setpoint != ElevatorSetpoints.BASE);
@@ -29,14 +28,7 @@ public class Elevator extends SubsystemBase {
       new Trigger(() -> setpoint != ElevatorSetpoints.BASE && setpoint != ElevatorSetpoints.L1);
 
   public final Trigger toZero = new Trigger(() -> inputs.hominSensor);
-  public final Trigger atSetpoint =
-      new Trigger(
-          () -> {
-            var refrence = setpoint.setpoint / (Math.PI * 2 * 0.03055) * 8.1818;
-            var current = inputs.positionRotations;
-
-            return (refrence - current) < 0.85248701367;
-          });
+  public final Trigger atSetpoint;
 
   @AutoLogOutput(key = "Climber/ElevatorAtSetpoint")
   public final Trigger atClimbSetpoint = new Trigger(climbPID::atSetpoint);
@@ -49,8 +41,21 @@ public class Elevator extends SubsystemBase {
 
   public Elevator(ElevatorIO io) {
     this.io = io;
-    pid.setTolerance(tolerance);
-    climbPID.setTolerance(tolerance);
+    climbPID.setTolerance(0.01);
+
+    atSetpoint =
+        new Trigger(
+            () -> {
+              var referencePos = io.metresToRotations(setpoint.setpoint);
+              var posTolerance = io.metresToRotations(0.005);
+              var currentPos = inputs.positionRotations;
+
+              var velTolerance = io.metresToRotations(0.3);
+              var currentVel = inputs.angularVelocityRotationsPerSecond;
+
+              return Math.abs(referencePos - currentPos) < posTolerance
+                  && Math.abs(0 - currentVel) < velTolerance;
+            });
   }
 
   @Override
@@ -60,7 +65,6 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Elevator/isNotAtCollect", isNotAtCollect.getAsBoolean());
     Logger.recordOutput("Elevator/setpoint", ElevatorSetpoints.struct, setpoint);
     Logger.recordOutput("Elevator/AtSetpoint", atSetpoint.getAsBoolean());
-    Logger.recordOutput("Elevator/ActualError", pid.getError());
 
     // if (inputs.hominSensor) {
     //   io.zero();
@@ -100,7 +104,7 @@ public class Elevator extends SubsystemBase {
               setpoint = point;
               var out =
                   climbPID.calculate(
-                      io.positionRotationsToMetres(inputs.positionRotations), setpoint.setpoint);
+                      io.rotationsToMetres(inputs.positionRotations), setpoint.setpoint);
               io.setVoltage(MathUtil.clamp(out, -4, 4));
             }),
         Commands.none(),
@@ -120,7 +124,7 @@ public class Elevator extends SubsystemBase {
     return new Pose3d(
         0,
         0,
-        io.positionRotationsToMetres(inputs.positionRotations),
+        io.rotationsToMetres(inputs.positionRotations),
         new Rotation3d(Math.PI / 2, 0, Math.PI / 2));
   }
 }

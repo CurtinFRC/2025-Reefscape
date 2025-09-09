@@ -4,14 +4,12 @@ import static org.curtinfrc.frc2025.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
@@ -26,17 +24,9 @@ public class ElevatorIOComp implements ElevatorIO {
   private static final double gearing = 8.1818;
   private static final int ID = 7;
   private static final int FOLLOWER_ID = 40;
-  private static final TalonFXConfiguration config =
-      new TalonFXConfiguration()
-          .withMotorOutput(
-              new MotorOutputConfigs()
-                  .withInverted(InvertedValue.CounterClockwise_Positive)
-                  .withNeutralMode(NeutralModeValue.Brake))
-          .withSlot0(new Slot0Configs().withKP(0.4))
-          .withCurrentLimits(
-              new CurrentLimitsConfigs().withSupplyCurrentLimit(30).withStatorCurrentLimit(60));
+  private final TalonFXConfiguration config;
 
-  private final TalonFX motor = new TalonFX(ID);
+  protected final TalonFX motor = new TalonFX(ID);
   private final TalonFX follower = new TalonFX(FOLLOWER_ID);
 
   private DigitalInput reset = new DigitalInput(0);
@@ -47,10 +37,39 @@ public class ElevatorIOComp implements ElevatorIO {
   private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
 
   private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(true);
-  private final PositionVoltage positionRequest = new PositionVoltage(0).withEnableFOC(true);
+  private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0).withEnableFOC(true);
   private final Follower followRequest = new Follower(ID, false);
 
   public ElevatorIOComp() {
+    config = new TalonFXConfiguration();
+    var output = config.MotorOutput;
+    output.Inverted = InvertedValue.CounterClockwise_Positive;
+    output.NeutralMode = NeutralModeValue.Brake;
+
+    var slot0 = config.Slot0;
+    slot0.GravityType = GravityTypeValue.Elevator_Static;
+    // we lie about units cause of how the dimensional analysis works out
+    // rotations = metres / value
+    // rotations * value = metres
+    // V/rotations = V/metres/value
+    // V/rotations = V*value/metres
+    // so rotationsToMetres does the correct thing here
+    slot0.kG = 0.09;
+    slot0.kP = rotationsToMetres(318.70);
+    slot0.kD = rotationsToMetres(1.33);
+    slot0.kV = rotationsToMetres(5.29);
+    slot0.kV = rotationsToMetres(0.01);
+
+    var currentLimits = config.CurrentLimits;
+    currentLimits.StatorCurrentLimitEnable = true;
+    currentLimits.StatorCurrentLimit = 60;
+    currentLimits.SupplyCurrentLimitEnable = true;
+    currentLimits.SupplyCurrentLimit = 30;
+
+    var mmConfig = config.MotionMagic;
+    mmConfig.MotionMagicCruiseVelocity = metresToRotations(2.24);
+    mmConfig.MotionMagicAcceleration = metresToRotations(49.00);
+
     tryUntilOk(5, () -> motor.getConfigurator().apply(config));
     tryUntilOk(5, () -> follower.getConfigurator().apply(config));
     BaseStatusSignal.setUpdateFrequencyForAll(20.0, velocity, voltage, current, position);
@@ -66,7 +85,7 @@ public class ElevatorIOComp implements ElevatorIO {
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.currentAmps = current.getValueAsDouble();
     inputs.positionRotations = position.getValueAsDouble();
-    inputs.angularVelocityRotationsPerMinute = velocity.getValueAsDouble();
+    inputs.angularVelocityRotationsPerSecond = velocity.getValueAsDouble();
     inputs.hominSensor = reset.get();
   }
 
@@ -78,7 +97,7 @@ public class ElevatorIOComp implements ElevatorIO {
 
   @Override
   public void setPosition(double positionMetres) {
-    positionRequest.withPosition(positionMetresToRotations(positionMetres));
+    positionRequest.withPosition(metresToRotations(positionMetres));
     motor.setControl(positionRequest);
   }
 
@@ -88,12 +107,12 @@ public class ElevatorIOComp implements ElevatorIO {
   }
 
   @Override
-  public double positionRotationsToMetres(double rotations) {
+  public double rotationsToMetres(double rotations) {
     return rotations * Math.PI * 2 * pulleyRadiusMeters / gearing;
   }
 
   @Override
-  public double positionMetresToRotations(double metres) {
+  public double metresToRotations(double metres) {
     return metres / (Math.PI * 2 * pulleyRadiusMeters) * gearing;
   }
 }

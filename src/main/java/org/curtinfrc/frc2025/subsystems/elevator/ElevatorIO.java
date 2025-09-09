@@ -9,7 +9,7 @@ public interface ElevatorIO {
     public double appliedVolts;
     public double currentAmps;
     public double positionRotations;
-    public double angularVelocityRotationsPerMinute;
+    public double angularVelocityRotationsPerSecond;
     public boolean hominSensor;
   }
 
@@ -21,11 +21,11 @@ public interface ElevatorIO {
 
   public default void zero() {}
 
-  public default double positionRotationsToMetres(double rotations) {
+  public default double rotationsToMetres(double rotations) {
     return rotations;
   }
 
-  public default double positionMetresToRotations(double metres) {
+  public default double metresToRotations(double metres) {
     return metres;
   }
 }
